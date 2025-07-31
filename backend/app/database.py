@@ -1,12 +1,10 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from .models import Device, DeviceData, User, Alert
+from models import Device, DeviceData, User, Alert, Base
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./iot.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
 
 def get_db():
     db = SessionLocal()
@@ -56,17 +54,19 @@ def get_alerts(db, device_id=None):
     return q.order_by(Alert.timestamp.desc()).all() 
 
 def create_device_group(db, group):
-    db_group = models.DeviceGroup(name=group.name)
+    from models import DeviceGroup
+    db_group = DeviceGroup(name=group.name)
     db.add(db_group)
     db.commit()
     db.refresh(db_group)
     return db_group
 
 def get_device_groups(db):
-    return db.query(models.DeviceGroup).all()
+    from models import DeviceGroup
+    return db.query(DeviceGroup).all()
 
 def update_device(db, device_id, update):
-    device = db.query(models.Device).filter(models.Device.id == device_id).first()
+    device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         return None
     for field, value in update.dict(exclude_unset=True).items():

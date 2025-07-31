@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, Table, ForeignKey
-from .database import Base
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 import datetime
 
 class Device(Base):

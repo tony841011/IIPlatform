@@ -1,171 +1,171 @@
-import React, { useEffect, useRef, useState } from "react";
-import * as echarts from "echarts";
-import axios from "axios";
+import React, { useState, useEffect, useRef } from 'react';
+import { Row, Col, Card, Statistic, Alert } from 'antd';
+import { DeviceOutlined, AlertOutlined, CheckCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import * as echarts from 'echarts';
+import axios from 'axios';
 
-function Dashboard() {
-  const chartRef = useRef(null);
-  const [data, setData] = useState([]);
+const Dashboard = () => {
+  const [devices, setDevices] = useState([]);
   const [alerts, setAlerts] = useState([]);
-  const [popup, setPopup] = useState(null);
-  const [selected, setSelected] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [aiResult, setAiResult] = useState(null);
-  const [groups, setGroups] = useState([]);
-  const [editDevice, setEditDevice] = useState(null);
-  const [editTags, setEditTags] = useState("");
-  const [editGroup, setEditGroup] = useState("");
+  const [stats, setStats] = useState({
+    totalDevices: 0,
+    activeDevices: 0,
+    totalAlerts: 0,
+    criticalAlerts: 0
+  });
+  const chartRef = useRef(null);
+  const [ws, setWs] = useState(null);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/devices/").then((res) => {
-      setData(res.data);
-    });
-    axios.get("http://localhost:8000/groups/").then((res) => {
-      setGroups(res.data);
-    });
-    // WebSocket 連線
-    const ws = new WebSocket("ws://localhost:8000/ws/data");
-    ws.onmessage = (event) => {
+    loadData();
+    connectWebSocket();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [devicesRes, alertsRes] = await Promise.all([
+        axios.get('http://localhost:8000/devices/'),
+        axios.get('http://localhost:8000/alerts/')
+      ]);
+      
+      setDevices(devicesRes.data);
+      setAlerts(alertsRes.data);
+      
+      setStats({
+        totalDevices: devicesRes.data.length,
+        activeDevices: devicesRes.data.filter(d => d.value !== undefined).length,
+        totalAlerts: alertsRes.data.length,
+        criticalAlerts: alertsRes.data.filter(a => a.value > 80).length
+      });
+    } catch (error) {
+      console.error('載入資料失敗:', error);
+    }
+  };
+
+  const connectWebSocket = () => {
+    const websocket = new WebSocket('ws://localhost:8000/ws/data');
+    
+    websocket.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      if (msg.type === "alert") {
-        setPopup(msg);
-        setAlerts((prev) => [msg, ...prev]);
-        setTimeout(() => setPopup(null), 5000);
+      if (msg.type === 'alert') {
+        setAlerts(prev => [msg, ...prev]);
+        setStats(prev => ({
+          ...prev,
+          totalAlerts: prev.totalAlerts + 1,
+          criticalAlerts: msg.value > 80 ? prev.criticalAlerts + 1 : prev.criticalAlerts
+        }));
       } else {
-        setData((prev) => {
-          // 依 device_id 更新對應資料
-          const idx = prev.findIndex((d) => d.id === msg.device_id);
-          if (idx !== -1) {
-            const updated = [...prev];
-            updated[idx] = { ...updated[idx], value: msg.value, timestamp: msg.timestamp };
-            return updated;
-          }
-          return prev;
+        setDevices(prev => {
+          const updated = prev.map(d => 
+            d.id === msg.device_id ? { ...d, value: msg.value, timestamp: msg.timestamp } : d
+          );
+          return updated;
         });
       }
     };
-    return () => ws.close();
-  }, []);
+
+    setWs(websocket);
+  };
 
   useEffect(() => {
-    if (selected) {
-      axios.get(`http://localhost:8000/history/?device_id=${selected}`).then((res) => {
-        setHistory(res.data.reverse());
-      });
-      axios.get(`http://localhost:8000/ai/anomaly/?device_id=${selected}`).then((res) => {
-        setAiResult(res.data);
-      });
-    }
-  }, [selected]);
-
-  useEffect(() => {
-    if (data.length > 0) {
+    if (devices.length > 0 && chartRef.current) {
       const chart = echarts.init(chartRef.current);
       const option = {
-        title: { text: "設備清單" },
-        tooltip: {},
-        xAxis: { type: "category", data: data.map((d) => d.name) },
-        yAxis: { type: "value" },
-        series: [
-          {
-            data: data.map((d) => d.value || Math.random() * 100), // 若有即時值則顯示
-            type: "bar",
-          },
-        ],
+        title: { text: '設備即時狀態', left: 'center' },
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['設備數值'], top: 30 },
+        xAxis: { 
+          type: 'category', 
+          data: devices.map(d => d.name),
+          axisLabel: { rotate: 45 }
+        },
+        yAxis: { type: 'value' },
+        series: [{
+          name: '設備數值',
+          data: devices.map(d => d.value || Math.random() * 100),
+          type: 'bar',
+          itemStyle: {
+            color: function(params) {
+              const value = devices[params.dataIndex]?.value || 0;
+              return value > 80 ? '#ff4d4f' : value > 60 ? '#faad14' : '#52c41a';
+            }
+          }
+        }]
       };
       chart.setOption(option);
     }
-  }, [data]);
-
-  // 歷史折線圖
-  const historyChartRef = useRef(null);
-  useEffect(() => {
-    if (history.length > 0) {
-      const chart = echarts.init(historyChartRef.current);
-      const option = {
-        title: { text: "歷史數據" },
-        tooltip: {},
-        xAxis: { type: "category", data: history.map((h) => h.timestamp) },
-        yAxis: { type: "value" },
-        series: [
-          {
-            data: history.map((h) => h.value),
-            type: "line",
-          },
-        ],
-      };
-      chart.setOption(option);
-    }
-  }, [history]);
+  }, [devices]);
 
   return (
-    <>
-      {popup && (
-        <div style={{position:'fixed',top:20,right:20,background:'#ffcccc',padding:20,zIndex:1000}}>
-          <b>告警！</b><br/>
-          設備ID: {popup.device_id}<br/>
-          數值: {popup.value}<br/>
-          時間: {popup.timestamp}<br/>
-          訊息: {popup.message}
-        </div>
+    <div>
+      <h2>系統概覽</h2>
+      
+      {/* 統計卡片 */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="總設備數"
+              value={stats.totalDevices}
+              prefix={<DeviceOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="活躍設備"
+              value={stats.activeDevices}
+              prefix={<CheckCircleOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="總告警數"
+              value={stats.totalAlerts}
+              prefix={<AlertOutlined />}
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="嚴重告警"
+              value={stats.criticalAlerts}
+              prefix={<WarningOutlined />}
+              valueStyle={{ color: '#ff4d4f' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 即時圖表 */}
+      <Card title="設備即時狀態" className="chart-container">
+        <div ref={chartRef} style={{ height: 400 }} />
+      </Card>
+
+      {/* 最新告警 */}
+      {alerts.length > 0 && (
+        <Card title="最新告警" style={{ marginTop: 16 }}>
+          {alerts.slice(0, 5).map((alert, index) => (
+            <Alert
+              key={index}
+              message={`設備 ${alert.device_id} - ${alert.message}`}
+              description={`數值: ${alert.value} | 時間: ${alert.timestamp}`}
+              type={alert.value > 80 ? "error" : "warning"}
+              showIcon
+              style={{ marginBottom: 8 }}
+            />
+          ))}
+        </Card>
       )}
-      <div ref={chartRef} style={{ width: 600, height: 400 }} />
-      <div>
-        <label>選擇設備：</label>
-        <select onChange={e => setSelected(e.target.value)} value={selected || ""}>
-          <option value="">請選擇</option>
-          {data.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
-        {selected && (
-          <button onClick={() => {
-            const dev = data.find(d => d.id == selected);
-            setEditDevice(dev);
-            setEditTags(dev.tags || "");
-            setEditGroup(dev.group || "");
-          }}>編輯分群/標籤</button>
-        )}
-      </div>
-      {editDevice && (
-        <div style={{background:'#f0f0f0',padding:10,margin:'10px 0'}}>
-          <b>編輯設備分群/標籤</b><br/>
-          <label>分群：</label>
-          <select value={editGroup} onChange={e=>setEditGroup(e.target.value)}>
-            <option value="">無</option>
-            {groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}
-          </select><br/>
-          <label>標籤：</label>
-          <input value={editTags} onChange={e=>setEditTags(e.target.value)} />
-          <button onClick={async()=>{
-            await axios.patch(`http://localhost:8000/devices/${editDevice.id}`,{group:editGroup?parseInt(editGroup):null,tags:editTags});
-            setEditDevice(null);
-            setSelected(editDevice.id);
-            axios.get("http://localhost:8000/devices/").then((res) => { setData(res.data); });
-          }}>儲存</button>
-          <button onClick={()=>setEditDevice(null)}>取消</button>
-        </div>
-      )}
-      <div>
-        <b>分群：</b>{data.find(d=>d.id==selected)?.group || "無"} <b>標籤：</b>{data.find(d=>d.id==selected)?.tags || ""}
-      </div>
-      <div ref={historyChartRef} style={{ width: 600, height: 300, marginTop: 20 }} />
-      {aiResult && (
-        <div style={{marginTop:10,padding:10,background:'#e0f7fa'}}>
-          <b>AI 異常偵測</b><br/>
-          異常分數: {aiResult.score.toFixed(2)}<br/>
-          建議: {aiResult.advice}<br/>
-          平均值: {aiResult.mean.toFixed(2)} 標準差: {aiResult.std.toFixed(2)}<br/>
-          最新數值: {aiResult.latest.toFixed(2)}
-        </div>
-      )}
-      <h2>告警紀錄</h2>
-      <ul>
-        {alerts.map((a, i) => (
-          <li key={i} style={{color:'red'}}>
-            [{a.timestamp}] 設備ID:{a.device_id} 數值:{a.value} 訊息:{a.message}
-          </li>
-        ))}
-      </ul>
-    </>
+    </div>
   );
-}
+};
 
 export default Dashboard; 

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>IIoT 工廠平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .chart { width: 600px; height: 400px; margin: 20px 0; }
+        .history-chart { width: 600px; height: 300px; margin: 20px 0; }
+        .alert { background: #ffcccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        select, input { padding: 5px; margin: 5px; }
+        .device-form { background: #f0f0f0; padding: 15px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>工廠物聯網平台儀表板</h1>
+        
+        <!-- 設備管理 -->
+        <div class="section">
+            <h2>設備管理</h2>
+            <div class="device-form">
+                <input type="text" id="deviceName" placeholder="設備名稱">
+                <input type="text" id="deviceLocation" placeholder="位置">
+                <button onclick="createDevice()">新增設備</button>
+            </div>
+            <div id="deviceList"></div>
+        </div>
+
+        <!-- 即時資料圖表 -->
+        <div class="section">
+            <h2>即時資料</h2>
+            <div id="realtimeChart" class="chart"></div>
+        </div>
+
+        <!-- 歷史資料 -->
+        <div class="section">
+            <h2>歷史資料查詢</h2>
+            <select id="deviceSelect">
+                <option value="">請選擇設備</option>
+            </select>
+            <button onclick="loadHistory()">載入歷史資料</button>
+            <div id="historyChart" class="history-chart"></div>
+        </div>
+
+        <!-- AI 分析 -->
+        <div class="section">
+            <h2>AI 異常偵測</h2>
+            <div id="aiResult"></div>
+        </div>
+
+        <!-- 告警紀錄 -->
+        <div class="section">
+            <h2>告警紀錄</h2>
+            <div id="alertList"></div>
+        </div>
+
+        <!-- 即時告警彈窗 -->
+        <div id="alertPopup" style="display:none; position:fixed; top:20px; right:20px; background:#ffcccc; padding:20px; z-index:1000; border-radius:5px;"></div>
+    </div>
+
+    <script>
+        let devices = [];
+        let ws = null;
+
+        // 初始化
+        window.onload = function() {
+            loadDevices();
+            connectWebSocket();
+        };
+
+        // 載入設備列表
+        async function loadDevices() {
+            try {
+                const response = await axios.get('http://localhost:8000/devices/');
+                devices = response.data;
+                updateDeviceList();
+                updateDeviceSelect();
+                updateRealtimeChart();
+            } catch (error) {
+                console.error('載入設備失敗:', error);
+            }
+        }
+
+        // 更新設備列表顯示
+        function updateDeviceList() {
+            const deviceList = document.getElementById('deviceList');
+            deviceList.innerHTML = devices.map(device => 
+                `<div>ID: ${device.id} | 名稱: ${device.name} | 位置: ${device.location}</div>`
+            ).join('');
+        }
+
+        // 更新設備選擇下拉選單
+        function updateDeviceSelect() {
+            const select = document.getElementById('deviceSelect');
+            select.innerHTML = '<option value="">請選擇設備</option>' + 
+                devices.map(device => `<option value="${device.id}">${device.name}</option>`).join('');
+        }
+
+        // 新增設備
+        async function createDevice() {
+            const name = document.getElementById('deviceName').value;
+            const location = document.getElementById('deviceLocation').value;
+            
+            if (!name || !location) {
+                alert('請填寫設備名稱和位置');
+                return;
+            }
+
+            try {
+                await axios.post('http://localhost:8000/devices/', {
+                    name: name,
+                    location: location
+                });
+                loadDevices();
+                document.getElementById('deviceName').value = '';
+                document.getElementById('deviceLocation').value = '';
+            } catch (error) {
+                console.error('新增設備失敗:', error);
+            }
+        }
+
+        // 更新即時圖表
+        function updateRealtimeChart() {
+            const chart = echarts.init(document.getElementById('realtimeChart'));
+            const option = {
+                title: { text: '設備即時資料' },
+                tooltip: {},
+                xAxis: { type: 'category', data: devices.map(d => d.name) },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: devices.map(d => d.value || Math.random() * 100),
+                    type: 'bar'
+                }]
+            };
+            chart.setOption(option);
+        }
+
+        // 載入歷史資料
+        async function loadHistory() {
+            const deviceId = document.getElementById('deviceSelect').value;
+            if (!deviceId) {
+                alert('請選擇設備');
+                return;
+            }
+
+            try {
+                const response = await axios.get(`http://localhost:8000/history/?device_id=${deviceId}`);
+                const history = response.data.reverse();
+                
+                const chart = echarts.init(document.getElementById('historyChart'));
+                const option = {
+                    title: { text: '歷史數據趨勢' },
+                    tooltip: {},
+                    xAxis: { type: 'category', data: history.map(h => h.timestamp) },
+                    yAxis: { type: 'value' },
+                    series: [{
+                        data: history.map(h => h.value),
+                        type: 'line'
+                    }]
+                };
+                chart.setOption(option);
+
+                // 載入 AI 分析
+                loadAIResult(deviceId);
+            } catch (error) {
+                console.error('載入歷史資料失敗:', error);
+            }
+        }
+
+        // 載入 AI 分析結果
+        async function loadAIResult(deviceId) {
+            try {
+                const response = await axios.get(`http://localhost:8000/ai/anomaly/?device_id=${deviceId}`);
+                const result = response.data;
+                
+                document.getElementById('aiResult').innerHTML = `
+                    <div style="background:#e0f7fa; padding:10px; border-radius:5px;">
+                        <b>AI 異常偵測結果</b><br/>
+                        異常分數: ${result.score.toFixed(2)}<br/>
+                        建議: ${result.advice}<br/>
+                        平均值: ${result.mean.toFixed(2)} | 標準差: ${result.std.toFixed(2)}<br/>
+                        最新數值: ${result.latest.toFixed(2)}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('載入 AI 分析失敗:', error);
+            }
+        }
+
+        // 連接 WebSocket
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8000/ws/data');
+            
+            ws.onmessage = function(event) {
+                const msg = JSON.parse(event.data);
+                
+                if (msg.type === 'alert') {
+                    // 顯示告警彈窗
+                    showAlert(msg);
+                    // 更新告警列表
+                    updateAlertList();
+                } else {
+                    // 更新設備資料
+                    updateDeviceData(msg);
+                }
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket 錯誤:', error);
+            };
+        }
+
+        // 顯示告警彈窗
+        function showAlert(alert) {
+            const popup = document.getElementById('alertPopup');
+            popup.innerHTML = `
+                <b>⚠️ 告警！</b><br/>
+                設備ID: ${alert.device_id}<br/>
+                數值: ${alert.value}<br/>
+                時間: ${alert.timestamp}<br/>
+                訊息: ${alert.message}
+            `;
+            popup.style.display = 'block';
+            
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 5000);
+        }
+
+        // 更新設備資料
+        function updateDeviceData(msg) {
+            const deviceIndex = devices.findIndex(d => d.id === msg.device_id);
+            if (deviceIndex !== -1) {
+                devices[deviceIndex].value = msg.value;
+                devices[deviceIndex].timestamp = msg.timestamp;
+                updateRealtimeChart();
+            }
+        }
+
+        // 更新告警列表
+        async function updateAlertList() {
+            try {
+                const response = await axios.get('http://localhost:8000/alerts/');
+                const alerts = response.data;
+                
+                document.getElementById('alertList').innerHTML = alerts.map(alert => 
+                    `<div class="alert">
+                        [${alert.timestamp}] 設備ID:${alert.device_id} | 數值:${alert.value} | ${alert.message}
+                    </div>`
+                ).join('');
+            } catch (error) {
+                console.error('載入告警失敗:', error);
+            }
+        }
+
+        // 模擬資料上傳（測試用）
+        function simulateData() {
+            const deviceId = document.getElementById('deviceSelect').value;
+            if (!deviceId) {
+                alert('請先選擇設備');
+                return;
+            }
+
+            const value = Math.random() * 100;
+            axios.post('http://localhost:8000/data/', {
+                device_id: parseInt(deviceId),
+                value: value,
+                timestamp: new Date().toISOString()
+            }).then(() => {
+                console.log('資料上傳成功');
+            }).catch(error => {
+                console.error('資料上傳失敗:', error);
+            });
+        }
+
+        // 定期更新告警列表
+        setInterval(updateAlertList, 10000);
+    </script>
+
+    <!-- 測試按鈕 -->
+    <div style="position:fixed; bottom:20px; right:20px;">
+        <button onclick="simulateData()" style="background:#4CAF50; color:white;">模擬資料上傳</button>
+    </div>
+</body>
+</html> 

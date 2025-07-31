@@ -50,18 +50,29 @@ pip install -r requirements.txt
 ```
 
 (2) 初始化資料庫
-```python
-# 在 backend/app 目錄下執行
+```bash
+# 方法一：使用初始化腳本
+cd backend
+python init_db.py
+
+# 方法二：手動初始化
+cd backend/app
 python
->>> from database import Base, engine
->>> import models
+>>> from models import Base
+>>> from database import engine
 >>> Base.metadata.create_all(bind=engine)
 >>> exit()
 ```
 
 (3) 啟動後端服務
 ```bash
+# 方法一：使用 uvicorn 命令
+cd backend/app
 uvicorn main:app --reload
+
+# 方法二：使用 Python 腳本
+cd backend
+python run.py
 ```
 後端預設監聽 http://localhost:8000
 
@@ -79,12 +90,27 @@ npm start
 python mqtt_client.py
 ```
 
-#### 5. 平台測試與驗證
-- 註冊/登入：可用 Postman 或前端頁面（如有）測試 /register、/token。
-- 設備管理：可用 API 或前端新增設備、分群、標籤。
-- 即時資料：用 MQTT 或 API 上傳資料，前端儀表板即時顯示。
-- 異常告警：上傳異常數值，前端即時彈窗與告警列表。
-- 歷史查詢/AI：選擇設備，查看歷史折線圖與 AI 分析結果。
+#### 5. 生成測試數據
+```bash
+cd backend
+python generate_test_data.py
+```
+
+#### 6. 模擬即時數據
+```bash
+cd backend
+python simulate_realtime_data.py
+```
+
+#### 7. 平台測試與驗證
+- **測試帳號**：
+  - 管理員：admin / admin123
+  - 操作員：operator1 / op123
+  - 經理：manager / mgmt123
+- **設備管理**：可用 API 或前端新增設備、分群、標籤
+- **即時資料**：用模擬器上傳資料，前端儀表板即時顯示
+- **異常告警**：上傳異常數值，前端即時彈窗與告警列表
+- **歷史查詢/AI**：選擇設備，查看歷史折線圖與 AI 分析結果
 
 ### 三、常見問題與加速技巧
 - 依賴安裝失敗：確認 Python/Node 版本正確，必要時用 pip install --upgrade pip。
