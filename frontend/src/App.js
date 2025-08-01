@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Layout, Menu, theme } from 'antd';
 import {
   DashboardOutlined,
-  DeviceOutlined,
+  DesktopOutlined,
   AlertOutlined,
   HistoryOutlined,
   RobotOutlined,
@@ -34,7 +34,7 @@ function App() {
     },
     {
       key: '/devices',
-      icon: <DeviceOutlined />,
+      icon: <DesktopOutlined />,
       label: <Link to="/devices">設備管理</Link>,
     },
     {

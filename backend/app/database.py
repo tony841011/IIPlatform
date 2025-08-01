@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Device, DeviceData, User, Alert, Base
+from .models import Device, DeviceData, User, Alert, Base
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./iot.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Row, Col, Card, Statistic, Alert } from 'antd';
-import { DeviceOutlined, AlertOutlined, CheckCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, AlertOutlined, CheckCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import * as echarts from 'echarts';
 import axios from 'axios';
 
@@ -14,12 +14,12 @@ const Dashboard = () => {
     criticalAlerts: 0
   });
   const chartRef = useRef(null);
-  const [ws, setWs] = useState(null);
+  //const [ws, setWs] = useState(null);
 
-  useEffect(() => {
+ /* useEffect(() => {
     loadData();
     connectWebSocket();
-  }, []);
+  }, []);*/
 
   const loadData = async () => {
     try {
@@ -42,7 +42,7 @@ const Dashboard = () => {
     }
   };
 
-  const connectWebSocket = () => {
+  /*const connectWebSocket = () => {
     const websocket = new WebSocket('ws://localhost:8000/ws/data');
     
     websocket.onmessage = (event) => {
@@ -65,7 +65,7 @@ const Dashboard = () => {
     };
 
     setWs(websocket);
-  };
+  };*/
 
   useEffect(() => {
     if (devices.length > 0 && chartRef.current) {
@@ -107,7 +107,7 @@ const Dashboard = () => {
             <Statistic
               title="總設備數"
               value={stats.totalDevices}
-              prefix={<DeviceOutlined />}
+              prefix={<AppstoreOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
           </Card>

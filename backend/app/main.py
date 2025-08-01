@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-import models, schemas, database
+#import models, schemas, database
+from . import models, schemas, database
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
@@ -63,22 +64,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
+#class ConnectionManager:
+    #def __init__(self):
+        #self.active_connections: List[WebSocket] = []
 
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
+    #async def connect(self, websocket: WebSocket):
+        #await websocket.accept()
+        #self.active_connections.append(websocket)
 
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+    #def disconnect(self, websocket: WebSocket):
+        #self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
+    #async def broadcast(self, message: str):
+        #for connection in self.active_connections:
+            #await connection.send_text(message)
 
-manager = ConnectionManager()
+#manager = ConnectionManager()
 
 @app.get("/")
 def read_root():
@@ -92,28 +93,28 @@ def create_device(device: schemas.DeviceCreate, db: Session = Depends(database.g
 def list_devices(db: Session = Depends(database.get_db)):
     return database.get_devices(db)
 
-@app.websocket("/ws/data")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            await websocket.receive_text()  # 保持連線
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+#@app.websocket("/ws/data")
+#async def websocket_endpoint(websocket: WebSocket):
+    #await manager.connect(websocket)
+    #try:
+        #while True:
+            #await websocket.receive_text()  # 保持連線
+    #except WebSocketDisconnect:
+        #manager.disconnect(websocket)
 
 # 修改資料接收 API，收到資料時推播給前端
 @app.post("/data/")
 def receive_data(data: schemas.DeviceData, db: Session = Depends(database.get_db)):
     saved = database.save_device_data(db, data)
     import json
-    import asyncio
+    #import asyncio
     # 假設異常條件：value > 80
     if data.value > 80:
         alert = schemas.AlertCreate(device_id=data.device_id, value=data.value, timestamp=data.timestamp, message="數值異常: 超過80")
         database.create_alert(db, alert)
-        asyncio.create_task(manager.broadcast(json.dumps({"type": "alert", "device_id": data.device_id, "value": data.value, "timestamp": str(data.timestamp), "message": "數值異常: 超過80"})))
+        #asyncio.create_task(manager.broadcast(json.dumps({"type": "alert", "device_id": data.device_id, "value": data.value, "timestamp": str(data.timestamp), "message": "數值異常: 超過80"})))
     else:
-        asyncio.create_task(manager.broadcast(json.dumps({"device_id": data.device_id, "value": data.value, "timestamp": str(data.timestamp)})))
+        #asyncio.create_task(manager.broadcast(json.dumps({"device_id": data.device_id, "value": data.value, "timestamp": str(data.timestamp)})))
     return saved
 
 @app.get("/alerts/", response_model=list[schemas.AlertOut])

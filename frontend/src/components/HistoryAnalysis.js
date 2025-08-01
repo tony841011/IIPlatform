@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Select, Card, Row, Col, Statistic } from 'antd';
-import { LineChartOutlined, TrendingUpOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { LineChartOutlined, RiseOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import * as echarts from 'echarts';
 import axios from 'axios';
 
@@ -130,7 +130,7 @@ const HistoryAnalysis = () => {
                 <Statistic
                   title="最大值"
                   value={stats.maxValue.toFixed(2)}
-                  prefix={<TrendingUpOutlined />}
+                  prefix={<RiseOutlined />}
                   valueStyle={{ color: '#52c41a' }}
                 />
               </Card>
@@ -140,7 +140,7 @@ const HistoryAnalysis = () => {
                 <Statistic
                   title="最小值"
                   value={stats.minValue.toFixed(2)}
-                  prefix={<TrendingUpOutlined />}
+                  prefix={<RiseOutlined />}
                   valueStyle={{ color: '#faad14' }}
                 />
               </Card>
