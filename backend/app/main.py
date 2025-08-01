@@ -1172,3 +1172,165 @@ def simulate_gpu_monitoring(gpu_device_id: int, db: Session = Depends(database.g
         database.create_gpu_alert(db, alert)
     
     return database.create_gpu_monitoring(db, monitoring_data) 
+```
+
+## 5. 新增平台設定和用戶角色切換相關的 API 端點
+
+```python:backend/app/main.py
+# 在檔案末尾新增以下平台設定和用戶角色切換相關的 API 端點
+
+# 平台設定管理
+@app.post("/platform/settings/", response_model=schemas.PlatformSettingsOut)
+def create_platform_setting(setting: schemas.PlatformSettingsCreate, db: Session = Depends(database.get_db)):
+    """創建平台設定"""
+    return database.create_platform_setting(db, setting)
+
+@app.get("/platform/settings/", response_model=List[schemas.PlatformSettingsOut])
+def list_platform_settings(category: str = None, db: Session = Depends(database.get_db)):
+    """獲取平台設定列表"""
+    return database.get_platform_settings(db, category)
+
+@app.get("/platform/settings/{setting_key}", response_model=schemas.PlatformSettingsOut)
+def get_platform_setting(setting_key: str, db: Session = Depends(database.get_db)):
+    """獲取特定平台設定"""
+    setting = database.get_platform_setting(db, setting_key)
+    if not setting:
+        raise HTTPException(status_code=404, detail="Platform setting not found")
+    return setting
+
+@app.patch("/platform/settings/{setting_key}", response_model=schemas.PlatformSettingsOut)
+def update_platform_setting(setting_key: str, setting: schemas.PlatformSettingsUpdate, db: Session = Depends(database.get_db)):
+    """更新平台設定"""
+    updated_setting = database.update_platform_setting(db, setting_key, setting)
+    if not updated_setting:
+        raise HTTPException(status_code=404, detail="Platform setting not found")
+    return updated_setting
+
+@app.delete("/platform/settings/{setting_key}")
+def delete_platform_setting(setting_key: str, db: Session = Depends(database.get_db)):
+    """刪除平台設定"""
+    setting = database.delete_platform_setting(db, setting_key)
+    if not setting:
+        raise HTTPException(status_code=404, detail="Platform setting not found")
+    return {"message": "Platform setting deleted successfully"}
+
+# 平台資訊管理
+@app.get("/platform/info", response_model=schemas.PlatformInfoOut)
+def get_platform_info(db: Session = Depends(database.get_db)):
+    """獲取平台資訊"""
+    info = database.get_platform_info(db)
+    if not info:
+        raise HTTPException(status_code=404, detail="Platform info not found")
+    return info
+
+@app.post("/platform/info", response_model=schemas.PlatformInfoOut)
+def create_platform_info(info: schemas.PlatformInfoCreate, db: Session = Depends(database.get_db)):
+    """創建平台資訊"""
+    return database.create_platform_info(db, info)
+
+@app.patch("/platform/info", response_model=schemas.PlatformInfoOut)
+def update_platform_info(info: schemas.PlatformInfoUpdate, db: Session = Depends(database.get_db)):
+    """更新平台資訊"""
+    updated_info = database.update_platform_info(db, info)
+    if not updated_info:
+        raise HTTPException(status_code=404, detail="Platform info not found")
+    return updated_info
+
+# 用戶角色切換管理
+@app.post("/users/{user_id}/switch-role", response_model=schemas.UserRoleSwitchOut)
+def switch_user_role(user_id: int, switch_request: schemas.RoleSwitchRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+    """切換用戶角色"""
+    role_switch = database.switch_user_role(db, user_id, switch_request, current_user.id)
+    if not role_switch:
+        raise HTTPException(status_code=404, detail="User not found or role switch failed")
+    return role_switch
+
+@app.get("/users/{user_id}/role-switches", response_model=List[schemas.UserRoleSwitchOut])
+def list_user_role_switches(user_id: int, db: Session = Depends(database.get_db)):
+    """獲取用戶角色切換歷史"""
+    return database.get_user_role_switches(db, user_id)
+
+@app.get("/users/{user_id}/current-status", response_model=schemas.UserCurrentStatus)
+def get_user_current_status(user_id: int, db: Session = Depends(database.get_db)):
+    """獲取用戶當前狀態"""
+    status = database.get_user_current_status(db, user_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="User not found")
+    return status
+
+@app.post("/users/{user_id}/revert-role")
+def revert_user_role(user_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+    """恢復用戶原始角色"""
+    result = database.revert_user_role(db, user_id, current_user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found or revert failed")
+    return {"message": "User role reverted successfully"}
+
+# 用戶會話管理
+@app.post("/users/sessions/", response_model=schemas.UserSessionOut)
+def create_user_session(session: schemas.UserSessionCreate, db: Session = Depends(database.get_db)):
+    """創建用戶會話"""
+    return database.create_user_session(db, session)
+
+@app.get("/users/sessions/{session_token}", response_model=schemas.UserSessionOut)
+def get_user_session(session_token: str, db: Session = Depends(database.get_db)):
+    """獲取用戶會話"""
+    session = database.get_user_session(db, session_token)
+    if not session:
+        raise HTTPException(status_code=404, detail="User session not found")
+    return session
+
+@app.patch("/users/sessions/{session_token}", response_model=schemas.UserSessionOut)
+def update_user_session(session_token: str, session: schemas.UserSessionUpdate, db: Session = Depends(database.get_db)):
+    """更新用戶會話"""
+    updated_session = database.update_user_session(db, session_token, session)
+    if not updated_session:
+        raise HTTPException(status_code=404, detail="User session not found")
+    return updated_session
+
+@app.delete("/users/sessions/{session_token}")
+def delete_user_session(session_token: str, db: Session = Depends(database.get_db)):
+    """刪除用戶會話"""
+    session = database.delete_user_session(db, session_token)
+    if not session:
+        raise HTTPException(status_code=404, detail="User session not found")
+    return {"message": "User session deleted successfully"}
+
+# 用戶登入增強功能
+@app.post("/login/with-role")
+def login_with_role(login_data: dict, db: Session = Depends(database.get_db)):
+    """使用指定角色登入"""
+    user = database.authenticate_user(db, login_data["username"], login_data["password"])
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # 檢查是否有權限使用指定角色
+    target_role = login_data.get("role", user.role)
+    if not database.check_role_permission(db, user.id, target_role):
+        raise HTTPException(status_code=403, detail="No permission to use this role")
+    
+    # 創建會話
+    session_token = database.create_user_session_with_role(db, user.id, target_role, user.role)
+    
+    return {
+        "access_token": create_access_token(data={"sub": user.username}),
+        "token_type": "bearer",
+        "user": user,
+        "current_role": target_role,
+        "original_role": user.role,
+        "session_token": session_token
+    }
+
+# 獲取可用角色
+@app.get("/users/{user_id}/available-roles")
+def get_available_roles(user_id: int, db: Session = Depends(database.get_db)):
+    """獲取用戶可用的角色"""
+    roles = database.get_user_available_roles(db, user_id)
+    return {"available_roles": roles}
+
+# 平台設定分類
+@app.get("/platform/settings/categories")
+def get_platform_settings_categories(db: Session = Depends(database.get_db)):
+    """獲取平台設定分類"""
+    categories = database.get_platform_settings_categories(db)
+    return {"categories": categories} 
