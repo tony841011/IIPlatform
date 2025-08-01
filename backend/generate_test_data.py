@@ -510,3 +510,360 @@ if __name__ == "__main__":
 
 if __name__ == "__main__":
     generate_test_data() 
+
+## 總結
+
+我已經成功為你的 IIoT 平台新增了完整的串流影
+
+        # 生成串流影像辨識測試資料
+        print("生成串流影像辨識測試資料...")
+        from app.models import (
+            VideoStreamDevice, VideoRecognitionModel, VideoRecognitionTask,
+            VideoRecognitionResult, VideoRecognitionAlert, VideoProcessingConfig,
+            VideoStreamStatus, VideoRecordingConfig, VideoAnalyticsStats
+        )
+        
+        # 串流影像設備
+        video_devices = [
+            VideoStreamDevice(
+                name="生產線監控攝影機",
+                device_type="ip_camera",
+                stream_url="rtsp://192.168.1.100:554/stream1",
+                stream_type="rtsp",
+                resolution="1920x1080",
+                frame_rate=30,
+                bitrate=4000,
+                location="生產線A",
+                description="監控生產線運作狀況",
+                is_active=True
+            ),
+            VideoStreamDevice(
+                name="品質檢測攝影機",
+                device_type="ip_camera",
+                stream_url="rtsp://192.168.1.101:554/stream1",
+                stream_type="rtsp",
+                resolution="1920x1080",
+                frame_rate=25,
+                bitrate=3000,
+                location="檢測站B",
+                description="檢測產品品質缺陷",
+                is_active=True
+            ),
+            VideoStreamDevice(
+                name="安全監控攝影機",
+                device_type="ip_camera",
+                stream_url="rtsp://192.168.1.102:554/stream1",
+                stream_type="rtsp",
+                resolution="1280x720",
+                frame_rate=20,
+                bitrate=2000,
+                location="安全區域",
+                description="監控安全區域人員進出",
+                is_active=True
+            )
+        ]
+        
+        for device in video_devices:
+            db.add(device)
+        db.commit()
+        
+        # 影像辨識模型
+        video_models = [
+            VideoRecognitionModel(
+                name="YOLO 物件偵測模型",
+                model_type="object_detection",
+                framework="yolo",
+                model_path="/models/yolo_v5.pt",
+                model_config={"confidence": 0.7, "iou": 0.5},
+                classes=["person", "car", "truck", "bicycle", "motorcycle"],
+                confidence_threshold=0.7,
+                is_active=True,
+                is_production=True,
+                created_by=1
+            ),
+            VideoRecognitionModel(
+                name="品質缺陷檢測模型",
+                model_type="quality_inspection",
+                framework="tensorflow",
+                model_path="/models/quality_inspection.h5",
+                model_config={"input_size": [224, 224], "batch_size": 32},
+                classes=["scratch", "crack", "discoloration", "misalignment", "contamination"],
+                confidence_threshold=0.8,
+                is_active=True,
+                is_production=True,
+                created_by=1
+            ),
+            VideoRecognitionModel(
+                name="人臉辨識模型",
+                model_type="face_recognition",
+                framework="opencv",
+                model_path="/models/face_recognition.xml",
+                model_config={"scale_factor": 1.1, "min_neighbors": 5},
+                classes=["authorized_person", "unauthorized_person"],
+                confidence_threshold=0.9,
+                is_active=True,
+                is_production=False,
+                created_by=1
+            )
+        ]
+        
+        for model in video_models:
+            db.add(model)
+        db.commit()
+        
+        # 影像辨識任務
+        video_tasks = [
+            VideoRecognitionTask(
+                name="生產線監控任務",
+                device_id=1,
+                model_id=1,
+                task_type="real_time",
+                status="running",
+                config={"fps": 30, "roi": [100, 100, 800, 600], "alert_enabled": True},
+                is_active=True,
+                created_by=1
+            ),
+            VideoRecognitionTask(
+                name="品質檢測任務",
+                device_id=2,
+                model_id=2,
+                task_type="real_time",
+                status="running",
+                config={"fps": 25, "roi": [200, 200, 700, 500], "alert_enabled": True},
+                is_active=True,
+                created_by=1
+            ),
+            VideoRecognitionTask(
+                name="安全監控任務",
+                device_id=3,
+                model_id=3,
+                task_type="real_time",
+                status="stopped",
+                config={"fps": 20, "roi": [0, 0, 1280, 720], "alert_enabled": True},
+                is_active=True,
+                created_by=1
+            )
+        ]
+        
+        for task in video_tasks:
+            db.add(task)
+        db.commit()
+        
+        # 影像辨識結果（模擬數據）
+        import random
+        import datetime
+        
+        for task in video_tasks:
+            for i in range(10):  # 每個任務生成10個結果
+                result = VideoRecognitionResult(
+                    task_id=task.id,
+                    frame_timestamp=datetime.datetime.utcnow() - datetime.timedelta(minutes=i*5),
+                    frame_number=random.randint(1, 1000),
+                    detection_results={
+                        "objects": [
+                            {"class": "person", "confidence": random.uniform(0.7, 0.95), "bbox": [100, 100, 200, 300]},
+                            {"class": "car", "confidence": random.uniform(0.6, 0.9), "bbox": [300, 200, 500, 400]}
+                        ]
+                    },
+                    confidence_scores={"person": random.uniform(0.7, 0.95), "car": random.uniform(0.6, 0.9)},
+                    bounding_boxes=[[100, 100, 200, 300], [300, 200, 500, 400]],
+                    class_labels=["person", "car"],
+                    processing_time=random.uniform(50, 200),
+                    is_alert=random.choice([True, False])
+                )
+                db.add(result)
+        db.commit()
+        
+        # 影像辨識警報
+        video_alerts = [
+            VideoRecognitionAlert(
+                result_id=1,
+                alert_type="quality_defect",
+                alert_level="high",
+                alert_message="檢測到產品缺陷：刮痕",
+                detected_objects=["scratch"],
+                location_info={"x": 150, "y": 200, "width": 100, "height": 50},
+                image_snapshot="/snapshots/defect_001.jpg"
+            ),
+            VideoRecognitionAlert(
+                result_id=2,
+                alert_type="safety_violation",
+                alert_level="critical",
+                alert_message="檢測到未授權人員進入",
+                detected_objects=["unauthorized_person"],
+                location_info={"x": 300, "y": 250, "width": 80, "height": 120},
+                image_snapshot="/snapshots/security_001.jpg"
+            ),
+            VideoRecognitionAlert(
+                result_id=3,
+                alert_type="quality_defect",
+                alert_level="medium",
+                alert_message="檢測到產品變色",
+                detected_objects=["discoloration"],
+                location_info={"x": 400, "y": 300, "width": 120, "height": 80},
+                image_snapshot="/snapshots/defect_002.jpg"
+            )
+        ]
+        
+        for alert in video_alerts:
+            db.add(alert)
+        db.commit()
+        
+        # 影像處理配置
+        video_processing_configs = [
+            VideoProcessingConfig(
+                task_id=1,
+                preprocessing_steps=[
+                    {"type": "resize", "params": {"width": 640, "height": 480}},
+                    {"type": "normalize", "params": {"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}}
+                ],
+                postprocessing_steps=[
+                    {"type": "nms", "params": {"iou_threshold": 0.5}},
+                    {"type": "confidence_filter", "params": {"threshold": 0.7}}
+                ],
+                filter_settings={"blur": False, "sharpen": True},
+                enhancement_settings={"brightness": 1.1, "contrast": 1.2},
+                roi_settings={"enabled": True, "coordinates": [100, 100, 800, 600]},
+                is_active=True
+            ),
+            VideoProcessingConfig(
+                task_id=2,
+                preprocessing_steps=[
+                    {"type": "resize", "params": {"width": 224, "height": 224}},
+                    {"type": "normalize", "params": {"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}}
+                ],
+                postprocessing_steps=[
+                    {"type": "confidence_filter", "params": {"threshold": 0.8}}
+                ],
+                filter_settings={"blur": False, "sharpen": False},
+                enhancement_settings={"brightness": 1.0, "contrast": 1.0},
+                roi_settings={"enabled": True, "coordinates": [200, 200, 700, 500]},
+                is_active=True
+            )
+        ]
+        
+        for config in video_processing_configs:
+            db.add(config)
+        db.commit()
+        
+        # 影像串流狀態
+        video_stream_status = [
+            VideoStreamStatus(
+                device_id=1,
+                connection_status="connected",
+                stream_quality="excellent",
+                frame_rate_current=30.0,
+                bitrate_current=4000,
+                resolution_current="1920x1080",
+                latency=50.0,
+                is_recording=False
+            ),
+            VideoStreamStatus(
+                device_id=2,
+                connection_status="connected",
+                stream_quality="good",
+                frame_rate_current=25.0,
+                bitrate_current=3000,
+                resolution_current="1920x1080",
+                latency=75.0,
+                is_recording=True
+            ),
+            VideoStreamStatus(
+                device_id=3,
+                connection_status="disconnected",
+                stream_quality="poor",
+                frame_rate_current=0.0,
+                bitrate_current=0,
+                resolution_current="1280x720",
+                latency=0.0,
+                error_message="Connection timeout",
+                is_recording=False
+            )
+        ]
+        
+        for status in video_stream_status:
+            db.add(status)
+        db.commit()
+        
+        # 影像錄製配置
+        video_recording_configs = [
+            VideoRecordingConfig(
+                device_id=1,
+                recording_enabled=False,
+                recording_trigger="manual",
+                recording_format="mp4",
+                recording_quality="high",
+                storage_path="/recordings/device_1/",
+                retention_days=30,
+                max_file_size=1024,
+                is_active=True
+            ),
+            VideoRecordingConfig(
+                device_id=2,
+                recording_enabled=True,
+                recording_trigger="motion",
+                recording_format="mp4",
+                recording_quality="medium",
+                storage_path="/recordings/device_2/",
+                retention_days=15,
+                max_file_size=512,
+                is_active=True
+            ),
+            VideoRecordingConfig(
+                device_id=3,
+                recording_enabled=True,
+                recording_trigger="alert",
+                recording_format="avi",
+                recording_quality="high",
+                storage_path="/recordings/device_3/",
+                retention_days=60,
+                max_file_size=2048,
+                is_active=True
+            )
+        ]
+        
+        for config in video_recording_configs:
+            db.add(config)
+        db.commit()
+        
+        # 影像分析統計
+        video_analytics_stats = [
+            VideoAnalyticsStats(
+                task_id=1,
+                date=datetime.datetime.utcnow().date(),
+                total_frames_processed=86400,  # 24小時 * 30fps
+                total_detections=1200,
+                average_processing_time=150.0,
+                detection_rate=0.85,
+                false_positive_rate=0.05,
+                false_negative_rate=0.10,
+                alert_count=15,
+                class_distribution={"person": 800, "car": 400},
+                performance_metrics={"fps": 30, "memory_usage": 512, "cpu_usage": 45}
+            ),
+            VideoAnalyticsStats(
+                task_id=2,
+                date=datetime.datetime.utcnow().date(),
+                total_frames_processed=64800,  # 24小時 * 25fps
+                total_detections=800,
+                average_processing_time=120.0,
+                detection_rate=0.90,
+                false_positive_rate=0.03,
+                false_negative_rate=0.07,
+                alert_count=8,
+                class_distribution={"scratch": 300, "crack": 200, "discoloration": 300},
+                performance_metrics={"fps": 25, "memory_usage": 384, "cpu_usage": 35}
+            )
+        ]
+        
+        for stats in video_analytics_stats:
+            db.add(stats)
+        db.commit()
+        
+        print("✅ 串流影像辨識測試數據生成完成！")
+        print(f"🖥️ 已建立 {len(video_devices)} 個影像設備")
+        print(f"🤖 已建立 {len(video_models)} 個辨識模型")
+        print(f"📋 已建立 {len(video_tasks)} 個辨識任務")
+        print(f"📊 已生成 {len(video_alerts)} 個影像警報")
+        print(f"⚙️  已建立 {len(video_processing_configs)} 個處理配置")
+        print(f"📈 已建立 {len(video_analytics_stats)} 個分析統計") 

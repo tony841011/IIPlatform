@@ -17,7 +17,8 @@ import {
   KeyOutlined,
   TeamOutlined,
   DatabaseOutlined,
-  TableOutlined
+  TableOutlined,
+  VideoCameraOutlined
 } from '@ant-design/icons';
 import Dashboard from './components/Dashboard';
 import DeviceManagement from './components/DeviceManagement';
@@ -37,6 +38,7 @@ import RoleManagement from './components/RoleManagement';
 import CommunicationProtocols from './components/CommunicationProtocols';
 import DatabaseConnectionManagement from './components/DatabaseConnectionManagement';
 import TableSchemaManagement from './components/TableSchemaManagement';
+import VideoRecognition from './components/VideoRecognition';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -71,6 +73,11 @@ function App() {
       key: '/communication',
       icon: <ApiOutlined />,
       label: <Link to="/communication">通訊協定</Link>,
+    },
+    {
+      key: '/video-recognition',
+      icon: <VideoCameraOutlined />,
+      label: <Link to="/video-recognition">串流影像辨識</Link>,
     },
     {
       key: '/alerts',
@@ -190,6 +197,7 @@ function App() {
               <Route path="/device-control" element={<DeviceControl />} />
               <Route path="/ota-update" element={<OTAUpdate />} />
               <Route path="/communication" element={<CommunicationProtocols />} />
+              <Route path="/video-recognition" element={<VideoRecognition />} />
               <Route path="/alerts" element={<AlertCenter />} />
               <Route path="/history" element={<HistoryAnalysis />} />
               <Route path="/ai" element={<AIAnalysis />} />
