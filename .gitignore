@@ -1,0 +1,12 @@
+# .gitign# .gitignore
+
+node_modules/
+*.log
+.env
+__pycache__/
+*.pyc
+*.pkl
+*.db
+.cache/
+frontend/node_modules/
+frontend/.cache/
