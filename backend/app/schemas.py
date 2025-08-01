@@ -419,3 +419,207 @@ class DatabaseConnectionTestOut(DatabaseConnectionTestBase):
 # 資料庫連線測試請求
 class DatabaseConnectionTestRequest(BaseModel):
     connection_id: int 
+
+# 在檔案末尾新增以下 AI 模型相關的 schemas
+
+# AI 模型相關
+class AIModelBase(BaseModel):
+    name: str
+    model_type: str  # isolation_forest, autoencoder, lstm, etc.
+    device_id: int
+    model_config: Dict[str, Any]
+    is_active: bool = True
+    is_production: bool = False
+
+class AIModelCreate(AIModelBase):
+    pass
+
+class AIModelUpdate(AIModelBase):
+    pass
+
+class AIModelOut(AIModelBase):
+    id: int
+    model_path: Optional[str] = None
+    training_data_size: Optional[int] = None
+    accuracy: Optional[float] = None
+    f1_score: Optional[float] = None
+    precision: Optional[float] = None
+    recall: Optional[float] = None
+    created_by: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 資料預處理相關
+class DataPreprocessingBase(BaseModel):
+    model_id: int
+    preprocessing_type: str
+    config: Dict[str, Any]
+    is_active: bool = True
+
+class DataPreprocessingCreate(DataPreprocessingBase):
+    pass
+
+class DataPreprocessingUpdate(DataPreprocessingBase):
+    pass
+
+class DataPreprocessingOut(DataPreprocessingBase):
+    id: int
+    created_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 模型訓練相關
+class ModelTrainingBase(BaseModel):
+    model_id: int
+    training_status: str
+    training_data_size: int
+    validation_data_size: int
+
+class ModelTrainingCreate(ModelTrainingBase):
+    pass
+
+class ModelTrainingUpdate(ModelTrainingBase):
+    pass
+
+class ModelTrainingOut(ModelTrainingBase):
+    id: int
+    training_start: datetime.datetime
+    training_end: Optional[datetime.datetime] = None
+    training_duration: Optional[float] = None
+    final_accuracy: Optional[float] = None
+    final_loss: Optional[float] = None
+    training_logs: Optional[Dict[str, Any]] = None
+    error_message: Optional[str] = None
+    created_by: int
+    created_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 異常偵測相關
+class AnomalyDetectionBase(BaseModel):
+    model_id: int
+    device_id: int
+    data_point_id: int
+    anomaly_score: float
+    is_anomaly: bool
+    confidence: float
+    features: Dict[str, Any]
+    prediction_details: Dict[str, Any]
+
+class AnomalyDetectionCreate(AnomalyDetectionBase):
+    pass
+
+class AnomalyDetectionOut(AnomalyDetectionBase):
+    id: int
+    detection_time: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 異常告警相關
+class AnomalyAlertBase(BaseModel):
+    detection_id: int
+    alert_level: str
+    alert_message: str
+    recommended_actions: Dict[str, Any]
+
+class AnomalyAlertCreate(AnomalyAlertBase):
+    pass
+
+class AnomalyAlertUpdate(AnomalyAlertBase):
+    is_acknowledged: bool = False
+
+class AnomalyAlertOut(AnomalyAlertBase):
+    id: int
+    is_acknowledged: bool
+    acknowledged_by: Optional[int] = None
+    acknowledged_at: Optional[datetime.datetime] = None
+    created_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 模型可解釋性相關
+class ModelExplainabilityBase(BaseModel):
+    model_id: int
+    detection_id: int
+    feature_importance: Dict[str, Any]
+    shap_values: Dict[str, Any]
+    lime_explanation: Dict[str, Any]
+    decision_path: Dict[str, Any]
+
+class ModelExplainabilityCreate(ModelExplainabilityBase):
+    pass
+
+class ModelExplainabilityOut(ModelExplainabilityBase):
+    id: int
+    created_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 模型營運相關
+class ModelOperationsBase(BaseModel):
+    model_id: int
+    operation_type: str
+    operation_status: str
+    operation_config: Dict[str, Any]
+    performance_metrics: Dict[str, Any]
+    drift_detection: Dict[str, Any]
+    retraining_trigger: str
+
+class ModelOperationsCreate(ModelOperationsBase):
+    pass
+
+class ModelOperationsUpdate(ModelOperationsBase):
+    pass
+
+class ModelOperationsOut(ModelOperationsBase):
+    id: int
+    created_by: int
+    created_at: datetime.datetime
+    completed_at: Optional[datetime.datetime] = None
+    class Config:
+        orm_mode = True
+
+# 模型版本相關
+class ModelVersionBase(BaseModel):
+    model_id: int
+    version_number: str
+    model_path: str
+    model_hash: str
+    performance_metrics: Dict[str, Any]
+    change_log: str
+    is_deployed: bool = False
+
+class ModelVersionCreate(ModelVersionBase):
+    pass
+
+class ModelVersionUpdate(ModelVersionBase):
+    pass
+
+class ModelVersionOut(ModelVersionBase):
+    id: int
+    deployed_at: Optional[datetime.datetime] = None
+    created_by: int
+    created_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# AI 分析請求
+class AIAnalysisRequest(BaseModel):
+    device_id: int
+    model_id: Optional[int] = None
+    data_points: Optional[List[Dict[str, Any]]] = None
+    include_explanation: bool = False
+
+# 模型訓練請求
+class ModelTrainingRequest(BaseModel):
+    model_id: int
+    training_config: Dict[str, Any]
+    data_config: Dict[str, Any]
+
+# 模型部署請求
+class ModelDeploymentRequest(BaseModel):
+    model_id: int
+    version_id: int
+    deployment_config: Dict[str, Any] 

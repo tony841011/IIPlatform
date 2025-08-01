@@ -7,4 +7,7 @@ python-jose
 passlib[bcrypt] 
 numpy
 pymysql
-psycopg2-binary 
+psycopg2-binary
+scikit-learn
+pandas
+joblib 

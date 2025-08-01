@@ -262,3 +262,122 @@ class DatabaseConnectionTest(Base):
     response_time = Column(Float, nullable=True)  # 回應時間 (秒)
     tested_at = Column(DateTime, default=datetime.datetime.utcnow)
     tested_by = Column(Integer, ForeignKey("users.id")) 
+
+# 在檔案末尾新增以下 AI 模型相關的資料模型
+
+# AI 模型管理
+class AIModel(Base):
+    __tablename__ = "ai_models"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 模型名稱
+    model_type = Column(String)  # isolation_forest, autoencoder, lstm, etc.
+    device_id = Column(Integer, ForeignKey("devices.id"))  # 關聯的設備
+    model_path = Column(String)  # 模型檔案路徑
+    model_config = Column(JSON)  # 模型配置參數
+    training_data_size = Column(Integer)  # 訓練資料大小
+    accuracy = Column(Float)  # 模型準確率
+    f1_score = Column(Float)  # F1 分數
+    precision = Column(Float)  # 精確率
+    recall = Column(Float)  # 召回率
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    is_production = Column(Boolean, default=False)  # 是否為生產環境模型
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 資料預處理配置
+class DataPreprocessing(Base):
+    __tablename__ = "data_preprocessing"
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("ai_models.id"))
+    preprocessing_type = Column(String)  # normalization, standardization, scaling, etc.
+    config = Column(JSON)  # 預處理配置
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 模型訓練記錄
+class ModelTraining(Base):
+    __tablename__ = "model_trainings"
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("ai_models.id"))
+    training_status = Column(String)  # running, completed, failed
+    training_start = Column(DateTime)
+    training_end = Column(DateTime)
+    training_duration = Column(Float)  # 訓練時間（秒）
+    training_data_size = Column(Integer)
+    validation_data_size = Column(Integer)
+    final_accuracy = Column(Float)
+    final_loss = Column(Float)
+    training_logs = Column(JSON)  # 訓練日誌
+    error_message = Column(String, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 即時異常偵測結果
+class AnomalyDetection(Base):
+    __tablename__ = "anomaly_detections"
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("ai_models.id"))
+    device_id = Column(Integer, ForeignKey("devices.id"))
+    data_point_id = Column(Integer, ForeignKey("device_data.id"))
+    anomaly_score = Column(Float)  # 異常分數
+    is_anomaly = Column(Boolean)  # 是否為異常
+    confidence = Column(Float)  # 置信度
+    detection_time = Column(DateTime, default=datetime.datetime.utcnow)
+    features = Column(JSON)  # 特徵向量
+    prediction_details = Column(JSON)  # 預測詳細資訊
+
+# 異常告警與行動建議
+class AnomalyAlert(Base):
+    __tablename__ = "anomaly_alerts"
+    id = Column(Integer, primary_key=True, index=True)
+    detection_id = Column(Integer, ForeignKey("anomaly_detections.id"))
+    alert_level = Column(String)  # low, medium, high, critical
+    alert_message = Column(String)
+    recommended_actions = Column(JSON)  # 建議行動
+    is_acknowledged = Column(Boolean, default=False)
+    acknowledged_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    acknowledged_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 模型可解釋性分析
+class ModelExplainability(Base):
+    __tablename__ = "model_explainability"
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("ai_models.id"))
+    detection_id = Column(Integer, ForeignKey("anomaly_detections.id"))
+    feature_importance = Column(JSON)  # 特徵重要性
+    shap_values = Column(JSON)  # SHAP 值
+    lime_explanation = Column(JSON)  # LIME 解釋
+    decision_path = Column(JSON)  # 決策路徑
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# AI 模型營運與調整
+class ModelOperations(Base):
+    __tablename__ = "model_operations"
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("ai_models.id"))
+    operation_type = Column(String)  # retrain, update, deploy, rollback
+    operation_status = Column(String)  # pending, running, completed, failed
+    operation_config = Column(JSON)  # 操作配置
+    performance_metrics = Column(JSON)  # 性能指標
+    drift_detection = Column(JSON)  # 漂移檢測
+    retraining_trigger = Column(String)  # 重訓練觸發條件
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+# 模型版本管理
+class ModelVersion(Base):
+    __tablename__ = "model_versions"
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("ai_models.id"))
+    version_number = Column(String)  # 版本號
+    model_path = Column(String)  # 模型檔案路徑
+    model_hash = Column(String)  # 模型檔案雜湊值
+    performance_metrics = Column(JSON)  # 性能指標
+    change_log = Column(String)  # 變更日誌
+    is_deployed = Column(Boolean, default=False)
+    deployed_at = Column(DateTime, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow) 
