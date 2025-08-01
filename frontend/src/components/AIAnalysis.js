@@ -31,7 +31,8 @@ import {
   Collapse,
   List,
   Avatar,
-  Rate
+  Rate,
+  Gauge
 } from 'antd';
 import {
   RobotOutlined,
@@ -57,7 +58,13 @@ import {
   BulbOutlined,
   SafetyCertificateOutlined,
   MonitorOutlined,
-  CloudServerOutlined
+  CloudServerOutlined,
+  DesktopOutlined,
+  HeatMapOutlined,
+  PartitionOutlined,
+  PoweroffOutlined,  
+  ClockCircleOutlined,
+  RocketOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -77,7 +84,16 @@ const AIAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('1');
   
-  // 新增狀態
+  // GPU 監控狀態
+  const [gpuDevices, setGpuDevices] = useState([]);
+  const [selectedGPU, setSelectedGPU] = useState(null);
+  const [gpuMonitoring, setGpuMonitoring] = useState([]);
+  const [gpuAlerts, setGpuAlerts] = useState([]);
+  const [gpuResourceAllocations, setGpuResourceAllocations] = useState([]);
+  const [gpuPerformanceConfig, setGpuPerformanceConfig] = useState(null);
+  const [gpuResourceUsage, setGpuResourceUsage] = useState(null);
+  
+  // 原有狀態
   const [modelModalVisible, setModelModalVisible] = useState(false);
   const [trainingModalVisible, setTrainingModalVisible] = useState(false);
   const [deploymentModalVisible, setDeploymentModalVisible] = useState(false);
@@ -99,6 +115,7 @@ const AIAnalysis = () => {
   useEffect(() => {
     loadDevices();
     loadModels();
+    loadGPUDevices();
   }, []);
 
   useEffect(() => {
@@ -118,6 +135,16 @@ const AIAnalysis = () => {
     }
   }, [selectedModel]);
 
+  useEffect(() => {
+    if (selectedGPU) {
+      loadGPUMonitoring();
+      loadGPUAlerts();
+      loadGPUResourceAllocations();
+      loadGPUPerformanceConfig();
+      loadGPUResourceUsage();
+    }
+  }, [selectedGPU]);
+
   const loadDevices = async () => {
     try {
       const response = await axios.get('http://localhost:8000/devices/');
@@ -133,6 +160,15 @@ const AIAnalysis = () => {
       setModels(response.data);
     } catch (error) {
       message.error('載入 AI 模型失敗');
+    }
+  };
+
+  const loadGPUDevices = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/gpu/devices/');
+      setGpuDevices(response.data);
+    } catch (error) {
+      message.error('載入 GPU 設備失敗');
     }
   };
 
@@ -205,11 +241,91 @@ const AIAnalysis = () => {
     }
   };
 
+  // GPU 監控相關函數
+  const loadGPUMonitoring = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/gpu/monitoring/?gpu_device_id=${selectedGPU}&limit=50`);
+      setGpuMonitoring(response.data);
+    } catch (error) {
+      message.error('載入 GPU 監測數據失敗');
+    }
+  };
+
+  const loadGPUAlerts = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/gpu/alerts/?gpu_device_id=${selectedGPU}&limit=50`);
+      setGpuAlerts(response.data);
+    } catch (error) {
+      message.error('載入 GPU 警報失敗');
+    }
+  };
+
+  const loadGPUResourceAllocations = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/gpu/allocations/?gpu_device_id=${selectedGPU}`);
+      setGpuResourceAllocations(response.data);
+    } catch (error) {
+      message.error('載入 GPU 資源分配失敗');
+    }
+  };
+
+  const loadGPUPerformanceConfig = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/gpu/performance-config/${selectedGPU}`);
+      setGpuPerformanceConfig(response.data);
+    } catch (error) {
+      // 如果沒有配置，不顯示錯誤
+    }
+  };
+
+  const loadGPUResourceUsage = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/gpu/resource-usage/${selectedGPU}`);
+      setGpuResourceUsage(response.data);
+    } catch (error) {
+      message.error('載入 GPU 資源使用統計失敗');
+    }
+  };
+
+  const simulateGPUMonitoring = async () => {
+    try {
+      await axios.post(`http://localhost:8000/gpu/simulate-monitoring/${selectedGPU}`);
+      message.success('模擬 GPU 監測數據已生成');
+      loadGPUMonitoring();
+      loadGPUAlerts();
+      loadGPUResourceUsage();
+    } catch (error) {
+      message.error('生成模擬數據失敗');
+    }
+  };
+
+  const acknowledgeGPUAlert = async (alertId) => {
+    try {
+      await axios.patch(`http://localhost:8000/gpu/alerts/${alertId}/acknowledge`);
+      message.success('GPU 警報已確認');
+      loadGPUAlerts();
+    } catch (error) {
+      message.error('確認 GPU 警報失敗');
+    }
+  };
+
   const getAnomalyLevel = (score) => {
     if (score < 30) return { level: 'normal', color: '#52c41a', text: '正常' };
     if (score < 50) return { level: 'warning', color: '#faad14', text: '輕微異常' };
     if (score < 70) return { level: 'error', color: '#ff4d4f', text: '異常' };
     return { level: 'critical', color: '#cf1322', text: '嚴重異常' };
+  };
+
+  const getUtilizationColor = (value) => {
+    if (value < 50) return '#52c41a';
+    if (value < 80) return '#faad14';
+    return '#ff4d4f';
+  };
+
+  const getTemperatureColor = (temp) => {
+    if (temp < 60) return '#52c41a';
+    if (temp < 75) return '#faad14';
+    return '#ff4d4f';
   };
 
   const createModel = async (values) => {
@@ -407,6 +523,137 @@ const AIAnalysis = () => {
     },
   ];
 
+  const gpuMonitoringColumns = [
+    {
+      title: '時間',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      render: (time) => new Date(time).toLocaleString(),
+    },
+    {
+      title: 'GPU 使用率',
+      dataIndex: 'gpu_utilization',
+      key: 'gpu_utilization',
+      render: (value) => (
+        <Progress 
+          percent={value} 
+          size="small" 
+          strokeColor={getUtilizationColor(value)}
+          format={() => `${value.toFixed(1)}%`}
+        />
+      ),
+    },
+    {
+      title: '記憶體使用率',
+      dataIndex: 'memory_utilization',
+      key: 'memory_utilization',
+      render: (value) => (
+        <Progress 
+          percent={value} 
+          size="small" 
+          strokeColor={getUtilizationColor(value)}
+          format={() => `${value.toFixed(1)}%`}
+        />
+      ),
+    },
+    {
+      title: '溫度',
+      dataIndex: 'temperature',
+      key: 'temperature',
+      render: (temp) => (
+        <Tag color={getTemperatureColor(temp)}>
+          <HeatMapOutlined /> {temp.toFixed(1)}°C
+        </Tag>
+      ),
+    },
+    {
+      title: '功耗',
+      dataIndex: 'power_consumption',
+      key: 'power_consumption',
+      render: (power) => (
+        <Tag color="blue">
+          <PoweroffOutlined /> {power.toFixed(1)}W
+        </Tag>
+      ),
+    },
+    {
+      title: '風扇轉速',
+      dataIndex: 'fan_speed',
+      key: 'fan_speed',
+      render: (speed) => (
+        <Tag color="green">
+          <ThunderboltOutlined /> {speed.toFixed(1)}%
+        </Tag>
+      ),
+    },
+  ];
+
+  const gpuAlertColumns = [
+    {
+      title: '時間',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (time) => new Date(time).toLocaleString(),
+    },
+    {
+      title: '警報類型',
+      dataIndex: 'alert_type',
+      key: 'alert_type',
+      render: (type) => {
+        const colors = {
+          temperature: 'red',
+          memory: 'orange',
+          utilization: 'yellow',
+          power: 'purple'
+        };
+        return <Tag color={colors[type]}>{type.toUpperCase()}</Tag>;
+      },
+    },
+    {
+      title: '等級',
+      dataIndex: 'alert_level',
+      key: 'alert_level',
+      render: (level) => {
+        const colors = {
+          warning: 'orange',
+          critical: 'red'
+        };
+        return <Tag color={colors[level]}>{level.toUpperCase()}</Tag>;
+      },
+    },
+    {
+      title: '訊息',
+      dataIndex: 'alert_message',
+      key: 'alert_message',
+    },
+    {
+      title: '狀態',
+      dataIndex: 'is_acknowledged',
+      key: 'is_acknowledged',
+      render: (acknowledged) => (
+        <Badge 
+          status={acknowledged ? 'success' : 'processing'} 
+          text={acknowledged ? '已確認' : '未確認'} 
+        />
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        !record.is_acknowledged && (
+          <Button 
+            size="small" 
+            type="primary"
+            onClick={() => acknowledgeGPUAlert(record.id)}
+          >
+            確認
+          </Button>
+        )
+      ),
+    },
+  ];
+
   const modelTrainingColumns = [
     {
       title: '訓練時間',
@@ -587,6 +834,7 @@ const AIAnalysis = () => {
                   onClick={() => {
                     loadDevices();
                     loadModels();
+                    loadGPUDevices();
                     if (selectedDevice) loadAIResult();
                   }}
                 >
@@ -619,22 +867,22 @@ const AIAnalysis = () => {
               </Col>
               <Col span={6}>
                 <Statistic
+                  title="GPU 設備數"
+                  value={gpuDevices.length}
+                  prefix={<DesktopOutlined />}
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic
                   title="異常偵測數"
                   value={anomalyDetections.length}
                   prefix={<WarningOutlined />}
                 />
               </Col>
-              <Col span={6}>
-                <Statistic
-                  title="未確認告警"
-                  value={anomalyAlerts.filter(a => !a.is_acknowledged).length}
-                  prefix={<ExclamationCircleOutlined />}
-                />
-              </Col>
             </Row>
 
             <Row gutter={16} style={{ marginBottom: 24 }}>
-              <Col span={12}>
+              <Col span={8}>
                 <Select
                   placeholder="選擇設備進行 AI 分析"
                   style={{ width: '100%' }}
@@ -648,7 +896,7 @@ const AIAnalysis = () => {
                   ))}
                 </Select>
               </Col>
-              <Col span={12}>
+              <Col span={8}>
                 <Select
                   placeholder="選擇 AI 模型"
                   style={{ width: '100%' }}
@@ -658,6 +906,20 @@ const AIAnalysis = () => {
                   {models.map(model => (
                     <Option key={model.id} value={model.id}>
                       {model.name} ({model.model_type})
+                    </Option>
+                  ))}
+                </Select>
+              </Col>
+              <Col span={8}>
+                <Select
+                  placeholder="選擇 GPU 設備"
+                  style={{ width: '100%' }}
+                  onChange={setSelectedGPU}
+                  value={selectedGPU}
+                >
+                  {gpuDevices.map(gpu => (
+                    <Option key={gpu.id} value={gpu.id}>
+                      {gpu.name} ({gpu.manufacturer})
                     </Option>
                   ))}
                 </Select>
@@ -740,8 +1002,159 @@ const AIAnalysis = () => {
                 </Row>
               </TabPane>
 
+              {/* GPU 效能監測 */}
+              <TabPane tab="GPU 效能監測" key="2">
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    {selectedGPU && gpuResourceUsage && (
+                      <Card title="GPU 資源使用情況">
+                        <Row gutter={16}>
+                          <Col span={6}>
+                            <Card size="small">
+                              <Statistic
+                                title="總記憶體"
+                                value={gpuResourceUsage.total_memory}
+                                suffix="MB"
+                                prefix={<PartitionOutlined />}
+                              />
+                            </Card>
+                          </Col>
+                          <Col span={6}>
+                            <Card size="small">
+                              <Statistic
+                                title="已使用記憶體"
+                                value={gpuResourceUsage.used_memory}
+                                suffix="MB"
+                                valueStyle={{ color: getUtilizationColor(gpuResourceUsage.memory_utilization) }}
+                              />
+                            </Card>
+                          </Col>
+                          <Col span={6}>
+                            <Card size="small">
+                              <Statistic
+                                title="可用記憶體"
+                                value={gpuResourceUsage.free_memory}
+                                suffix="MB"
+                                valueStyle={{ color: '#52c41a' }}
+                              />
+                            </Card>
+                          </Col>
+                          <Col span={6}>
+                            <Card size="small">
+                              <Statistic
+                                title="AI 可用性"
+                                value={gpuResourceUsage.available_for_ai ? '可用' : '不可用'}
+                                valueStyle={{ color: gpuResourceUsage.available_for_ai ? '#52c41a' : '#ff4d4f' }}
+                                prefix={<RocketOutlined />}
+                              />
+                            </Card>
+                          </Col>
+                        </Row>
+
+                        <Divider />
+
+                        <Row gutter={16}>
+                          <Col span={8}>
+                            <Card title="GPU 使用率" size="small">
+                              <Progress 
+                                type="circle" 
+                                percent={gpuResourceUsage.gpu_utilization} 
+                                strokeColor={getUtilizationColor(gpuResourceUsage.gpu_utilization)}
+                                format={() => `${gpuResourceUsage.gpu_utilization.toFixed(1)}%`}
+                              />
+                            </Card>
+                          </Col>
+                          <Col span={8}>
+                            <Card title="記憶體使用率" size="small">
+                              <Progress 
+                                type="circle" 
+                                percent={gpuResourceUsage.memory_utilization} 
+                                strokeColor={getUtilizationColor(gpuResourceUsage.memory_utilization)}
+                                format={() => `${gpuResourceUsage.memory_utilization.toFixed(1)}%`}
+                              />
+                            </Card>
+                          </Col>
+                          <Col span={8}>
+                            <Card title="溫度" size="small">
+                              <div style={{ textAlign: 'center' }}>
+                                <Text style={{ fontSize: '24px', color: getTemperatureColor(gpuResourceUsage.temperature) }}>
+                                  {gpuResourceUsage.temperature.toFixed(1)}°C
+                                </Text>
+                              </div>
+                            </Card>
+                          </Col>
+                        </Row>
+
+                        {gpuResourceUsage.recommended_models && gpuResourceUsage.recommended_models.length > 0 && (
+                          <>
+                            <Divider />
+                            <Card title="推薦模型" size="small">
+                              <List
+                                size="small"
+                                dataSource={gpuResourceUsage.recommended_models}
+                                renderItem={(model) => (
+                                  <List.Item>
+                                    <Tag color="blue">{model}</Tag>
+                                  </List.Item>
+                                )}
+                              />
+                            </Card>
+                          </>
+                        )}
+
+                        <Divider />
+
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Card title="GPU 監測歷史" size="small">
+                              <Table
+                                dataSource={gpuMonitoring}
+                                columns={gpuMonitoringColumns}
+                                rowKey="id"
+                                size="small"
+                                pagination={{ pageSize: 5 }}
+                              />
+                            </Card>
+                          </Col>
+                          <Col span={12}>
+                            <Card title="GPU 警報" size="small">
+                              <Table
+                                dataSource={gpuAlerts}
+                                columns={gpuAlertColumns}
+                                rowKey="id"
+                                size="small"
+                                pagination={{ pageSize: 5 }}
+                              />
+                            </Card>
+                          </Col>
+                        </Row>
+
+                        <div style={{ marginTop: 16 }}>
+                          <Button 
+                            type="primary" 
+                            icon={<PlayCircleOutlined />}
+                            onClick={simulateGPUMonitoring}
+                          >
+                            模擬 GPU 監測
+                          </Button>
+                        </div>
+                      </Card>
+                    )}
+
+                    {!selectedGPU && (
+                      <Alert
+                        message="請選擇 GPU 設備"
+                        description="在設備選擇中選擇一個 GPU 設備來查看效能監測數據"
+                        type="info"
+                        showIcon
+                      />
+                    )}
+                  </Col>
+                </Row>
+              </TabPane>
+
               {/* 資料準備與前處理 */}
-              <TabPane tab="資料準備與前處理" key="2">
+              <TabPane tab="資料準備與前處理" key="3">
                 <Row gutter={[16, 16]}>
                   <Col span={24}>
                     <Card 
@@ -777,7 +1190,7 @@ const AIAnalysis = () => {
               </TabPane>
 
               {/* 模型訓練與管理 */}
-              <TabPane tab="模型訓練與管理" key="3">
+              <TabPane tab="模型訓練與管理" key="4">
                 <Row gutter={[16, 16]}>
                   <Col span={24}>
                     <Card 
@@ -804,7 +1217,7 @@ const AIAnalysis = () => {
               </TabPane>
 
               {/* 異常告警與行動建議 */}
-              <TabPane tab="異常告警與行動建議" key="4">
+              <TabPane tab="異常告警與行動建議" key="5">
                 <Row gutter={[16, 16]}>
                   <Col span={24}>
                     <Card title="異常告警">
@@ -820,7 +1233,7 @@ const AIAnalysis = () => {
               </TabPane>
 
               {/* 歷史分析與模型可解釋性 */}
-              <TabPane tab="歷史分析與模型可解釋性" key="5">
+              <TabPane tab="歷史分析與模型可解釋性" key="6">
                 <Row gutter={[16, 16]}>
                   <Col span={12}>
                     <Card title="異常偵測歷史">
@@ -862,7 +1275,7 @@ const AIAnalysis = () => {
               </TabPane>
 
               {/* AI 模型營運與調整 */}
-              <TabPane tab="AI 模型營運與調整" key="6">
+              <TabPane tab="AI 模型營運與調整" key="7">
                 <Row gutter={[16, 16]}>
                   <Col span={12}>
                     <Card title="模型版本管理">
@@ -1057,7 +1470,6 @@ const AIAnalysis = () => {
               <Option value="normalization">標準化</Option>
               <Option value="standardization">正規化</Option>
               <Option value="scaling">縮放</Option>
-              <Option value="encoding">編碼</Option>
             </Select>
           </Form.Item>
 
