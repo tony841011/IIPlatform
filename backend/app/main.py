@@ -555,122 +555,166 @@ class ModelVersion(Base):
     deployed_at = Column(DateTime, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-```
 
-## 2. 新增對應的 Pydantic Schemas
+# 在檔案末尾新增以下 GPU 監測相關的資料模型
 
-```python:backend/app/schemas.py
-# 在檔案末尾新增以下 AI 模型相關的 schemas
+# GPU 設備資訊
+class GPUDevice(Base):
+    __tablename__ = "gpu_devices"
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(String, unique=True)  # GPU 設備 ID
+    name = Column(String)  # GPU 名稱
+    manufacturer = Column(String)  # 製造商 (NVIDIA, AMD, Intel)
+    memory_total = Column(Integer)  # 總記憶體 (MB)
+    compute_capability = Column(String)  # 計算能力
+    driver_version = Column(String)  # 驅動程式版本
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
-# AI 模型相關
-class AIModelBase(BaseModel):
+# GPU 效能監測記錄
+class GPUMonitoring(Base):
+    __tablename__ = "gpu_monitoring"
+    id = Column(Integer, primary_key=True, index=True)
+    gpu_device_id = Column(Integer, ForeignKey("gpu_devices.id"))
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    gpu_utilization = Column(Float)  # GPU 使用率 (%)
+    memory_utilization = Column(Float)  # 記憶體使用率 (%)
+    memory_used = Column(Integer)  # 已使用記憶體 (MB)
+    memory_free = Column(Integer)  # 可用記憶體 (MB)
+    temperature = Column(Float)  # 溫度 (°C)
+    power_consumption = Column(Float)  # 功耗 (W)
+    fan_speed = Column(Float)  # 風扇轉速 (%)
+    clock_speed = Column(Float)  # 時脈速度 (MHz)
+    memory_clock = Column(Float)  # 記憶體時脈 (MHz)
+
+# GPU 資源分配
+class GPUResourceAllocation(Base):
+    __tablename__ = "gpu_resource_allocation"
+    id = Column(Integer, primary_key=True, index=True)
+    gpu_device_id = Column(Integer, ForeignKey("gpu_devices.id"))
+    ai_model_id = Column(Integer, ForeignKey("ai_models.id"))
+    allocated_memory = Column(Integer)  # 分配的記憶體 (MB)
+    priority = Column(String)  # 優先級 (high, medium, low)
+    status = Column(String)  # 狀態 (running, idle, stopped)
+    started_at = Column(DateTime, default=datetime.datetime.utcnow)
+    ended_at = Column(DateTime, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"))
+
+# GPU 效能警報
+class GPUAlert(Base):
+    __tablename__ = "gpu_alerts"
+    id = Column(Integer, primary_key=True, index=True)
+    gpu_device_id = Column(Integer, ForeignKey("gpu_devices.id"))
+    alert_type = Column(String)  # temperature, memory, utilization, power
+    alert_level = Column(String)  # warning, critical
+    alert_message = Column(String)
+    threshold_value = Column(Float)
+    current_value = Column(Float)
+    is_acknowledged = Column(Boolean, default=False)
+    acknowledged_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    acknowledged_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# GPU 效能設定
+class GPUPerformanceConfig(Base):
+    __tablename__ = "gpu_performance_config"
+    id = Column(Integer, primary_key=True, index=True)
+    gpu_device_id = Column(Integer, ForeignKey("gpu_devices.id"))
+    max_temperature = Column(Float)  # 最大溫度閾值
+    max_memory_utilization = Column(Float)  # 最大記憶體使用率閾值
+    max_gpu_utilization = Column(Float)  # 最大 GPU 使用率閾值
+    max_power_consumption = Column(Float)  # 最大功耗閾值
+    auto_fan_control = Column(Boolean, default=True)  # 自動風扇控制
+    power_limit = Column(Float)  # 功耗限制 (W)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 在檔案末尾新增以下 GPU 監測相關的 schemas
+
+# GPU 設備相關
+class GPUDeviceBase(BaseModel):
+    device_id: str
     name: str
-    model_type: str  # isolation_forest, autoencoder, lstm, etc.
-    device_id: int
-    model_config: Dict[str, Any]
+    manufacturer: str
+    memory_total: int
+    compute_capability: Optional[str] = None
+    driver_version: Optional[str] = None
     is_active: bool = True
-    is_production: bool = False
 
-class AIModelCreate(AIModelBase):
+class GPUDeviceCreate(GPUDeviceBase):
     pass
 
-class AIModelUpdate(AIModelBase):
+class GPUDeviceUpdate(GPUDeviceBase):
     pass
 
-class AIModelOut(AIModelBase):
+class GPUDeviceOut(GPUDeviceBase):
     id: int
-    model_path: Optional[str] = None
-    training_data_size: Optional[int] = None
-    accuracy: Optional[float] = None
-    f1_score: Optional[float] = None
-    precision: Optional[float] = None
-    recall: Optional[float] = None
-    created_by: int
     created_at: datetime.datetime
     updated_at: datetime.datetime
     class Config:
         orm_mode = True
 
-# 資料預處理相關
-class DataPreprocessingBase(BaseModel):
-    model_id: int
-    preprocessing_type: str
-    config: Dict[str, Any]
-    is_active: bool = True
+# GPU 監測相關
+class GPUMonitoringBase(BaseModel):
+    gpu_device_id: int
+    gpu_utilization: float
+    memory_utilization: float
+    memory_used: int
+    memory_free: int
+    temperature: float
+    power_consumption: float
+    fan_speed: float
+    clock_speed: float
+    memory_clock: float
 
-class DataPreprocessingCreate(DataPreprocessingBase):
+class GPUMonitoringCreate(GPUMonitoringBase):
     pass
 
-class DataPreprocessingUpdate(DataPreprocessingBase):
-    pass
-
-class DataPreprocessingOut(DataPreprocessingBase):
+class GPUMonitoringOut(GPUMonitoringBase):
     id: int
-    created_at: datetime.datetime
+    timestamp: datetime.datetime
     class Config:
         orm_mode = True
 
-# 模型訓練相關
-class ModelTrainingBase(BaseModel):
-    model_id: int
-    training_status: str
-    training_data_size: int
-    validation_data_size: int
+# GPU 資源分配相關
+class GPUResourceAllocationBase(BaseModel):
+    gpu_device_id: int
+    ai_model_id: int
+    allocated_memory: int
+    priority: str
+    status: str
 
-class ModelTrainingCreate(ModelTrainingBase):
+class GPUResourceAllocationCreate(GPUResourceAllocationBase):
     pass
 
-class ModelTrainingUpdate(ModelTrainingBase):
+class GPUResourceAllocationUpdate(GPUResourceAllocationBase):
     pass
 
-class ModelTrainingOut(ModelTrainingBase):
+class GPUResourceAllocationOut(GPUResourceAllocationBase):
     id: int
-    training_start: datetime.datetime
-    training_end: Optional[datetime.datetime] = None
-    training_duration: Optional[float] = None
-    final_accuracy: Optional[float] = None
-    final_loss: Optional[float] = None
-    training_logs: Optional[Dict[str, Any]] = None
-    error_message: Optional[str] = None
+    started_at: datetime.datetime
+    ended_at: Optional[datetime.datetime] = None
     created_by: int
-    created_at: datetime.datetime
     class Config:
         orm_mode = True
 
-# 異常偵測相關
-class AnomalyDetectionBase(BaseModel):
-    model_id: int
-    device_id: int
-    data_point_id: int
-    anomaly_score: float
-    is_anomaly: bool
-    confidence: float
-    features: Dict[str, Any]
-    prediction_details: Dict[str, Any]
-
-class AnomalyDetectionCreate(AnomalyDetectionBase):
-    pass
-
-class AnomalyDetectionOut(AnomalyDetectionBase):
-    id: int
-    detection_time: datetime.datetime
-    class Config:
-        orm_mode = True
-
-# 異常告警相關
-class AnomalyAlertBase(BaseModel):
-    detection_id: int
+# GPU 警報相關
+class GPUAlertBase(BaseModel):
+    gpu_device_id: int
+    alert_type: str
     alert_level: str
     alert_message: str
-    recommended_actions: Dict[str, Any]
+    threshold_value: float
+    current_value: float
 
-class AnomalyAlertCreate(AnomalyAlertBase):
+class GPUAlertCreate(GPUAlertBase):
     pass
 
-class AnomalyAlertUpdate(AnomalyAlertBase):
+class GPUAlertUpdate(GPUAlertBase):
     is_acknowledged: bool = False
 
-class AnomalyAlertOut(AnomalyAlertBase):
+class GPUAlertOut(GPUAlertBase):
     id: int
     is_acknowledged: bool
     acknowledged_by: Optional[int] = None
@@ -679,251 +723,190 @@ class AnomalyAlertOut(AnomalyAlertBase):
     class Config:
         orm_mode = True
 
-# 模型可解釋性相關
-class ModelExplainabilityBase(BaseModel):
-    model_id: int
-    detection_id: int
-    feature_importance: Dict[str, Any]
-    shap_values: Dict[str, Any]
-    lime_explanation: Dict[str, Any]
-    decision_path: Dict[str, Any]
+# GPU 效能設定相關
+class GPUPerformanceConfigBase(BaseModel):
+    gpu_device_id: int
+    max_temperature: float
+    max_memory_utilization: float
+    max_gpu_utilization: float
+    max_power_consumption: float
+    auto_fan_control: bool = True
+    power_limit: float
 
-class ModelExplainabilityCreate(ModelExplainabilityBase):
+class GPUPerformanceConfigCreate(GPUPerformanceConfigBase):
     pass
 
-class ModelExplainabilityOut(ModelExplainabilityBase):
+class GPUPerformanceConfigUpdate(GPUPerformanceConfigBase):
+    pass
+
+class GPUPerformanceConfigOut(GPUPerformanceConfigBase):
     id: int
     created_at: datetime.datetime
+    updated_at: datetime.datetime
     class Config:
         orm_mode = True
 
-# 模型營運相關
-class ModelOperationsBase(BaseModel):
-    model_id: int
-    operation_type: str
-    operation_status: str
-    operation_config: Dict[str, Any]
-    performance_metrics: Dict[str, Any]
-    drift_detection: Dict[str, Any]
-    retraining_trigger: str
+# GPU 資源使用統計
+class GPUResourceUsage(BaseModel):
+    gpu_device_id: int
+    total_memory: int
+    used_memory: int
+    free_memory: int
+    memory_utilization: float
+    gpu_utilization: float
+    temperature: float
+    power_consumption: float
+    available_for_ai: bool
+    recommended_models: List[str]
 
-class ModelOperationsCreate(ModelOperationsBase):
-    pass
-
-class ModelOperationsUpdate(ModelOperationsBase):
-    pass
-
-class ModelOperationsOut(ModelOperationsBase):
-    id: int
-    created_by: int
-    created_at: datetime.datetime
-    completed_at: Optional[datetime.datetime] = None
-    class Config:
-        orm_mode = True
-
-# 模型版本相關
-class ModelVersionBase(BaseModel):
-    model_id: int
-    version_number: str
-    model_path: str
-    model_hash: str
-    performance_metrics: Dict[str, Any]
-    change_log: str
-    is_deployed: bool = False
-
-class ModelVersionCreate(ModelVersionBase):
-    pass
-
-class ModelVersionUpdate(ModelVersionBase):
-    pass
-
-class ModelVersionOut(ModelVersionBase):
-    id: int
-    deployed_at: Optional[datetime.datetime] = None
-    created_by: int
-    created_at: datetime.datetime
-    class Config:
-        orm_mode = True
-
-# AI 分析請求
-class AIAnalysisRequest(BaseModel):
-    device_id: int
-    model_id: Optional[int] = None
-    data_points: Optional[List[Dict[str, Any]]] = None
-    include_explanation: bool = False
-
-# 模型訓練請求
-class ModelTrainingRequest(BaseModel):
-    model_id: int
-    training_config: Dict[str, Any]
-    data_config: Dict[str, Any]
-
-# 模型部署請求
-class ModelDeploymentRequest(BaseModel):
-    model_id: int
-    version_id: int
-    deployment_config: Dict[str, Any]
-```
-
-## 3. 新增 AI 模型相關的資料庫操作函數
+## 3. 新增 GPU 監測相關的資料庫操作函數
 
 ```python:backend/app/database.py
-# 在檔案末尾新增以下 AI 模型相關的函數
+# 在檔案末尾新增以下 GPU 監測相關的函數
 
-# AI 模型管理
-def create_ai_model(db, model, user_id: int):
-    """創建 AI 模型"""
-    db_model = models.AIModel(
-        name=model.name,
-        model_type=model.model_type,
-        device_id=model.device_id,
-        model_config=model.model_config,
-        is_active=model.is_active,
-        is_production=model.is_production,
-        created_by=user_id
+# GPU 設備管理
+def create_gpu_device(db, device):
+    """創建 GPU 設備"""
+    db_device = models.GPUDevice(
+        device_id=device.device_id,
+        name=device.name,
+        manufacturer=device.manufacturer,
+        memory_total=device.memory_total,
+        compute_capability=device.compute_capability,
+        driver_version=device.driver_version,
+        is_active=device.is_active
     )
-    db.add(db_model)
+    db.add(db_device)
     db.commit()
-    db.refresh(db_model)
-    return db_model
+    db.refresh(db_device)
+    return db_device
 
-def get_ai_models(db, device_id: int = None):
-    """獲取 AI 模型列表"""
-    q = db.query(models.AIModel)
-    if device_id:
-        q = q.filter(models.AIModel.device_id == device_id)
-    return q.all()
+def get_gpu_devices(db):
+    """獲取所有 GPU 設備"""
+    return db.query(models.GPUDevice).all()
 
-def get_ai_model(db, model_id: int):
-    """獲取特定 AI 模型"""
-    return db.query(models.AIModel).filter(models.AIModel.id == model_id).first()
+def get_gpu_device(db, device_id: int):
+    """獲取特定 GPU 設備"""
+    return db.query(models.GPUDevice).filter(models.GPUDevice.id == device_id).first()
 
-def update_ai_model(db, model_id: int, model):
-    """更新 AI 模型"""
-    db_model = db.query(models.AIModel).filter(models.AIModel.id == model_id).first()
-    if not db_model:
+def update_gpu_device(db, device_id: int, device):
+    """更新 GPU 設備"""
+    db_device = db.query(models.GPUDevice).filter(models.GPUDevice.id == device_id).first()
+    if not db_device:
         return None
     
-    for field, value in model.dict(exclude_unset=True).items():
-        setattr(db_model, field, value)
+    for field, value in device.dict(exclude_unset=True).items():
+        setattr(db_device, field, value)
     
     db.commit()
-    db.refresh(db_model)
-    return db_model
+    db.refresh(db_device)
+    return db_device
 
-def delete_ai_model(db, model_id: int):
-    """刪除 AI 模型"""
-    db_model = db.query(models.AIModel).filter(models.AIModel.id == model_id).first()
-    if db_model:
-        db.delete(db_model)
+def delete_gpu_device(db, device_id: int):
+    """刪除 GPU 設備"""
+    db_device = db.query(models.GPUDevice).filter(models.GPUDevice.id == device_id).first()
+    if db_device:
+        db.delete(db_device)
         db.commit()
-    return db_model
+    return db_device
 
-# 資料預處理管理
-def create_data_preprocessing(db, preprocessing):
-    """創建資料預處理配置"""
-    db_preprocessing = models.DataPreprocessing(
-        model_id=preprocessing.model_id,
-        preprocessing_type=preprocessing.preprocessing_type,
-        config=preprocessing.config,
-        is_active=preprocessing.is_active
+# GPU 監測管理
+def create_gpu_monitoring(db, monitoring):
+    """創建 GPU 監測記錄"""
+    db_monitoring = models.GPUMonitoring(
+        gpu_device_id=monitoring.gpu_device_id,
+        gpu_utilization=monitoring.gpu_utilization,
+        memory_utilization=monitoring.memory_utilization,
+        memory_used=monitoring.memory_used,
+        memory_free=monitoring.memory_free,
+        temperature=monitoring.temperature,
+        power_consumption=monitoring.power_consumption,
+        fan_speed=monitoring.fan_speed,
+        clock_speed=monitoring.clock_speed,
+        memory_clock=monitoring.memory_clock
     )
-    db.add(db_preprocessing)
+    db.add(db_monitoring)
     db.commit()
-    db.refresh(db_preprocessing)
-    return db_preprocessing
+    db.refresh(db_monitoring)
+    return db_monitoring
 
-def get_data_preprocessing(db, model_id: int):
-    """獲取資料預處理配置"""
-    return db.query(models.DataPreprocessing).filter(models.DataPreprocessing.model_id == model_id).all()
+def get_gpu_monitoring(db, gpu_device_id: int = None, limit: int = 100):
+    """獲取 GPU 監測記錄"""
+    q = db.query(models.GPUMonitoring)
+    if gpu_device_id:
+        q = q.filter(models.GPUMonitoring.gpu_device_id == gpu_device_id)
+    return q.order_by(models.GPUMonitoring.timestamp.desc()).limit(limit).all()
 
-# 模型訓練管理
-def create_model_training(db, training, user_id: int):
-    """創建模型訓練記錄"""
-    db_training = models.ModelTraining(
-        model_id=training.model_id,
-        training_status=training.training_status,
-        training_start=datetime.datetime.utcnow(),
-        training_data_size=training.training_data_size,
-        validation_data_size=training.validation_data_size,
+def get_latest_gpu_monitoring(db, gpu_device_id: int):
+    """獲取最新的 GPU 監測記錄"""
+    return db.query(models.GPUMonitoring).filter(
+        models.GPUMonitoring.gpu_device_id == gpu_device_id
+    ).order_by(models.GPUMonitoring.timestamp.desc()).first()
+
+# GPU 資源分配管理
+def create_gpu_resource_allocation(db, allocation, user_id: int):
+    """創建 GPU 資源分配"""
+    db_allocation = models.GPUResourceAllocation(
+        gpu_device_id=allocation.gpu_device_id,
+        ai_model_id=allocation.ai_model_id,
+        allocated_memory=allocation.allocated_memory,
+        priority=allocation.priority,
+        status=allocation.status,
         created_by=user_id
     )
-    db.add(db_training)
+    db.add(db_allocation)
     db.commit()
-    db.refresh(db_training)
-    return db_training
+    db.refresh(db_allocation)
+    return db_allocation
 
-def update_model_training(db, training_id: int, training):
-    """更新模型訓練記錄"""
-    db_training = db.query(models.ModelTraining).filter(models.ModelTraining.id == training_id).first()
-    if not db_training:
+def get_gpu_resource_allocations(db, gpu_device_id: int = None):
+    """獲取 GPU 資源分配"""
+    q = db.query(models.GPUResourceAllocation)
+    if gpu_device_id:
+        q = q.filter(models.GPUResourceAllocation.gpu_device_id == gpu_device_id)
+    return q.order_by(models.GPUResourceAllocation.started_at.desc()).all()
+
+def update_gpu_resource_allocation(db, allocation_id: int, allocation):
+    """更新 GPU 資源分配"""
+    db_allocation = db.query(models.GPUResourceAllocation).filter(
+        models.GPUResourceAllocation.id == allocation_id
+    ).first()
+    if not db_allocation:
         return None
     
-    for field, value in training.dict(exclude_unset=True).items():
-        setattr(db_training, field, value)
+    for field, value in allocation.dict(exclude_unset=True).items():
+        setattr(db_allocation, field, value)
     
     db.commit()
-    db.refresh(db_training)
-    return db_training
+    db.refresh(db_allocation)
+    return db_allocation
 
-def get_model_trainings(db, model_id: int = None):
-    """獲取模型訓練記錄"""
-    q = db.query(models.ModelTraining)
-    if model_id:
-        q = q.filter(models.ModelTraining.model_id == model_id)
-    return q.order_by(models.ModelTraining.created_at.desc()).all()
-
-# 異常偵測管理
-def create_anomaly_detection(db, detection):
-    """創建異常偵測記錄"""
-    db_detection = models.AnomalyDetection(
-        model_id=detection.model_id,
-        device_id=detection.device_id,
-        data_point_id=detection.data_point_id,
-        anomaly_score=detection.anomaly_score,
-        is_anomaly=detection.is_anomaly,
-        confidence=detection.confidence,
-        features=detection.features,
-        prediction_details=detection.prediction_details
-    )
-    db.add(db_detection)
-    db.commit()
-    db.refresh(db_detection)
-    return db_detection
-
-def get_anomaly_detections(db, device_id: int = None, model_id: int = None, limit: int = 100):
-    """獲取異常偵測記錄"""
-    q = db.query(models.AnomalyDetection)
-    if device_id:
-        q = q.filter(models.AnomalyDetection.device_id == device_id)
-    if model_id:
-        q = q.filter(models.AnomalyDetection.model_id == model_id)
-    return q.order_by(models.AnomalyDetection.detection_time.desc()).limit(limit).all()
-
-# 異常告警管理
-def create_anomaly_alert(db, alert):
-    """創建異常告警"""
-    db_alert = models.AnomalyAlert(
-        detection_id=alert.detection_id,
+# GPU 警報管理
+def create_gpu_alert(db, alert):
+    """創建 GPU 警報"""
+    db_alert = models.GPUAlert(
+        gpu_device_id=alert.gpu_device_id,
+        alert_type=alert.alert_type,
         alert_level=alert.alert_level,
         alert_message=alert.alert_message,
-        recommended_actions=alert.recommended_actions
+        threshold_value=alert.threshold_value,
+        current_value=alert.current_value
     )
     db.add(db_alert)
     db.commit()
     db.refresh(db_alert)
     return db_alert
 
-def get_anomaly_alerts(db, device_id: int = None, limit: int = 100):
-    """獲取異常告警"""
-    q = db.query(models.AnomalyAlert).join(models.AnomalyDetection)
-    if device_id:
-        q = q.filter(models.AnomalyDetection.device_id == device_id)
-    return q.order_by(models.AnomalyAlert.created_at.desc()).limit(limit).all()
+def get_gpu_alerts(db, gpu_device_id: int = None, limit: int = 100):
+    """獲取 GPU 警報"""
+    q = db.query(models.GPUAlert)
+    if gpu_device_id:
+        q = q.filter(models.GPUAlert.gpu_device_id == gpu_device_id)
+    return q.order_by(models.GPUAlert.created_at.desc()).limit(limit).all()
 
-def acknowledge_anomaly_alert(db, alert_id: int, user_id: int):
-    """確認異常告警"""
-    db_alert = db.query(models.AnomalyAlert).filter(models.AnomalyAlert.id == alert_id).first()
+def acknowledge_gpu_alert(db, alert_id: int, user_id: int):
+    """確認 GPU 警報"""
+    db_alert = db.query(models.GPUAlert).filter(models.GPUAlert.id == alert_id).first()
     if db_alert:
         db_alert.is_acknowledged = True
         db_alert.acknowledged_by = user_id
@@ -931,350 +914,261 @@ def acknowledge_anomaly_alert(db, alert_id: int, user_id: int):
         db.commit()
     return db_alert
 
-# 模型可解釋性管理
-def create_model_explainability(db, explainability):
-    """創建模型可解釋性分析"""
-    db_explainability = models.ModelExplainability(
-        model_id=explainability.model_id,
-        detection_id=explainability.detection_id,
-        feature_importance=explainability.feature_importance,
-        shap_values=explainability.shap_values,
-        lime_explanation=explainability.lime_explanation,
-        decision_path=explainability.decision_path
+# GPU 效能設定管理
+def create_gpu_performance_config(db, config):
+    """創建 GPU 效能設定"""
+    db_config = models.GPUPerformanceConfig(
+        gpu_device_id=config.gpu_device_id,
+        max_temperature=config.max_temperature,
+        max_memory_utilization=config.max_memory_utilization,
+        max_gpu_utilization=config.max_gpu_utilization,
+        max_power_consumption=config.max_power_consumption,
+        auto_fan_control=config.auto_fan_control,
+        power_limit=config.power_limit
     )
-    db.add(db_explainability)
+    db.add(db_config)
     db.commit()
-    db.refresh(db_explainability)
-    return db_explainability
+    db.refresh(db_config)
+    return db_config
 
-def get_model_explainability(db, detection_id: int):
-    """獲取模型可解釋性分析"""
-    return db.query(models.ModelExplainability).filter(models.ModelExplainability.detection_id == detection_id).first()
+def get_gpu_performance_config(db, gpu_device_id: int):
+    """獲取 GPU 效能設定"""
+    return db.query(models.GPUPerformanceConfig).filter(
+        models.GPUPerformanceConfig.gpu_device_id == gpu_device_id
+    ).first()
 
-# 模型營運管理
-def create_model_operations(db, operations, user_id: int):
-    """創建模型營運記錄"""
-    db_operations = models.ModelOperations(
-        model_id=operations.model_id,
-        operation_type=operations.operation_type,
-        operation_status=operations.operation_status,
-        operation_config=operations.operation_config,
-        performance_metrics=operations.performance_metrics,
-        drift_detection=operations.drift_detection,
-        retraining_trigger=operations.retraining_trigger,
-        created_by=user_id
+def update_gpu_performance_config(db, config_id: int, config):
+    """更新 GPU 效能設定"""
+    db_config = db.query(models.GPUPerformanceConfig).filter(
+        models.GPUPerformanceConfig.id == config_id
+    ).first()
+    if not db_config:
+        return None
+    
+    for field, value in config.dict(exclude_unset=True).items():
+        setattr(db_config, field, value)
+    
+    db.commit()
+    db.refresh(db_config)
+    return db_config
+
+# GPU 資源使用統計
+def get_gpu_resource_usage(db, gpu_device_id: int):
+    """獲取 GPU 資源使用統計"""
+    # 獲取最新的監測記錄
+    latest_monitoring = get_latest_gpu_monitoring(db, gpu_device_id)
+    if not latest_monitoring:
+        return None
+    
+    # 獲取 GPU 設備資訊
+    gpu_device = get_gpu_device(db, gpu_device_id)
+    if not gpu_device:
+        return None
+    
+    # 計算可用性
+    available_for_ai = (
+        latest_monitoring.memory_utilization < 90 and
+        latest_monitoring.temperature < 85 and
+        latest_monitoring.gpu_utilization < 95
     )
-    db.add(db_operations)
-    db.commit()
-    db.refresh(db_operations)
-    return db_operations
-
-def get_model_operations(db, model_id: int = None):
-    """獲取模型營運記錄"""
-    q = db.query(models.ModelOperations)
-    if model_id:
-        q = q.filter(models.ModelOperations.model_id == model_id)
-    return q.order_by(models.ModelOperations.created_at.desc()).all()
-
-# 模型版本管理
-def create_model_version(db, version, user_id: int):
-    """創建模型版本"""
-    db_version = models.ModelVersion(
-        model_id=version.model_id,
-        version_number=version.version_number,
-        model_path=version.model_path,
-        model_hash=version.model_hash,
-        performance_metrics=version.performance_metrics,
-        change_log=version.change_log,
-        is_deployed=version.is_deployed,
-        created_by=user_id
-    )
-    db.add(db_version)
-    db.commit()
-    db.refresh(db_version)
-    return db_version
-
-def get_model_versions(db, model_id: int):
-    """獲取模型版本"""
-    return db.query(models.ModelVersion).filter(models.ModelVersion.model_id == model_id).order_by(models.ModelVersion.created_at.desc()).all()
-
-def deploy_model_version(db, version_id: int):
-    """部署模型版本"""
-    db_version = db.query(models.ModelVersion).filter(models.ModelVersion.id == version_id).first()
-    if db_version:
-        # 將其他版本設為未部署
-        db.query(models.ModelVersion).filter(models.ModelVersion.model_id == db_version.model_id).update({"is_deployed": False})
-        # 部署當前版本
-        db_version.is_deployed = True
-        db_version.deployed_at = datetime.datetime.utcnow()
-        db.commit()
-    return db_version
+    
+    # 推薦模型（基於可用資源）
+    recommended_models = []
+    free_memory_gb = latest_monitoring.memory_free / 1024
+    
+    if free_memory_gb >= 8:
+        recommended_models.extend(["大型語言模型", "圖像生成模型", "視頻處理模型"])
+    elif free_memory_gb >= 4:
+        recommended_models.extend(["中型語言模型", "圖像分類模型", "語音識別模型"])
+    elif free_memory_gb >= 2:
+        recommended_models.extend(["小型語言模型", "簡單分類模型"])
+    else:
+        recommended_models.append("輕量級模型")
+    
+    return {
+        "gpu_device_id": gpu_device_id,
+        "total_memory": gpu_device.memory_total,
+        "used_memory": latest_monitoring.memory_used,
+        "free_memory": latest_monitoring.memory_free,
+        "memory_utilization": latest_monitoring.memory_utilization,
+        "gpu_utilization": latest_monitoring.gpu_utilization,
+        "temperature": latest_monitoring.temperature,
+        "power_consumption": latest_monitoring.power_consumption,
+        "available_for_ai": available_for_ai,
+        "recommended_models": recommended_models
+    }
 ```
 
-## 4. 新增 AI 模型相關的 API 端點
+## 4. 新增 GPU 監測相關的 API 端點
 
 ```python:backend/app/main.py
 <code_block_to_apply_changes_from>
-# 在檔案末尾新增以下 AI 模型相關的 API 端點
+# 在檔案末尾新增以下 GPU 監測相關的 API 端點
 
-# AI 模型管理
-@app.post("/ai/models/", response_model=schemas.AIModelOut)
-def create_ai_model(model: schemas.AIModelCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
-    """創建 AI 模型"""
-    return database.create_ai_model(db, model, current_user.id)
+# GPU 設備管理
+@app.post("/gpu/devices/", response_model=schemas.GPUDeviceOut)
+def create_gpu_device(device: schemas.GPUDeviceCreate, db: Session = Depends(database.get_db)):
+    """創建 GPU 設備"""
+    return database.create_gpu_device(db, device)
 
-@app.get("/ai/models/", response_model=List[schemas.AIModelOut])
-def list_ai_models(device_id: int = None, db: Session = Depends(database.get_db)):
-    """獲取 AI 模型列表"""
-    return database.get_ai_models(db, device_id)
+@app.get("/gpu/devices/", response_model=List[schemas.GPUDeviceOut])
+def list_gpu_devices(db: Session = Depends(database.get_db)):
+    """獲取所有 GPU 設備"""
+    return database.get_gpu_devices(db)
 
-@app.get("/ai/models/{model_id}", response_model=schemas.AIModelOut)
-def get_ai_model(model_id: int, db: Session = Depends(database.get_db)):
-    """獲取特定 AI 模型"""
-    model = database.get_ai_model(db, model_id)
-    if not model:
-        raise HTTPException(status_code=404, detail="AI model not found")
-    return model
+@app.get("/gpu/devices/{device_id}", response_model=schemas.GPUDeviceOut)
+def get_gpu_device(device_id: int, db: Session = Depends(database.get_db)):
+    """獲取特定 GPU 設備"""
+    device = database.get_gpu_device(db, device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="GPU device not found")
+    return device
 
-@app.patch("/ai/models/{model_id}", response_model=schemas.AIModelOut)
-def update_ai_model(model_id: int, model: schemas.AIModelUpdate, db: Session = Depends(database.get_db)):
-    """更新 AI 模型"""
-    updated_model = database.update_ai_model(db, model_id, model)
-    if not updated_model:
-        raise HTTPException(status_code=404, detail="AI model not found")
-    return updated_model
+@app.patch("/gpu/devices/{device_id}", response_model=schemas.GPUDeviceOut)
+def update_gpu_device(device_id: int, device: schemas.GPUDeviceUpdate, db: Session = Depends(database.get_db)):
+    """更新 GPU 設備"""
+    updated_device = database.update_gpu_device(db, device_id, device)
+    if not updated_device:
+        raise HTTPException(status_code=404, detail="GPU device not found")
+    return updated_device
 
-@app.delete("/ai/models/{model_id}")
-def delete_ai_model(model_id: int, db: Session = Depends(database.get_db)):
-    """刪除 AI 模型"""
-    model = database.delete_ai_model(db, model_id)
-    if not model:
-        raise HTTPException(status_code=404, detail="AI model not found")
-    return {"message": "AI model deleted successfully"}
+@app.delete("/gpu/devices/{device_id}")
+def delete_gpu_device(device_id: int, db: Session = Depends(database.get_db)):
+    """刪除 GPU 設備"""
+    device = database.delete_gpu_device(db, device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="GPU device not found")
+    return {"message": "GPU device deleted successfully"}
 
-# 資料預處理管理
-@app.post("/ai/preprocessing/", response_model=schemas.DataPreprocessingOut)
-def create_data_preprocessing(preprocessing: schemas.DataPreprocessingCreate, db: Session = Depends(database.get_db)):
-    """創建資料預處理配置"""
-    return database.create_data_preprocessing(db, preprocessing)
+# GPU 監測管理
+@app.post("/gpu/monitoring/", response_model=schemas.GPUMonitoringOut)
+def create_gpu_monitoring(monitoring: schemas.GPUMonitoringCreate, db: Session = Depends(database.get_db)):
+    """創建 GPU 監測記錄"""
+    return database.create_gpu_monitoring(db, monitoring)
 
-@app.get("/ai/preprocessing/{model_id}", response_model=List[schemas.DataPreprocessingOut])
-def get_data_preprocessing(model_id: int, db: Session = Depends(database.get_db)):
-    """獲取資料預處理配置"""
-    return database.get_data_preprocessing(db, model_id)
+@app.get("/gpu/monitoring/", response_model=List[schemas.GPUMonitoringOut])
+def list_gpu_monitoring(gpu_device_id: int = None, limit: int = 100, db: Session = Depends(database.get_db)):
+    """獲取 GPU 監測記錄"""
+    return database.get_gpu_monitoring(db, gpu_device_id, limit)
 
-# 模型訓練管理
-@app.post("/ai/training/", response_model=schemas.ModelTrainingOut)
-def create_model_training(training: schemas.ModelTrainingCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
-    """創建模型訓練記錄"""
-    return database.create_model_training(db, training, current_user.id)
+@app.get("/gpu/monitoring/{gpu_device_id}/latest", response_model=schemas.GPUMonitoringOut)
+def get_latest_gpu_monitoring(gpu_device_id: int, db: Session = Depends(database.get_db)):
+    """獲取最新的 GPU 監測記錄"""
+    monitoring = database.get_latest_gpu_monitoring(db, gpu_device_id)
+    if not monitoring:
+        raise HTTPException(status_code=404, detail="GPU monitoring not found")
+    return monitoring
 
-@app.get("/ai/training/", response_model=List[schemas.ModelTrainingOut])
-def list_model_trainings(model_id: int = None, db: Session = Depends(database.get_db)):
-    """獲取模型訓練記錄"""
-    return database.get_model_trainings(db, model_id)
+# GPU 資源分配管理
+@app.post("/gpu/allocations/", response_model=schemas.GPUResourceAllocationOut)
+def create_gpu_resource_allocation(allocation: schemas.GPUResourceAllocationCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+    """創建 GPU 資源分配"""
+    return database.create_gpu_resource_allocation(db, allocation, current_user.id)
 
-@app.patch("/ai/training/{training_id}", response_model=schemas.ModelTrainingOut)
-def update_model_training(training_id: int, training: schemas.ModelTrainingUpdate, db: Session = Depends(database.get_db)):
-    """更新模型訓練記錄"""
-    updated_training = database.update_model_training(db, training_id, training)
-    if not updated_training:
-        raise HTTPException(status_code=404, detail="Model training not found")
-    return updated_training
+@app.get("/gpu/allocations/", response_model=List[schemas.GPUResourceAllocationOut])
+def list_gpu_resource_allocations(gpu_device_id: int = None, db: Session = Depends(database.get_db)):
+    """獲取 GPU 資源分配"""
+    return database.get_gpu_resource_allocations(db, gpu_device_id)
 
-# 異常偵測管理
-@app.post("/ai/detection/", response_model=schemas.AnomalyDetectionOut)
-def create_anomaly_detection(detection: schemas.AnomalyDetectionCreate, db: Session = Depends(database.get_db)):
-    """創建異常偵測記錄"""
-    return database.create_anomaly_detection(db, detection)
+@app.patch("/gpu/allocations/{allocation_id}", response_model=schemas.GPUResourceAllocationOut)
+def update_gpu_resource_allocation(allocation_id: int, allocation: schemas.GPUResourceAllocationUpdate, db: Session = Depends(database.get_db)):
+    """更新 GPU 資源分配"""
+    updated_allocation = database.update_gpu_resource_allocation(db, allocation_id, allocation)
+    if not updated_allocation:
+        raise HTTPException(status_code=404, detail="GPU resource allocation not found")
+    return updated_allocation
 
-@app.get("/ai/detection/", response_model=List[schemas.AnomalyDetectionOut])
-def list_anomaly_detections(device_id: int = None, model_id: int = None, limit: int = 100, db: Session = Depends(database.get_db)):
-    """獲取異常偵測記錄"""
-    return database.get_anomaly_detections(db, device_id, model_id, limit)
+# GPU 警報管理
+@app.post("/gpu/alerts/", response_model=schemas.GPUAlertOut)
+def create_gpu_alert(alert: schemas.GPUAlertCreate, db: Session = Depends(database.get_db)):
+    """創建 GPU 警報"""
+    return database.create_gpu_alert(db, alert)
 
-# 異常告警管理
-@app.post("/ai/alerts/", response_model=schemas.AnomalyAlertOut)
-def create_anomaly_alert(alert: schemas.AnomalyAlertCreate, db: Session = Depends(database.get_db)):
-    """創建異常告警"""
-    return database.create_anomaly_alert(db, alert)
+@app.get("/gpu/alerts/", response_model=List[schemas.GPUAlertOut])
+def list_gpu_alerts(gpu_device_id: int = None, limit: int = 100, db: Session = Depends(database.get_db)):
+    """獲取 GPU 警報"""
+    return database.get_gpu_alerts(db, gpu_device_id, limit)
 
-@app.get("/ai/alerts/", response_model=List[schemas.AnomalyAlertOut])
-def list_anomaly_alerts(device_id: int = None, limit: int = 100, db: Session = Depends(database.get_db)):
-    """獲取異常告警"""
-    return database.get_anomaly_alerts(db, device_id, limit)
-
-@app.patch("/ai/alerts/{alert_id}/acknowledge")
-def acknowledge_anomaly_alert(alert_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
-    """確認異常告警"""
-    alert = database.acknowledge_anomaly_alert(db, alert_id, current_user.id)
+@app.patch("/gpu/alerts/{alert_id}/acknowledge")
+def acknowledge_gpu_alert(alert_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+    """確認 GPU 警報"""
+    alert = database.acknowledge_gpu_alert(db, alert_id, current_user.id)
     if not alert:
-        raise HTTPException(status_code=404, detail="Anomaly alert not found")
-    return {"message": "Alert acknowledged successfully"}
+        raise HTTPException(status_code=404, detail="GPU alert not found")
+    return {"message": "GPU alert acknowledged successfully"}
 
-# 模型可解釋性管理
-@app.post("/ai/explainability/", response_model=schemas.ModelExplainabilityOut)
-def create_model_explainability(explainability: schemas.ModelExplainabilityCreate, db: Session = Depends(database.get_db)):
-    """創建模型可解釋性分析"""
-    return database.create_model_explainability(db, explainability)
+# GPU 效能設定管理
+@app.post("/gpu/performance-config/", response_model=schemas.GPUPerformanceConfigOut)
+def create_gpu_performance_config(config: schemas.GPUPerformanceConfigCreate, db: Session = Depends(database.get_db)):
+    """創建 GPU 效能設定"""
+    return database.create_gpu_performance_config(db, config)
 
-@app.get("/ai/explainability/{detection_id}", response_model=schemas.ModelExplainabilityOut)
-def get_model_explainability(detection_id: int, db: Session = Depends(database.get_db)):
-    """獲取模型可解釋性分析"""
-    explainability = database.get_model_explainability(db, detection_id)
-    if not explainability:
-        raise HTTPException(status_code=404, detail="Model explainability not found")
-    return explainability
+@app.get("/gpu/performance-config/{gpu_device_id}", response_model=schemas.GPUPerformanceConfigOut)
+def get_gpu_performance_config(gpu_device_id: int, db: Session = Depends(database.get_db)):
+    """獲取 GPU 效能設定"""
+    config = database.get_gpu_performance_config(db, gpu_device_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="GPU performance config not found")
+    return config
 
-# 模型營運管理
-@app.post("/ai/operations/", response_model=schemas.ModelOperationsOut)
-def create_model_operations(operations: schemas.ModelOperationsCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
-    """創建模型營運記錄"""
-    return database.create_model_operations(db, operations, current_user.id)
+@app.patch("/gpu/performance-config/{config_id}", response_model=schemas.GPUPerformanceConfigOut)
+def update_gpu_performance_config(config_id: int, config: schemas.GPUPerformanceConfigUpdate, db: Session = Depends(database.get_db)):
+    """更新 GPU 效能設定"""
+    updated_config = database.update_gpu_performance_config(db, config_id, config)
+    if not updated_config:
+        raise HTTPException(status_code=404, detail="GPU performance config not found")
+    return updated_config
 
-@app.get("/ai/operations/", response_model=List[schemas.ModelOperationsOut])
-def list_model_operations(model_id: int = None, db: Session = Depends(database.get_db)):
-    """獲取模型營運記錄"""
-    return database.get_model_operations(db, model_id)
+# GPU 資源使用統計
+@app.get("/gpu/resource-usage/{gpu_device_id}")
+def get_gpu_resource_usage(gpu_device_id: int, db: Session = Depends(database.get_db)):
+    """獲取 GPU 資源使用統計"""
+    usage = database.get_gpu_resource_usage(db, gpu_device_id)
+    if not usage:
+        raise HTTPException(status_code=404, detail="GPU resource usage not found")
+    return usage
 
-# 模型版本管理
-@app.post("/ai/versions/", response_model=schemas.ModelVersionOut)
-def create_model_version(version: schemas.ModelVersionCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
-    """創建模型版本"""
-    return database.create_model_version(db, version, current_user.id)
-
-@app.get("/ai/versions/{model_id}", response_model=List[schemas.ModelVersionOut])
-def list_model_versions(model_id: int, db: Session = Depends(database.get_db)):
-    """獲取模型版本"""
-    return database.get_model_versions(db, model_id)
-
-@app.post("/ai/versions/{version_id}/deploy")
-def deploy_model_version(version_id: int, db: Session = Depends(database.get_db)):
-    """部署模型版本"""
-    version = database.deploy_model_version(db, version_id)
-    if not version:
-        raise HTTPException(status_code=404, detail="Model version not found")
-    return {"message": "Model version deployed successfully"}
-
-# 進階 AI 分析
-@app.post("/ai/analysis/")
-def perform_ai_analysis(request: schemas.AIAnalysisRequest, db: Session = Depends(database.get_db)):
-    """執行 AI 分析"""
-    try:
-        # 獲取設備數據
-        device_data = database.get_device_history(db, request.device_id)
-        if not device_data:
-            raise HTTPException(status_code=404, detail="No data found for device")
-        
-        # 提取數值進行分析
-        values = [data.value for data in device_data]
-        
-        # 簡單的異常檢測算法
-        mean_value = np.mean(values)
-        std_value = np.std(values)
-        latest_value = values[-1] if values else 0
-        
-        # 計算異常分數
-        z_score = abs((latest_value - mean_value) / std_value) if std_value > 0 else 0
-        anomaly_score = min(100, z_score * 20)
-        
-        # 判斷是否為異常
-        is_anomaly = anomaly_score > 50
-        
-        # 生成建議
-        if is_anomaly:
-            if latest_value > mean_value + 2 * std_value:
-                advice = "數值異常偏高，建議檢查設備狀態"
-            elif latest_value < mean_value - 2 * std_value:
-                advice = "數值異常偏低，建議檢查設備狀態"
-            else:
-                advice = "檢測到異常模式，建議進一步分析"
-        else:
-            advice = "設備運行正常"
-        
-        result = {
-            "device_id": request.device_id,
-            "anomaly_score": round(anomaly_score, 2),
-            "latest_value": latest_value,
-            "mean_value": round(mean_value, 2),
-            "std_value": round(std_value, 2),
-            "z_score": round(z_score, 2),
-            "is_anomaly": is_anomaly,
-            "advice": advice,
-            "confidence": max(0, 100 - anomaly_score)
-        }
-        
-        # 如果需要，創建異常偵測記錄
-        if is_anomaly and request.model_id:
-            detection = schemas.AnomalyDetectionCreate(
-                model_id=request.model_id,
-                device_id=request.device_id,
-                data_point_id=device_data[-1].id,
-                anomaly_score=anomaly_score,
-                is_anomaly=True,
-                confidence=result["confidence"],
-                features={"latest_value": latest_value, "mean": mean_value, "std": std_value},
-                prediction_details={"z_score": z_score, "method": "statistical"}
-            )
-            database.create_anomaly_detection(db, detection)
-        
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI analysis failed: {str(e)}")
-
-# 模型訓練
-@app.post("/ai/train/")
-def train_model(request: schemas.ModelTrainingRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
-    """訓練模型"""
-    try:
-        # 創建訓練記錄
-        training = schemas.ModelTrainingCreate(
-            model_id=request.model_id,
-            training_status="running",
-            training_data_size=request.data_config.get("training_size", 1000),
-            validation_data_size=request.data_config.get("validation_size", 200)
+# GPU 自動監測（模擬數據）
+@app.post("/gpu/simulate-monitoring/{gpu_device_id}")
+def simulate_gpu_monitoring(gpu_device_id: int, db: Session = Depends(database.get_db)):
+    """模擬 GPU 監測數據"""
+    import random
+    
+    # 模擬 GPU 監測數據
+    monitoring_data = schemas.GPUMonitoringCreate(
+        gpu_device_id=gpu_device_id,
+        gpu_utilization=random.uniform(20, 80),
+        memory_utilization=random.uniform(30, 85),
+        memory_used=random.randint(2000, 6000),
+        memory_free=random.randint(1000, 4000),
+        temperature=random.uniform(45, 75),
+        power_consumption=random.uniform(80, 200),
+        fan_speed=random.uniform(30, 80),
+        clock_speed=random.uniform(1000, 1800),
+        memory_clock=random.uniform(5000, 8000)
+    )
+    
+    # 檢查是否需要創建警報
+    if monitoring_data.temperature > 70:
+        alert = schemas.GPUAlertCreate(
+            gpu_device_id=gpu_device_id,
+            alert_type="temperature",
+            alert_level="warning",
+            alert_message=f"GPU 溫度過高: {monitoring_data.temperature:.1f}°C",
+            threshold_value=70,
+            current_value=monitoring_data.temperature
         )
-        
-        db_training = database.create_model_training(db, training, current_user.id)
-        
-        # 這裡可以實現實際的模型訓練邏輯
-        # 目前只是模擬訓練過程
-        
-        # 更新訓練狀態
-        updated_training = schemas.ModelTrainingUpdate(
-            training_status="completed",
-            final_accuracy=0.85,
-            final_loss=0.15,
-            training_logs={"epochs": 100, "loss": [0.5, 0.3, 0.2, 0.15]}
+        database.create_gpu_alert(db, alert)
+    
+    if monitoring_data.memory_utilization > 90:
+        alert = schemas.GPUAlertCreate(
+            gpu_device_id=gpu_device_id,
+            alert_type="memory",
+            alert_level="critical",
+            alert_message=f"GPU 記憶體使用率過高: {monitoring_data.memory_utilization:.1f}%",
+            threshold_value=90,
+            current_value=monitoring_data.memory_utilization
         )
-        
-        database.update_model_training(db, db_training.id, updated_training)
-        
-        return {
-            "training_id": db_training.id,
-            "status": "completed",
-            "accuracy": 0.85,
-            "message": "Model training completed successfully"
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Model training failed: {str(e)}")
-
-# 模型部署
-@app.post("/ai/deploy/")
-def deploy_model(request: schemas.ModelDeploymentRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
-    """部署模型"""
-    try:
-        # 部署模型版本
-        version = database.deploy_model_version(db, request.version_id)
-        
-        return {
-            "model_id": request.model_id,
-            "version_id": request.version_id,
-            "status": "deployed",
-            "message": "Model deployed successfully"
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Model deployment failed: {str(e)}") 
+        database.create_gpu_alert(db, alert)
+    
+    return database.create_gpu_monitoring(db, monitoring_data) 

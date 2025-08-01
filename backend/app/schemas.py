@@ -623,3 +623,132 @@ class ModelDeploymentRequest(BaseModel):
     model_id: int
     version_id: int
     deployment_config: Dict[str, Any] 
+
+# 在檔案末尾新增以下 GPU 監測相關的 schemas
+
+# GPU 設備相關
+class GPUDeviceBase(BaseModel):
+    device_id: str
+    name: str
+    manufacturer: str
+    memory_total: int
+    compute_capability: Optional[str] = None
+    driver_version: Optional[str] = None
+    is_active: bool = True
+
+class GPUDeviceCreate(GPUDeviceBase):
+    pass
+
+class GPUDeviceUpdate(GPUDeviceBase):
+    pass
+
+class GPUDeviceOut(GPUDeviceBase):
+    id: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# GPU 監測相關
+class GPUMonitoringBase(BaseModel):
+    gpu_device_id: int
+    gpu_utilization: float
+    memory_utilization: float
+    memory_used: int
+    memory_free: int
+    temperature: float
+    power_consumption: float
+    fan_speed: float
+    clock_speed: float
+    memory_clock: float
+
+class GPUMonitoringCreate(GPUMonitoringBase):
+    pass
+
+class GPUMonitoringOut(GPUMonitoringBase):
+    id: int
+    timestamp: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# GPU 資源分配相關
+class GPUResourceAllocationBase(BaseModel):
+    gpu_device_id: int
+    ai_model_id: int
+    allocated_memory: int
+    priority: str
+    status: str
+
+class GPUResourceAllocationCreate(GPUResourceAllocationBase):
+    pass
+
+class GPUResourceAllocationUpdate(GPUResourceAllocationBase):
+    pass
+
+class GPUResourceAllocationOut(GPUResourceAllocationBase):
+    id: int
+    started_at: datetime.datetime
+    ended_at: Optional[datetime.datetime] = None
+    created_by: int
+    class Config:
+        orm_mode = True
+
+# GPU 警報相關
+class GPUAlertBase(BaseModel):
+    gpu_device_id: int
+    alert_type: str
+    alert_level: str
+    alert_message: str
+    threshold_value: float
+    current_value: float
+
+class GPUAlertCreate(GPUAlertBase):
+    pass
+
+class GPUAlertUpdate(GPUAlertBase):
+    is_acknowledged: bool = False
+
+class GPUAlertOut(GPUAlertBase):
+    id: int
+    is_acknowledged: bool
+    acknowledged_by: Optional[int] = None
+    acknowledged_at: Optional[datetime.datetime] = None
+    created_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# GPU 效能設定相關
+class GPUPerformanceConfigBase(BaseModel):
+    gpu_device_id: int
+    max_temperature: float
+    max_memory_utilization: float
+    max_gpu_utilization: float
+    max_power_consumption: float
+    auto_fan_control: bool = True
+    power_limit: float
+
+class GPUPerformanceConfigCreate(GPUPerformanceConfigBase):
+    pass
+
+class GPUPerformanceConfigUpdate(GPUPerformanceConfigBase):
+    pass
+
+class GPUPerformanceConfigOut(GPUPerformanceConfigBase):
+    id: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# GPU 資源使用統計
+class GPUResourceUsage(BaseModel):
+    gpu_device_id: int
+    total_memory: int
+    used_memory: int
+    free_memory: int
+    memory_utilization: float
+    gpu_utilization: float
+    temperature: float
+    power_consumption: float
+    available_for_ai: bool
+    recommended_models: List[str] 

@@ -381,3 +381,77 @@ class ModelVersion(Base):
     deployed_at = Column(DateTime, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow) 
+
+# 在檔案末尾新增以下 GPU 監測相關的資料模型
+
+# GPU 設備資訊
+class GPUDevice(Base):
+    __tablename__ = "gpu_devices"
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(String, unique=True)  # GPU 設備 ID
+    name = Column(String)  # GPU 名稱
+    manufacturer = Column(String)  # 製造商 (NVIDIA, AMD, Intel)
+    memory_total = Column(Integer)  # 總記憶體 (MB)
+    compute_capability = Column(String)  # 計算能力
+    driver_version = Column(String)  # 驅動程式版本
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# GPU 效能監測記錄
+class GPUMonitoring(Base):
+    __tablename__ = "gpu_monitoring"
+    id = Column(Integer, primary_key=True, index=True)
+    gpu_device_id = Column(Integer, ForeignKey("gpu_devices.id"))
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    gpu_utilization = Column(Float)  # GPU 使用率 (%)
+    memory_utilization = Column(Float)  # 記憶體使用率 (%)
+    memory_used = Column(Integer)  # 已使用記憶體 (MB)
+    memory_free = Column(Integer)  # 可用記憶體 (MB)
+    temperature = Column(Float)  # 溫度 (°C)
+    power_consumption = Column(Float)  # 功耗 (W)
+    fan_speed = Column(Float)  # 風扇轉速 (%)
+    clock_speed = Column(Float)  # 時脈速度 (MHz)
+    memory_clock = Column(Float)  # 記憶體時脈 (MHz)
+
+# GPU 資源分配
+class GPUResourceAllocation(Base):
+    __tablename__ = "gpu_resource_allocation"
+    id = Column(Integer, primary_key=True, index=True)
+    gpu_device_id = Column(Integer, ForeignKey("gpu_devices.id"))
+    ai_model_id = Column(Integer, ForeignKey("ai_models.id"))
+    allocated_memory = Column(Integer)  # 分配的記憶體 (MB)
+    priority = Column(String)  # 優先級 (high, medium, low)
+    status = Column(String)  # 狀態 (running, idle, stopped)
+    started_at = Column(DateTime, default=datetime.datetime.utcnow)
+    ended_at = Column(DateTime, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"))
+
+# GPU 效能警報
+class GPUAlert(Base):
+    __tablename__ = "gpu_alerts"
+    id = Column(Integer, primary_key=True, index=True)
+    gpu_device_id = Column(Integer, ForeignKey("gpu_devices.id"))
+    alert_type = Column(String)  # temperature, memory, utilization, power
+    alert_level = Column(String)  # warning, critical
+    alert_message = Column(String)
+    threshold_value = Column(Float)
+    current_value = Column(Float)
+    is_acknowledged = Column(Boolean, default=False)
+    acknowledged_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    acknowledged_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# GPU 效能設定
+class GPUPerformanceConfig(Base):
+    __tablename__ = "gpu_performance_config"
+    id = Column(Integer, primary_key=True, index=True)
+    gpu_device_id = Column(Integer, ForeignKey("gpu_devices.id"))
+    max_temperature = Column(Float)  # 最大溫度閾值
+    max_memory_utilization = Column(Float)  # 最大記憶體使用率閾值
+    max_gpu_utilization = Column(Float)  # 最大 GPU 使用率閾值
+    max_power_consumption = Column(Float)  # 最大功耗閾值
+    auto_fan_control = Column(Boolean, default=True)  # 自動風扇控制
+    power_limit = Column(Float)  # 功耗限制 (W)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow) 
