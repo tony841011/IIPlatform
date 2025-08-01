@@ -4,7 +4,7 @@ import random
 import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
 
-from app.models import Base, Device, DeviceData, User, Alert, DeviceGroup, Role, Firmware, Rule, Workflow
+from app.models import Base, Device, DeviceData, User, Alert, DeviceGroup, Role, Firmware, Rule, Workflow, CommunicationProtocol, MQTTConfig, ModbusTCPConfig, OPCUAConfig
 from app.database import engine, SessionLocal
 from app.main import get_password_hash
 
@@ -243,6 +243,59 @@ def generate_test_data():
             db.add(workflow)
         db.commit()
         
+        # 10. 生成通訊協定配置
+        print("生成通訊協定配置...")
+        
+        # MQTT 配置
+        mqtt_configs = [
+            MQTTConfig(device_id=1, broker_url="mqtt://localhost", broker_port=1883, topic_prefix="sensor/temp", qos_level=1),
+            MQTTConfig(device_id=2, broker_url="mqtt://localhost", broker_port=1883, topic_prefix="sensor/pressure", qos_level=1),
+            MQTTConfig(device_id=3, broker_url="mqtt://localhost", broker_port=1883, topic_prefix="sensor/flow", qos_level=1),
+            MQTTConfig(device_id=4, broker_url="mqtt://localhost", broker_port=1883, topic_prefix="sensor/temp", qos_level=1),
+            MQTTConfig(device_id=5, broker_url="mqtt://localhost", broker_port=1883, topic_prefix="sensor/vibration", qos_level=1)
+        ]
+        
+        for config in mqtt_configs:
+            db.add(config)
+        
+        # Modbus TCP 配置
+        modbus_configs = [
+            ModbusTCPConfig(device_id=6, host="192.168.1.100", port=502, unit_id=1),
+            ModbusTCPConfig(device_id=7, host="192.168.1.101", port=502, unit_id=1),
+            ModbusTCPConfig(device_id=8, host="192.168.1.102", port=502, unit_id=1)
+        ]
+        
+        for config in modbus_configs:
+            db.add(config)
+        
+        # OPC UA 配置
+        opc_ua_configs = [
+            OPCUAConfig(device_id=9, server_url="opc.tcp://192.168.1.200:4840", node_id="ns=2;s=QualitySensor1"),
+            OPCUAConfig(device_id=10, server_url="opc.tcp://192.168.1.201:4840", node_id="ns=2;s=QualitySensor2")
+        ]
+        
+        for config in opc_ua_configs:
+            db.add(config)
+        
+        # 通訊協定配置
+        protocols = [
+            CommunicationProtocol(device_id=1, protocol_type="mqtt", config={"topic": "sensor/temp/01", "qos": 1}),
+            CommunicationProtocol(device_id=2, protocol_type="mqtt", config={"topic": "sensor/pressure/01", "qos": 1}),
+            CommunicationProtocol(device_id=3, protocol_type="mqtt", config={"topic": "sensor/flow/01", "qos": 1}),
+            CommunicationProtocol(device_id=4, protocol_type="mqtt", config={"topic": "sensor/temp/02", "qos": 1}),
+            CommunicationProtocol(device_id=5, protocol_type="mqtt", config={"topic": "sensor/vibration/01", "qos": 1}),
+            CommunicationProtocol(device_id=6, protocol_type="modbus_tcp", config={"register": "40001", "count": 10}),
+            CommunicationProtocol(device_id=7, protocol_type="modbus_tcp", config={"register": "40001", "count": 10}),
+            CommunicationProtocol(device_id=8, protocol_type="modbus_tcp", config={"register": "40001", "count": 10}),
+            CommunicationProtocol(device_id=9, protocol_type="opc_ua", config={"node_id": "ns=2;s=QualitySensor1"}),
+            CommunicationProtocol(device_id=10, protocol_type="opc_ua", config={"node_id": "ns=2;s=QualitySensor2"})
+        ]
+        
+        for protocol in protocols:
+            db.add(protocol)
+        
+        db.commit()
+        
         print("✅ 測試數據生成完成！")
         print(f"👥 已建立 {len(roles)} 個角色")
         print(f"📊 已建立 {len(groups)} 個設備群組")
@@ -253,6 +306,10 @@ def generate_test_data():
         print(f"💾 已建立 {len(firmwares)} 個韌體")
         print(f"⚙️  已建立 {len(rules)} 個規則")
         print(f"🔄 已建立 {len(workflows)} 個工作流程")
+        print(f"📡 已建立 {len(mqtt_configs)} 個 MQTT 配置")
+        print(f"🔌 已建立 {len(modbus_configs)} 個 Modbus TCP 配置")
+        print(f"🌐 已建立 {len(opc_ua_configs)} 個 OPC UA 配置")
+        print(f"📋 已建立 {len(protocols)} 個通訊協定配置")
         print("\n📝 測試帳號:")
         print("  管理員: admin / admin123")
         print("  操作員: operator1 / op123")

@@ -244,4 +244,178 @@ class PermissionCheck(BaseModel):
     user_id: int
     resource_type: str
     resource_id: int
-    action: str 
+    action: str
+
+# 通訊協定相關
+class CommunicationProtocolBase(BaseModel):
+    device_id: int
+    protocol_type: str  # mqtt, restful, modbus_tcp, opc_ua
+    config: Dict[str, Any]
+
+class CommunicationProtocolCreate(CommunicationProtocolBase):
+    pass
+
+class CommunicationProtocolOut(CommunicationProtocolBase):
+    id: int
+    is_active: bool
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# MQTT 配置
+class MQTTConfigBase(BaseModel):
+    device_id: int
+    broker_url: str
+    broker_port: int = 1883
+    username: Optional[str] = None
+    password: Optional[str] = None
+    topic_prefix: str
+    qos_level: int = 1
+    keep_alive: int = 60
+    is_ssl: bool = False
+
+class MQTTConfigCreate(MQTTConfigBase):
+    pass
+
+class MQTTConfigOut(MQTTConfigBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+# Modbus TCP 配置
+class ModbusTCPConfigBase(BaseModel):
+    device_id: int
+    host: str
+    port: int = 502
+    unit_id: int = 1
+    timeout: int = 10
+    retries: int = 3
+
+class ModbusTCPConfigCreate(ModbusTCPConfigBase):
+    pass
+
+class ModbusTCPConfigOut(ModbusTCPConfigBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+# OPC UA 配置
+class OPCUAConfigBase(BaseModel):
+    device_id: int
+    server_url: str
+    namespace: str = "2"
+    node_id: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    security_policy: str = "Basic256Sha256"
+    message_security_mode: str = "SignAndEncrypt"
+
+class OPCUAConfigCreate(OPCUAConfigBase):
+    pass
+
+class OPCUAConfigOut(OPCUAConfigBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+# 通訊協定測試
+class ProtocolTest(BaseModel):
+    device_id: int
+    protocol_type: str
+    test_data: Dict[str, Any] 
+
+# 資料庫連線相關
+class DatabaseConnectionBase(BaseModel):
+    name: str
+    db_type: str  # sqlite, mysql, postgresql, oracle, mssql
+    host: Optional[str] = None
+    port: Optional[int] = None
+    database: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    connection_string: str
+    is_active: bool = True
+    is_default: bool = False
+
+class DatabaseConnectionCreate(DatabaseConnectionBase):
+    pass
+
+class DatabaseConnectionUpdate(DatabaseConnectionBase):
+    pass
+
+class DatabaseConnectionOut(DatabaseConnectionBase):
+    id: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 資料表配置相關
+class TableSchemaBase(BaseModel):
+    table_name: str
+    display_name: str
+    description: Optional[str] = None
+    db_connection_id: int
+    schema_definition: Dict[str, Any]
+    is_active: bool = True
+
+class TableSchemaCreate(TableSchemaBase):
+    pass
+
+class TableSchemaUpdate(TableSchemaBase):
+    pass
+
+class TableSchemaOut(TableSchemaBase):
+    id: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 資料表欄位配置相關
+class TableColumnBase(BaseModel):
+    table_id: int
+    column_name: str
+    display_name: str
+    data_type: str
+    length: Optional[int] = None
+    is_nullable: bool = True
+    is_primary_key: bool = False
+    is_index: bool = False
+    default_value: Optional[str] = None
+    description: Optional[str] = None
+    order_index: int = 0
+
+class TableColumnCreate(TableColumnBase):
+    pass
+
+class TableColumnUpdate(TableColumnBase):
+    pass
+
+class TableColumnOut(TableColumnBase):
+    id: int
+    created_at: datetime.datetime
+    class Config:
+        orm_mode = True
+
+# 資料庫連線測試相關
+class DatabaseConnectionTestBase(BaseModel):
+    connection_id: int
+    test_result: str
+    error_message: Optional[str] = None
+    response_time: Optional[float] = None
+
+class DatabaseConnectionTestCreate(DatabaseConnectionTestBase):
+    pass
+
+class DatabaseConnectionTestOut(DatabaseConnectionTestBase):
+    id: int
+    tested_at: datetime.datetime
+    tested_by: Optional[int] = None
+    class Config:
+        orm_mode = True
+
+# 資料庫連線測試請求
+class DatabaseConnectionTestRequest(BaseModel):
+    connection_id: int 

@@ -28,7 +28,7 @@ python mqtt_client.py
 ### 一、環境需求
 1. Python 3.9+（建議用 venv 虛擬環境）
 2. Node.js 16+（含 npm）
-3. MQTT Broker（如 Mosquitto，若需測試 MQTT）
+3. 通訊協定支援：MQTT, RESTful API, Modbus TCP, OPC UA
 
 ### 二、快速建置步驟
 
@@ -84,11 +84,12 @@ npm start
 ```
 前端預設監聽 http://localhost:3000
 
-#### 4. 測試 MQTT（如需）
-安裝 Mosquitto 或其他 MQTT Broker，啟動後可用 backend/app/mqtt_client.py 測試資料上傳。
+#### 4. 測試通訊協定（如需）
+啟動通訊協定模擬器測試不同協定的數據傳輸：
 ```bash
-python mqtt_client.py
-```cd
+cd backend
+python protocol_simulators.py
+```
 
 #### 5. 生成測試數據
 ```bash
@@ -122,7 +123,8 @@ python simulate_realtime_data.py
 - 依賴安裝失敗：確認 Python/Node 版本正確，必要時用 pip install --upgrade pip。
 - 資料庫結構異動：如有修改 models，需重新建立資料表（或用 Alembic 做遷移）。
 - CORS 問題：已預設允許全部來源，若有跨域問題可調整 main.py 的 CORS 設定。
-- 多台設備測試：可複製多份 mqtt_client.py，改不同 device_id 模擬多設備。
+- 多台設備測試：可使用通訊協定模擬器測試不同協定的設備。
+- 通訊協定配置：支援 MQTT、RESTful API、Modbus TCP、OPC UA 四種協定。
 
 ### 四、進階建議
 - Docker 化：可用 Docker Compose 一鍵啟動前後端與 Mosquitto。

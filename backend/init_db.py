@@ -24,6 +24,10 @@ def init_db():
     print("   - workflow_executions (工作流程執行)")
     print("   - audit_logs (審計日誌)")
     print("   - device_commands (設備命令)")
+    print("   - communication_protocols (通訊協定)")
+    print("   - mqtt_configs (MQTT配置)")
+    print("   - modbus_tcp_configs (Modbus TCP配置)")
+    print("   - opc_ua_configs (OPC UA配置)")
 
 if __name__ == "__main__":
     init_db() 

@@ -154,4 +154,111 @@ class DeviceCommand(Base):
     acknowledged_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     result = Column(JSON, nullable=True)
-    sent_by = Column(Integer, ForeignKey("users.id")) 
+    sent_by = Column(Integer, ForeignKey("users.id"))
+
+# 通訊協定配置
+class CommunicationProtocol(Base):
+    __tablename__ = "communication_protocols"
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(Integer, ForeignKey("devices.id"))
+    protocol_type = Column(String)  # mqtt, restful, modbus_tcp, opc_ua
+    config = Column(JSON)  # 協定特定配置
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# MQTT 配置
+class MQTTConfig(Base):
+    __tablename__ = "mqtt_configs"
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(Integer, ForeignKey("devices.id"))
+    broker_url = Column(String)
+    broker_port = Column(Integer, default=1883)
+    username = Column(String, nullable=True)
+    password = Column(String, nullable=True)
+    topic_prefix = Column(String)
+    qos_level = Column(Integer, default=1)
+    keep_alive = Column(Integer, default=60)
+    is_ssl = Column(Boolean, default=False)
+
+# Modbus TCP 配置
+class ModbusTCPConfig(Base):
+    __tablename__ = "modbus_tcp_configs"
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(Integer, ForeignKey("devices.id"))
+    host = Column(String)
+    port = Column(Integer, default=502)
+    unit_id = Column(Integer, default=1)
+    timeout = Column(Integer, default=10)
+    retries = Column(Integer, default=3)
+
+# OPC UA 配置
+class OPCUAConfig(Base):
+    __tablename__ = "opc_ua_configs"
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(Integer, ForeignKey("devices.id"))
+    server_url = Column(String)
+    namespace = Column(String, default="2")
+    node_id = Column(String)
+    username = Column(String, nullable=True)
+    password = Column(String, nullable=True)
+    security_policy = Column(String, default="Basic256Sha256")
+    message_security_mode = Column(String, default="SignAndEncrypt") 
+
+# 資料庫連線配置
+class DatabaseConnection(Base):
+    __tablename__ = "database_connections"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 連線名稱
+    db_type = Column(String)  # sqlite, mysql, postgresql, oracle, mssql
+    host = Column(String, nullable=True)  # 主機地址
+    port = Column(Integer, nullable=True)  # 端口
+    database = Column(String)  # 資料庫名稱
+    username = Column(String, nullable=True)  # 用戶名
+    password = Column(String, nullable=True)  # 密碼
+    connection_string = Column(String)  # 完整連線字串
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    is_default = Column(Boolean, default=False)  # 是否為預設連線
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 資料表配置
+class TableSchema(Base):
+    __tablename__ = "table_schemas"
+    id = Column(Integer, primary_key=True, index=True)
+    table_name = Column(String, unique=True)  # 資料表名稱
+    display_name = Column(String)  # 顯示名稱
+    description = Column(String)  # 描述
+    db_connection_id = Column(Integer, ForeignKey("database_connections.id"))  # 關聯的資料庫連線
+    schema_definition = Column(JSON)  # 資料表結構定義
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 資料表欄位配置
+class TableColumn(Base):
+    __tablename__ = "table_columns"
+    id = Column(Integer, primary_key=True, index=True)
+    table_id = Column(Integer, ForeignKey("table_schemas.id"))  # 關聯的資料表
+    column_name = Column(String)  # 欄位名稱
+    display_name = Column(String)  # 顯示名稱
+    data_type = Column(String)  # 資料類型 (varchar, int, float, datetime, etc.)
+    length = Column(Integer, nullable=True)  # 長度
+    is_nullable = Column(Boolean, default=True)  # 是否可為空
+    is_primary_key = Column(Boolean, default=False)  # 是否為主鍵
+    is_index = Column(Boolean, default=False)  # 是否為索引
+    default_value = Column(String, nullable=True)  # 預設值
+    description = Column(String)  # 描述
+    order_index = Column(Integer, default=0)  # 排序索引
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 資料庫連線測試記錄
+class DatabaseConnectionTest(Base):
+    __tablename__ = "database_connection_tests"
+    id = Column(Integer, primary_key=True, index=True)
+    connection_id = Column(Integer, ForeignKey("database_connections.id"))
+    test_result = Column(String)  # success, failed
+    error_message = Column(String, nullable=True)  # 錯誤訊息
+    response_time = Column(Float, nullable=True)  # 回應時間 (秒)
+    tested_at = Column(DateTime, default=datetime.datetime.utcnow)
+    tested_by = Column(Integer, ForeignKey("users.id")) 

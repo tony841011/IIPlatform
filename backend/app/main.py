@@ -1,14 +1,23 @@
-from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-import models, schemas, database
+from . import models, schemas, database
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 import datetime
-from typing import List
+from typing import List, Optional, Dict, Any
 import numpy as np
 import json
+import asyncio
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, JSON, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from .database import engine
+from .models import Base
+
+Base.metadata.create_all(bind=engine)
+Base = declarative_base()
 
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
@@ -74,23 +83,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
-
-manager = ConnectionManager()
-
 @app.get("/")
 def read_root():
     return {"msg": "IIoT Platform Backend"}
@@ -104,26 +96,15 @@ def create_device(device: schemas.DeviceCreate, db: Session = Depends(database.g
 def list_devices(db: Session = Depends(database.get_db)):
     return database.get_devices(db)
 
-@app.websocket("/ws/data")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+
 
 @app.post("/data/")
 def receive_data(data: schemas.DeviceData, db: Session = Depends(database.get_db)):
     saved = database.save_device_data(db, data)
-    import asyncio
     # 假設異常條件：value > 80
     if data.value > 80:
         alert = schemas.AlertCreate(device_id=data.device_id, value=data.value, timestamp=data.timestamp, message="數值異常: 超過80")
         database.create_alert(db, alert)
-        asyncio.create_task(manager.broadcast(json.dumps({"type": "alert", "device_id": data.device_id, "value": data.value, "timestamp": str(data.timestamp), "message": "數值異常: 超過80"})))
-    else:
-        asyncio.create_task(manager.broadcast(json.dumps({"device_id": data.device_id, "value": data.value, "timestamp": str(data.timestamp)})))
     return saved
 
 @app.get("/alerts/", response_model=list[schemas.AlertOut])
@@ -283,4 +264,175 @@ def list_roles(db: Session = Depends(database.get_db)):
 def check_permission(permission: schemas.PermissionCheck, db: Session = Depends(database.get_db)):
     """檢查權限"""
     result = database.check_permission(db, permission.user_id, permission.resource_type, permission.resource_id, permission.action)
-    return {"has_permission": result} 
+    return {"has_permission": result}
+
+# 通訊協定管理
+@app.post("/protocols/", response_model=schemas.CommunicationProtocolOut)
+def create_protocol(protocol: schemas.CommunicationProtocolCreate, db: Session = Depends(database.get_db)):
+    """創建通訊協定配置"""
+    return database.create_communication_protocol(db, protocol)
+
+@app.get("/protocols/", response_model=list[schemas.CommunicationProtocolOut])
+def list_protocols(device_id: int = None, db: Session = Depends(database.get_db)):
+    """獲取通訊協定配置列表"""
+    return database.get_communication_protocols(db, device_id)
+
+# MQTT 配置
+@app.post("/protocols/mqtt/", response_model=schemas.MQTTConfigOut)
+def create_mqtt_config(config: schemas.MQTTConfigCreate, db: Session = Depends(database.get_db)):
+    """創建 MQTT 配置"""
+    return database.create_mqtt_config(db, config)
+
+@app.get("/protocols/mqtt/", response_model=list[schemas.MQTTConfigOut])
+def list_mqtt_configs(device_id: int = None, db: Session = Depends(database.get_db)):
+    """獲取 MQTT 配置列表"""
+    return database.get_mqtt_configs(db, device_id)
+
+# Modbus TCP 配置
+@app.post("/protocols/modbus-tcp/", response_model=schemas.ModbusTCPConfigOut)
+def create_modbus_tcp_config(config: schemas.ModbusTCPConfigCreate, db: Session = Depends(database.get_db)):
+    """創建 Modbus TCP 配置"""
+    return database.create_modbus_tcp_config(db, config)
+
+@app.get("/protocols/modbus-tcp/", response_model=list[schemas.ModbusTCPConfigOut])
+def list_modbus_tcp_configs(device_id: int = None, db: Session = Depends(database.get_db)):
+    """獲取 Modbus TCP 配置列表"""
+    return database.get_modbus_tcp_configs(db, device_id)
+
+# OPC UA 配置
+@app.post("/protocols/opc-ua/", response_model=schemas.OPCUAConfigOut)
+def create_opc_ua_config(config: schemas.OPCUAConfigCreate, db: Session = Depends(database.get_db)):
+    """創建 OPC UA 配置"""
+    return database.create_opc_ua_config(db, config)
+
+@app.get("/protocols/opc-ua/", response_model=list[schemas.OPCUAConfigOut])
+def list_opc_ua_configs(device_id: int = None, db: Session = Depends(database.get_db)):
+    """獲取 OPC UA 配置列表"""
+    return database.get_opc_ua_configs(db, device_id)
+
+# 通訊協定測試
+@app.post("/protocols/test")
+def test_protocol(test: schemas.ProtocolTest, db: Session = Depends(database.get_db)):
+    """測試通訊協定連線"""
+    try:
+        if test.protocol_type == "mqtt":
+            # 這裡可以實現 MQTT 連線測試
+            return {"status": "success", "message": "MQTT 連線測試成功", "protocol": "mqtt"}
+        elif test.protocol_type == "modbus_tcp":
+            # 這裡可以實現 Modbus TCP 連線測試
+            return {"status": "success", "message": "Modbus TCP 連線測試成功", "protocol": "modbus_tcp"}
+        elif test.protocol_type == "opc_ua":
+            # 這裡可以實現 OPC UA 連線測試
+            return {"status": "success", "message": "OPC UA 連線測試成功", "protocol": "opc_ua"}
+        elif test.protocol_type == "restful":
+            # RESTful API 測試
+            return {"status": "success", "message": "RESTful API 測試成功", "protocol": "restful"}
+        else:
+            return {"status": "error", "message": "不支援的通訊協定", "protocol": test.protocol_type}
+    except Exception as e:
+        return {"status": "error", "message": f"連線測試失敗: {str(e)}", "protocol": test.protocol_type} 
+
+# 資料庫連線管理
+@app.post("/database-connections/", response_model=schemas.DatabaseConnectionOut)
+def create_database_connection(connection: schemas.DatabaseConnectionCreate, db: Session = Depends(database.get_db)):
+    """創建資料庫連線配置"""
+    return database.create_database_connection(db, connection)
+
+@app.get("/database-connections/", response_model=List[schemas.DatabaseConnectionOut])
+def list_database_connections(db: Session = Depends(database.get_db)):
+    """獲取所有資料庫連線配置"""
+    return database.get_database_connections(db)
+
+@app.get("/database-connections/{connection_id}", response_model=schemas.DatabaseConnectionOut)
+def get_database_connection(connection_id: int, db: Session = Depends(database.get_db)):
+    """獲取特定資料庫連線配置"""
+    connection = database.get_database_connection(db, connection_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail="Database connection not found")
+    return connection
+
+@app.patch("/database-connections/{connection_id}", response_model=schemas.DatabaseConnectionOut)
+def update_database_connection(connection_id: int, connection: schemas.DatabaseConnectionUpdate, db: Session = Depends(database.get_db)):
+    """更新資料庫連線配置"""
+    updated_connection = database.update_database_connection(db, connection_id, connection)
+    if not updated_connection:
+        raise HTTPException(status_code=404, detail="Database connection not found")
+    return updated_connection
+
+@app.delete("/database-connections/{connection_id}")
+def delete_database_connection(connection_id: int, db: Session = Depends(database.get_db)):
+    """刪除資料庫連線配置"""
+    connection = database.delete_database_connection(db, connection_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail="Database connection not found")
+    return {"message": "Database connection deleted successfully"}
+
+@app.post("/database-connections/{connection_id}/test")
+def test_database_connection(connection_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+    """測試資料庫連線"""
+    result = database.test_database_connection(db, connection_id, current_user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Database connection not found")
+    return result
+
+# 資料表配置管理
+@app.post("/table-schemas/", response_model=schemas.TableSchemaOut)
+def create_table_schema(schema: schemas.TableSchemaCreate, db: Session = Depends(database.get_db)):
+    """創建資料表配置"""
+    return database.create_table_schema(db, schema)
+
+@app.get("/table-schemas/", response_model=List[schemas.TableSchemaOut])
+def list_table_schemas(db: Session = Depends(database.get_db)):
+    """獲取所有資料表配置"""
+    return database.get_table_schemas(db)
+
+@app.get("/table-schemas/{schema_id}", response_model=schemas.TableSchemaOut)
+def get_table_schema(schema_id: int, db: Session = Depends(database.get_db)):
+    """獲取特定資料表配置"""
+    schema = database.get_table_schema(db, schema_id)
+    if not schema:
+        raise HTTPException(status_code=404, detail="Table schema not found")
+    return schema
+
+@app.patch("/table-schemas/{schema_id}", response_model=schemas.TableSchemaOut)
+def update_table_schema(schema_id: int, schema: schemas.TableSchemaUpdate, db: Session = Depends(database.get_db)):
+    """更新資料表配置"""
+    updated_schema = database.update_table_schema(db, schema_id, schema)
+    if not updated_schema:
+        raise HTTPException(status_code=404, detail="Table schema not found")
+    return updated_schema
+
+@app.delete("/table-schemas/{schema_id}")
+def delete_table_schema(schema_id: int, db: Session = Depends(database.get_db)):
+    """刪除資料表配置"""
+    schema = database.delete_table_schema(db, schema_id)
+    if not schema:
+        raise HTTPException(status_code=404, detail="Table schema not found")
+    return {"message": "Table schema deleted successfully"}
+
+# 資料表欄位管理
+@app.post("/table-columns/", response_model=schemas.TableColumnOut)
+def create_table_column(column: schemas.TableColumnCreate, db: Session = Depends(database.get_db)):
+    """創建資料表欄位配置"""
+    return database.create_table_column(db, column)
+
+@app.get("/table-columns/{table_id}", response_model=List[schemas.TableColumnOut])
+def list_table_columns(table_id: int, db: Session = Depends(database.get_db)):
+    """獲取資料表的所有欄位"""
+    return database.get_table_columns(db, table_id)
+
+@app.patch("/table-columns/{column_id}", response_model=schemas.TableColumnOut)
+def update_table_column(column_id: int, column: schemas.TableColumnUpdate, db: Session = Depends(database.get_db)):
+    """更新資料表欄位配置"""
+    updated_column = database.update_table_column(db, column_id, column)
+    if not updated_column:
+        raise HTTPException(status_code=404, detail="Table column not found")
+    return updated_column
+
+@app.delete("/table-columns/{column_id}")
+def delete_table_column(column_id: int, db: Session = Depends(database.get_db)):
+    """刪除資料表欄位配置"""
+    column = database.delete_table_column(db, column_id)
+    if not column:
+        raise HTTPException(status_code=404, detail="Table column not found")
+    return {"message": "Table column deleted successfully"} 

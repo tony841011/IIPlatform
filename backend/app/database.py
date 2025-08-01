@@ -1,9 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import (
+from .models import (
     Device, DeviceData, User, Alert, Base, DeviceGroup, Role, 
     Firmware, OTAUpdate, Rule, Workflow, WorkflowExecution, 
-    AuditLog, DeviceCommand
+    AuditLog, DeviceCommand, CommunicationProtocol, MQTTConfig, 
+    ModbusTCPConfig, OPCUAConfig
 )
 import datetime
 import uuid
@@ -287,4 +288,95 @@ def check_permission(db, user_id, resource_type, resource_id, action):
         return True
     
     # 這裡可以實現更複雜的權限檢查邏輯
-    return True 
+    return True
+
+# 通訊協定相關
+def create_communication_protocol(db, protocol):
+    """創建通訊協定配置"""
+    db_protocol = CommunicationProtocol(
+        device_id=protocol.device_id,
+        protocol_type=protocol.protocol_type,
+        config=protocol.config
+    )
+    db.add(db_protocol)
+    db.commit()
+    db.refresh(db_protocol)
+    return db_protocol
+
+def get_communication_protocols(db, device_id=None):
+    """獲取通訊協定配置"""
+    q = db.query(CommunicationProtocol)
+    if device_id:
+        q = q.filter(CommunicationProtocol.device_id == device_id)
+    return q.all()
+
+def create_mqtt_config(db, config):
+    """創建 MQTT 配置"""
+    db_config = MQTTConfig(
+        device_id=config.device_id,
+        broker_url=config.broker_url,
+        broker_port=config.broker_port,
+        username=config.username,
+        password=config.password,
+        topic_prefix=config.topic_prefix,
+        qos_level=config.qos_level,
+        keep_alive=config.keep_alive,
+        is_ssl=config.is_ssl
+    )
+    db.add(db_config)
+    db.commit()
+    db.refresh(db_config)
+    return db_config
+
+def get_mqtt_configs(db, device_id=None):
+    """獲取 MQTT 配置"""
+    q = db.query(MQTTConfig)
+    if device_id:
+        q = q.filter(MQTTConfig.device_id == device_id)
+    return q.all()
+
+def create_modbus_tcp_config(db, config):
+    """創建 Modbus TCP 配置"""
+    db_config = ModbusTCPConfig(
+        device_id=config.device_id,
+        host=config.host,
+        port=config.port,
+        unit_id=config.unit_id,
+        timeout=config.timeout,
+        retries=config.retries
+    )
+    db.add(db_config)
+    db.commit()
+    db.refresh(db_config)
+    return db_config
+
+def get_modbus_tcp_configs(db, device_id=None):
+    """獲取 Modbus TCP 配置"""
+    q = db.query(ModbusTCPConfig)
+    if device_id:
+        q = q.filter(ModbusTCPConfig.device_id == device_id)
+    return q.all()
+
+def create_opc_ua_config(db, config):
+    """創建 OPC UA 配置"""
+    db_config = OPCUAConfig(
+        device_id=config.device_id,
+        server_url=config.server_url,
+        namespace=config.namespace,
+        node_id=config.node_id,
+        username=config.username,
+        password=config.password,
+        security_policy=config.security_policy,
+        message_security_mode=config.message_security_mode
+    )
+    db.add(db_config)
+    db.commit()
+    db.refresh(db_config)
+    return db_config
+
+def get_opc_ua_configs(db, device_id=None):
+    """獲取 OPC UA 配置"""
+    q = db.query(OPCUAConfig)
+    if device_id:
+        q = q.filter(OPCUAConfig.device_id == device_id)
+    return q.all() 

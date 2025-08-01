@@ -8,7 +8,16 @@ import {
   HistoryOutlined,
   RobotOutlined,
   SettingOutlined,
-  UserOutlined
+  UserOutlined,
+  ApiOutlined,
+  CloudUploadOutlined,
+  SafetyCertificateOutlined,
+  ProjectOutlined,
+  AuditOutlined,
+  KeyOutlined,
+  TeamOutlined,
+  DatabaseOutlined,
+  TableOutlined
 } from '@ant-design/icons';
 import Dashboard from './components/Dashboard';
 import DeviceManagement from './components/DeviceManagement';
@@ -17,6 +26,17 @@ import HistoryAnalysis from './components/HistoryAnalysis';
 import AIAnalysis from './components/AIAnalysis';
 import Settings from './components/Settings';
 import Login from './components/Login';
+
+// 新增的進階功能組件
+import DeviceControl from './components/DeviceControl';
+import OTAUpdate from './components/OTAUpdate';
+import RuleEngine from './components/RuleEngine';
+import WorkflowAutomation from './components/WorkflowAutomation';
+import AuditTrail from './components/AuditTrail';
+import RoleManagement from './components/RoleManagement';
+import CommunicationProtocols from './components/CommunicationProtocols';
+import DatabaseConnectionManagement from './components/DatabaseConnectionManagement';
+import TableSchemaManagement from './components/TableSchemaManagement';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -38,6 +58,21 @@ function App() {
       label: <Link to="/devices">設備管理</Link>,
     },
     {
+      key: '/device-control',
+      icon: <ApiOutlined />,
+      label: <Link to="/device-control">設備控制</Link>,
+    },
+    {
+      key: '/ota-update',
+      icon: <CloudUploadOutlined />,
+      label: <Link to="/ota-update">OTA 更新</Link>,
+    },
+    {
+      key: '/communication',
+      icon: <ApiOutlined />,
+      label: <Link to="/communication">通訊協定</Link>,
+    },
+    {
       key: '/alerts',
       icon: <AlertOutlined />,
       label: <Link to="/alerts">告警中心</Link>,
@@ -51,6 +86,36 @@ function App() {
       key: '/ai',
       icon: <RobotOutlined />,
       label: <Link to="/ai">AI 分析</Link>,
+    },
+    {
+      key: '/rule-engine',
+      icon: <SafetyCertificateOutlined />,
+      label: <Link to="/rule-engine">規則引擎</Link>,
+    },
+    {
+      key: '/workflow',
+      icon: <ProjectOutlined />,
+      label: <Link to="/workflow">工作流程</Link>,
+    },
+    {
+      key: '/audit-trail',
+      icon: <AuditOutlined />,
+      label: <Link to="/audit-trail">審計日誌</Link>,
+    },
+    {
+      key: '/role-management',
+      icon: <KeyOutlined />,
+      label: <Link to="/role-management">角色管理</Link>,
+    },
+    {
+      key: '/database-connections',
+      icon: <DatabaseOutlined />,
+      label: <Link to="/database-connections">資料庫連線</Link>,
+    },
+    {
+      key: '/table-schemas',
+      icon: <TableOutlined />,
+      label: <Link to="/table-schemas">資料表設定</Link>,
     },
     {
       key: '/settings',
@@ -122,9 +187,18 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/devices" element={<DeviceManagement />} />
+              <Route path="/device-control" element={<DeviceControl />} />
+              <Route path="/ota-update" element={<OTAUpdate />} />
+              <Route path="/communication" element={<CommunicationProtocols />} />
               <Route path="/alerts" element={<AlertCenter />} />
               <Route path="/history" element={<HistoryAnalysis />} />
               <Route path="/ai" element={<AIAnalysis />} />
+              <Route path="/rule-engine" element={<RuleEngine />} />
+              <Route path="/workflow" element={<WorkflowAutomation />} />
+              <Route path="/audit-trail" element={<AuditTrail />} />
+              <Route path="/role-management" element={<RoleManagement />} />
+              <Route path="/database-connections" element={<DatabaseConnectionManagement />} />
+              <Route path="/table-schemas" element={<TableSchemaManagement />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/login" element={<Login />} />
             </Routes>
