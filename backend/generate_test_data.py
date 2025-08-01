@@ -4,7 +4,7 @@ import random
 import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
 
-from app.models import Base, Device, DeviceData, User, Alert, DeviceGroup
+from app.models import Base, Device, DeviceData, User, Alert, DeviceGroup, Role, Firmware, Rule, Workflow
 from app.database import engine, SessionLocal
 from app.main import get_password_hash
 
@@ -15,7 +15,20 @@ def generate_test_data():
     db = SessionLocal()
     
     try:
-        # 1. 建立設備群組
+        # 1. 建立角色
+        print("建立角色...")
+        roles = [
+            Role(name="admin", description="系統管理員", permissions={"all": True}),
+            Role(name="operator", description="操作員", permissions={"device_control": True, "view_data": True}),
+            Role(name="viewer", description="檢視者", permissions={"view_data": True}),
+            Role(name="maintenance", description="維護人員", permissions={"device_maintenance": True, "view_data": True})
+        ]
+        
+        for role in roles:
+            db.add(role)
+        db.commit()
+        
+        # 2. 建立設備群組
         print("建立設備群組...")
         groups = [
             DeviceGroup(name="生產線A"),
@@ -29,38 +42,39 @@ def generate_test_data():
             db.add(group)
         db.commit()
         
-        # 2. 建立用戶
+        # 3. 建立用戶
         print("建立測試用戶...")
         users = [
-            User(username="admin", hashed_password=get_password_hash("admin123"), role="admin"),
-            User(username="operator1", hashed_password=get_password_hash("op123"), role="user"),
-            User(username="manager", hashed_password=get_password_hash("mgmt123"), role="manager")
+            User(username="admin", hashed_password=get_password_hash("admin123"), role="admin", email="admin@company.com"),
+            User(username="operator1", hashed_password=get_password_hash("op123"), role="operator", email="op1@company.com"),
+            User(username="viewer1", hashed_password=get_password_hash("view123"), role="viewer", email="viewer1@company.com"),
+            User(username="maintenance1", hashed_password=get_password_hash("maint123"), role="maintenance", email="maint1@company.com")
         ]
         
         for user in users:
             db.add(user)
         db.commit()
         
-        # 3. 建立設備
+        # 4. 建立設備
         print("建立測試設備...")
         devices = [
-            Device(name="溫度感測器-01", location="生產線A-1號機", group=1, tags="溫度,感測器"),
-            Device(name="壓力感測器-01", location="生產線A-2號機", group=1, tags="壓力,感測器"),
-            Device(name="流量計-01", location="生產線A-3號機", group=1, tags="流量,計量"),
-            Device(name="溫度感測器-02", location="生產線B-1號機", group=2, tags="溫度,感測器"),
-            Device(name="振動感測器-01", location="生產線B-2號機", group=2, tags="振動,感測器"),
-            Device(name="包裝機-01", location="包裝區-1號機", group=3, tags="包裝,機器"),
-            Device(name="包裝機-02", location="包裝區-2號機", group=3, tags="包裝,機器"),
-            Device(name="倉儲溫控-01", location="倉儲區-1號", group=4, tags="溫度,控制"),
-            Device(name="品質檢測儀-01", location="檢測區-1號", group=5, tags="品質,檢測"),
-            Device(name="品質檢測儀-02", location="檢測區-2號", group=5, tags="品質,檢測")
+            Device(name="溫度感測器-01", location="生產線A-1號機", group=1, tags="溫度,感測器", device_type="sensor", status="online", firmware_version="v1.2.3", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="壓力感測器-01", location="生產線A-2號機", group=1, tags="壓力,感測器", device_type="sensor", status="online", firmware_version="v1.1.5", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="流量計-01", location="生產線A-3號機", group=1, tags="流量,計量", device_type="sensor", status="online", firmware_version="v2.0.1", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="溫度感測器-02", location="生產線B-1號機", group=2, tags="溫度,感測器", device_type="sensor", status="online", firmware_version="v1.2.3", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="振動感測器-01", location="生產線B-2號機", group=2, tags="振動,感測器", device_type="sensor", status="online", firmware_version="v1.0.8", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="包裝機-01", location="包裝區-1號機", group=3, tags="包裝,機器", device_type="actuator", status="online", firmware_version="v3.1.2", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="包裝機-02", location="包裝區-2號機", group=3, tags="包裝,機器", device_type="actuator", status="maintenance", firmware_version="v3.1.1", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="倉儲溫控-01", location="倉儲區-1號", group=4, tags="溫度,控制", device_type="controller", status="online", firmware_version="v2.5.0", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="品質檢測儀-01", location="檢測區-1號", group=5, tags="品質,檢測", device_type="sensor", status="online", firmware_version="v4.0.1", is_registered=True, registration_date=datetime.datetime.utcnow()),
+            Device(name="品質檢測儀-02", location="檢測區-2號", group=5, tags="品質,檢測", device_type="sensor", status="offline", firmware_version="v4.0.0", is_registered=True, registration_date=datetime.datetime.utcnow())
         ]
         
         for device in devices:
             db.add(device)
         db.commit()
         
-        # 4. 生成歷史數據
+        # 5. 生成歷史數據
         print("生成歷史數據...")
         base_time = datetime.datetime.now() - datetime.timedelta(days=7)
         
@@ -98,7 +112,7 @@ def generate_test_data():
         
         db.commit()
         
-        # 5. 生成告警數據
+        # 6. 生成告警數據
         print("生成告警數據...")
         alert_messages = [
             "數值超出正常範圍",
@@ -147,16 +161,103 @@ def generate_test_data():
         
         db.commit()
         
+        # 7. 生成韌體
+        print("生成韌體數據...")
+        firmwares = [
+            Firmware(version="v1.2.3", description="溫度感測器韌體更新", device_type="sensor", is_active=True),
+            Firmware(version="v2.0.1", description="流量計韌體更新", device_type="sensor", is_active=True),
+            Firmware(version="v3.1.2", description="包裝機韌體更新", device_type="actuator", is_active=True),
+            Firmware(version="v4.0.1", description="品質檢測儀韌體更新", device_type="sensor", is_active=True),
+            Firmware(version="v2.5.0", description="溫控器韌體更新", device_type="controller", is_active=True)
+        ]
+        
+        for firmware in firmwares:
+            db.add(firmware)
+        db.commit()
+        
+        # 8. 生成規則
+        print("生成規則數據...")
+        rules = [
+            Rule(
+                name="溫度異常告警",
+                description="當溫度超過35度時發送告警",
+                conditions={"temperature": 35, "operator": ">"},
+                actions={"type": "alert", "message": "溫度異常告警"},
+                is_active=True,
+                created_by=1
+            ),
+            Rule(
+                name="壓力異常告警",
+                description="當壓力超過3.5時發送告警",
+                conditions={"pressure": 3.5, "operator": ">"},
+                actions={"type": "alert", "message": "壓力異常告警"},
+                is_active=True,
+                created_by=1
+            ),
+            Rule(
+                name="品質檢測不合格",
+                description="當品質分數低於90時發送告警",
+                conditions={"quality": 90, "operator": "<"},
+                actions={"type": "alert", "message": "品質檢測不合格"},
+                is_active=True,
+                created_by=1
+            )
+        ]
+        
+        for rule in rules:
+            db.add(rule)
+        db.commit()
+        
+        # 9. 生成工作流程
+        print("生成工作流程數據...")
+        workflows = [
+            Workflow(
+                name="設備維護流程",
+                description="當設備狀態為維護時觸發的流程",
+                trigger_type="event",
+                trigger_conditions={"device_status": "maintenance"},
+                steps=[
+                    {"step": 1, "action": "send_notification", "params": {"type": "email", "to": "maintenance@company.com"}},
+                    {"step": 2, "action": "create_ticket", "params": {"priority": "high"}},
+                    {"step": 3, "action": "update_device_status", "params": {"status": "maintenance"}}
+                ],
+                is_active=True,
+                created_by=1
+            ),
+            Workflow(
+                name="異常處理流程",
+                description="當檢測到異常時的處理流程",
+                trigger_type="event",
+                trigger_conditions={"alert_type": "critical"},
+                steps=[
+                    {"step": 1, "action": "send_alert", "params": {"channels": ["email", "sms"]}},
+                    {"step": 2, "action": "stop_related_devices", "params": {"device_group": "production"}},
+                    {"step": 3, "action": "notify_operator", "params": {"priority": "urgent"}}
+                ],
+                is_active=True,
+                created_by=1
+            )
+        ]
+        
+        for workflow in workflows:
+            db.add(workflow)
+        db.commit()
+        
         print("✅ 測試數據生成完成！")
+        print(f"👥 已建立 {len(roles)} 個角色")
         print(f"📊 已建立 {len(groups)} 個設備群組")
-        print(f"👥 已建立 {len(users)} 個用戶")
+        print(f"👤 已建立 {len(users)} 個用戶")
         print(f"🔧 已建立 {len(devices)} 個設備")
         print(f"📈 已生成約 {7 * 24 * 10} 筆歷史數據")
         print(f"🚨 已生成約 {len(devices) * 2} 筆告警數據")
+        print(f"💾 已建立 {len(firmwares)} 個韌體")
+        print(f"⚙️  已建立 {len(rules)} 個規則")
+        print(f"🔄 已建立 {len(workflows)} 個工作流程")
         print("\n📝 測試帳號:")
         print("  管理員: admin / admin123")
         print("  操作員: operator1 / op123")
-        print("  經理: manager / mgmt123")
+        print("  檢視者: viewer1 / view123")
+        print("  維護員: maintenance1 / maint123")
         
     except Exception as e:
         print(f"❌ 生成測試數據時發生錯誤: {e}")

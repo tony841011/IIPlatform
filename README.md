@@ -88,7 +88,7 @@ npm start
 安裝 Mosquitto 或其他 MQTT Broker，啟動後可用 backend/app/mqtt_client.py 測試資料上傳。
 ```bash
 python mqtt_client.py
-```
+```cd
 
 #### 5. 生成測試數據
 ```bash
@@ -106,11 +106,17 @@ python simulate_realtime_data.py
 - **測試帳號**：
   - 管理員：admin / admin123
   - 操作員：operator1 / op123
-  - 經理：manager / mgmt123
+  - 檢視者：viewer1 / view123
+  - 維護員：maintenance1 / maint123
 - **設備管理**：可用 API 或前端新增設備、分群、標籤
 - **即時資料**：用模擬器上傳資料，前端儀表板即時顯示
 - **異常告警**：上傳異常數值，前端即時彈窗與告警列表
 - **歷史查詢/AI**：選擇設備，查看歷史折線圖與 AI 分析結果
+- **設備控制**：遠端控制設備、發送命令
+- **OTA 更新**：韌體版本管理與更新
+- **規則引擎**：可視化規則建立與條件判斷
+- **工作流程**：自動化流程與事件觸發
+- **審計日誌**：操作記錄與權限追蹤
 
 ### 三、常見問題與加速技巧
 - 依賴安裝失敗：確認 Python/Node 版本正確，必要時用 pip install --upgrade pip。
