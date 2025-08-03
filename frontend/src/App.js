@@ -23,7 +23,12 @@ import {
   PhoneOutlined,
   LogoutOutlined,
   LoginOutlined,
-  SwapOutlined
+  SwapOutlined,
+  ExperimentOutlined,
+  BellOutlined,
+  FileTextOutlined,
+  EnvironmentOutlined,
+  GatewayOutlined
 } from '@ant-design/icons';
 import Dashboard from './components/Dashboard';
 import DeviceManagement from './components/DeviceManagement';
@@ -46,6 +51,14 @@ import CommunicationProtocols from './components/CommunicationProtocols';
 import DatabaseConnectionManagement from './components/DatabaseConnectionManagement';
 import TableSchemaManagement from './components/TableSchemaManagement';
 import VideoRecognition from './components/VideoRecognition';
+
+// 新增的五個功能模組
+import MLOps from './components/MLOps';
+import NotificationPreferences from './components/NotificationPreferences';
+import ReportingSystem from './components/ReportingSystem';
+import GISIntegration from './components/GISIntegration';
+import EdgeGateway from './components/EdgeGateway';
+
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -116,6 +129,11 @@ function App() {
       label: <Link to="/ai">AI 分析</Link>,
     },
     {
+      key: '/mlops',
+      icon: <ExperimentOutlined />,
+      label: <Link to="/mlops">MLOps</Link>,
+    },
+    {
       key: '/rule-engine',
       icon: <SafetyCertificateOutlined />,
       label: <Link to="/rule-engine">規則引擎</Link>,
@@ -144,6 +162,26 @@ function App() {
       key: '/table-schemas',
       icon: <TableOutlined />,
       label: <Link to="/table-schemas">資料表結構</Link>,
+    },
+    {
+      key: '/notifications',
+      icon: <BellOutlined />,
+      label: <Link to="/notifications">通知偏好</Link>,
+    },
+    {
+      key: '/reporting',
+      icon: <FileTextOutlined />,
+      label: <Link to="/reporting">報表系統</Link>,
+    },
+    {
+      key: '/gis',
+      icon: <EnvironmentOutlined />,
+      label: <Link to="/gis">地理資訊</Link>,
+    },
+    {
+      key: '/edge-gateway',
+      icon: <GatewayOutlined />,
+      label: <Link to="/edge-gateway">邊緣閘道</Link>,
     },
     {
       key: '/settings',
@@ -274,12 +312,17 @@ function App() {
               <Route path="/alerts" element={<AlertCenter />} />
               <Route path="/history" element={<HistoryAnalysis />} />
               <Route path="/ai" element={<AIAnalysis />} />
+              <Route path="/mlops" element={<MLOps />} />
               <Route path="/rule-engine" element={<RuleEngine />} />
               <Route path="/workflow" element={<WorkflowAutomation />} />
               <Route path="/audit" element={<AuditTrail />} />
               <Route path="/roles" element={<RoleManagement />} />
               <Route path="/database-connections" element={<DatabaseConnectionManagement />} />
               <Route path="/table-schemas" element={<TableSchemaManagement />} />
+              <Route path="/notifications" element={<NotificationPreferences />} />
+              <Route path="/reporting" element={<ReportingSystem />} />
+              <Route path="/gis" element={<GISIntegration />} />
+              <Route path="/edge-gateway" element={<EdgeGateway />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/system-support" element={<SystemSupport />} />
             </Routes>
