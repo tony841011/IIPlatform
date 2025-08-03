@@ -5,11 +5,105 @@ import datetime
 
 Base = declarative_base()
 
-# 用戶角色關聯表
-user_roles = Table('user_roles', Base.metadata,
-    Column('user_id', Integer, ForeignKey('users.id')),
-    Column('role_id', Integer, ForeignKey('roles.id'))
-)
+# 在檔案開頭新增權限相關的模型
+
+# 權限分類
+class PermissionCategory(Base):
+    __tablename__ = "permission_categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 分類名稱
+    display_name = Column(String)  # 顯示名稱
+    description = Column(String)  # 描述
+    icon = Column(String)  # 圖示
+    order_index = Column(Integer, default=0)  # 排序索引
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 權限定義
+class Permission(Base):
+    __tablename__ = "permissions"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 權限名稱
+    display_name = Column(String)  # 顯示名稱
+    description = Column(String)  # 描述
+    category_id = Column(Integer, ForeignKey("permission_categories.id"))  # 權限分類
+    resource_type = Column(String)  # 資源類型 (device, user, rule, etc.)
+    action = Column(String)  # 動作 (create, read, update, delete, control)
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 角色權限關聯
+class RolePermission(Base):
+    __tablename__ = "role_permissions"
+    id = Column(Integer, primary_key=True, index=True)
+    role_id = Column(Integer, ForeignKey("roles.id"))
+    permission_id = Column(Integer, ForeignKey("permissions.id"))
+    granted = Column(Boolean, default=True)  # 是否授權
+    granted_by = Column(Integer, ForeignKey("users.id"))  # 授權者
+    granted_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 用戶權限關聯（覆蓋角色權限）
+class UserPermission(Base):
+    __tablename__ = "user_permissions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    permission_id = Column(Integer, ForeignKey("permissions.id"))
+    granted = Column(Boolean, default=True)  # 是否授權
+    granted_by = Column(Integer, ForeignKey("users.id"))  # 授權者
+    granted_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 更新 Role 模型
+class Role(Base):
+    __tablename__ = "roles"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 角色名稱
+    display_name = Column(String)  # 顯示名稱
+    description = Column(String)  # 描述
+    level = Column(Integer, default=0)  # 角色等級 (0=最低, 999=最高)
+    is_system = Column(Boolean, default=False)  # 是否為系統角色
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 更新 User 模型
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    display_name = Column(String)  # 顯示名稱
+    hashed_password = Column(String)
+    email = Column(String)
+    phone = Column(String, nullable=True)  # 電話
+    department = Column(String, nullable=True)  # 部門
+    position = Column(String, nullable=True)  # 職位
+    role_id = Column(Integer, ForeignKey("roles.id"))  # 主要角色
+    is_active = Column(Boolean, default=True)
+    is_superuser = Column(Boolean, default=False)  # 超級管理員
+    last_login = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 用戶多角色關聯
+class UserRole(Base):
+    __tablename__ = "user_roles"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    role_id = Column(Integer, ForeignKey("roles.id"))
+    is_primary = Column(Boolean, default=False)  # 是否為主要角色
+    assigned_by = Column(Integer, ForeignKey("users.id"))  # 分配者
+    assigned_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 資源權限（細粒度權限控制）
+class ResourcePermission(Base):
+    __tablename__ = "resource_permissions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    resource_type = Column(String)  # 資源類型
+    resource_id = Column(Integer)  # 資源 ID
+    permission = Column(String)  # 權限 (read, write, delete, control)
+    granted = Column(Boolean, default=True)  # 是否授權
+    granted_by = Column(Integer, ForeignKey("users.id"))  # 授權者
+    granted_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 # 用戶設備權限關聯表
 user_device_permissions = Table('user_device_permissions', Base.metadata,
@@ -17,24 +111,6 @@ user_device_permissions = Table('user_device_permissions', Base.metadata,
     Column('device_id', Integer, ForeignKey('devices.id')),
     Column('permission', String)  # read, write, control
 )
-
-class Role(Base):
-    __tablename__ = "roles"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True)  # admin, operator, viewer
-    description = Column(String)
-    permissions = Column(JSON)  # 權限列表
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    role = Column(String, default="user")
-    email = Column(String)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    last_login = Column(DateTime)
 
 class Device(Base):
     __tablename__ = "devices"
@@ -455,3 +531,47 @@ class GPUPerformanceConfig(Base):
     power_limit = Column(Float)  # 功耗限制 (W)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow) 
+
+# 在檔案末尾新增功能頁面分類相關模型
+
+# 功能頁面分類
+class PageCategory(Base):
+    __tablename__ = "page_categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 分類名稱
+    display_name = Column(String)  # 顯示名稱
+    description = Column(String)  # 描述
+    icon = Column(String)  # 圖示
+    color = Column(String)  # 顏色
+    order_index = Column(Integer, default=0)  # 排序索引
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 功能頁面
+class Page(Base):
+    __tablename__ = "pages"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 頁面名稱
+    display_name = Column(String)  # 顯示名稱
+    description = Column(String)  # 描述
+    path = Column(String)  # 路由路徑
+    component = Column(String)  # 組件名稱
+    icon = Column(String)  # 圖示
+    category_id = Column(Integer, ForeignKey("page_categories.id"))  # 分類
+    required_permission = Column(String)  # 所需權限
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    is_system = Column(Boolean, default=False)  # 是否為系統頁面
+    order_index = Column(Integer, default=0)  # 排序索引
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 角色頁面權限
+class RolePagePermission(Base):
+    __tablename__ = "role_page_permissions"
+    id = Column(Integer, primary_key=True, index=True)
+    role_id = Column(Integer, ForeignKey("roles.id"))
+    page_id = Column(Integer, ForeignKey("pages.id"))
+    can_access = Column(Boolean, default=True)  # 是否可以訪問
+    can_edit = Column(Boolean, default=False)  # 是否可以編輯
+    granted_by = Column(Integer, ForeignKey("users.id"))  # 授權者
+    granted_at = Column(DateTime, default=datetime.datetime.utcnow) 

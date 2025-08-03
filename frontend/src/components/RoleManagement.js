@@ -1,202 +1,385 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card,
-  Table,
+  Row,
+  Col,
   Button,
+  Space,
+  Table,
+  Tag,
   Modal,
   Form,
   Input,
   Select,
-  Space,
-  Tag,
-  Row,
-  Col,
-  Statistic,
-  message,
-  Alert,
   Switch,
-  Tree,
-  Transfer,
   Typography,
-  Divider
+  Divider,
+  Badge,
+  Tooltip,
+  Popconfirm,
+  message,
+  Spin,
+  Tabs,
+  Tree,
+  Checkbox,
+  Alert,
+  Descriptions,
+  List,
+  Avatar,
+  Progress,
+  Drawer,
+  Transfer,
+  TreeSelect,
+  Collapse,
+  Statistic
 } from 'antd';
 import {
   KeyOutlined,
   UserOutlined,
-  TeamOutlined,
-  PlusOutlined,
+  SettingOutlined,
+  EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  EyeOutlined,
-  LockOutlined
+  PlusOutlined,
+  SaveOutlined,
+  ReloadOutlined,
+  LockOutlined,
+  UnlockOutlined,
+  TeamOutlined,
+  SafetyCertificateOutlined,
+  ApiOutlined,
+  DatabaseOutlined,
+  BarChartOutlined,
+  RobotOutlined,
+  DashboardOutlined,
+  DesktopOutlined,
+  AlertOutlined,
+  HistoryOutlined,
+  VideoCameraOutlined,
+  NodeIndexOutlined,
+  ProjectOutlined,
+  AuditOutlined,
+  TableOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
+const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
-const { Title, Text } = Typography;
+const { Panel } = Collapse;
 
 const RoleManagement = () => {
-  const [roles, setRoles] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [roles, setRoles] = useState([]);
+  const [permissions, setPermissions] = useState([]);
+  const [permissionCategories, setPermissionCategories] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [pageCategories, setPageCategories] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
+  const [activeTab, setActiveTab] = useState('roles');
+  const [users, setUsers] = useState([]);
   const [form] = Form.useForm();
 
   useEffect(() => {
-    fetchRoles();
-    fetchUsers();
-    fetchDevices();
+    fetchData();
   }, []);
 
-  const fetchRoles = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8000/roles/');
-      setRoles(response.data);
-    } catch (error) {
-      message.error('獲取角色列表失敗');
-    }
-  };
+      // 模擬數據
+      setRoles([
+        {
+          id: 1,
+          name: 'super_admin',
+          display_name: '超級管理員',
+          description: '擁有所有權限的超級管理員',
+          level: 999,
+          is_system: true,
+          user_count: 1
+        },
+        {
+          id: 2,
+          name: 'admin',
+          display_name: '系統管理員',
+          description: '系統管理員，擁有大部分權限',
+          level: 100,
+          is_system: true,
+          user_count: 3
+        },
+        {
+          id: 3,
+          name: 'operator',
+          display_name: '操作員',
+          description: '一般操作員，擁有基本操作權限',
+          level: 50,
+          is_system: false,
+          user_count: 8
+        },
+        {
+          id: 4,
+          name: 'viewer',
+          display_name: '檢視者',
+          description: '只能檢視數據，無操作權限',
+          level: 10,
+          is_system: false,
+          user_count: 15
+        }
+      ]);
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/users/');
-      setUsers(response.data);
-    } catch (error) {
-      message.error('獲取用戶列表失敗');
-    }
-  };
+      // 模擬用戶數據
+      setUsers([
+        {
+          id: 1,
+          username: 'admin',
+          email: 'admin@company.com',
+          role: 'admin',
+          is_active: true,
+          last_login: '2024-01-15 10:30:00'
+        },
+        {
+          id: 2,
+          username: 'operator1',
+          email: 'operator1@company.com',
+          role: 'operator',
+          is_active: true,
+          last_login: '2024-01-15 09:15:00'
+        },
+        {
+          id: 3,
+          username: 'viewer1',
+          email: 'viewer1@company.com',
+          role: 'viewer',
+          is_active: true,
+          last_login: '2024-01-15 08:45:00'
+        }
+      ]);
 
-  const fetchDevices = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/devices/');
-      setDevices(response.data);
-    } catch (error) {
-      message.error('獲取設備列表失敗');
-    }
-  };
+      // 模擬權限分類
+      setPermissionCategories([
+        {
+          id: 1,
+          name: 'dashboard',
+          display_name: '儀表板',
+          description: '儀表板相關權限',
+          icon: 'DashboardOutlined'
+        },
+        {
+          id: 2,
+          name: 'device_management',
+          display_name: '設備管理',
+          description: '設備管理相關權限',
+          icon: 'DesktopOutlined'
+        },
+        {
+          id: 3,
+          name: 'data_analysis',
+          display_name: '數據分析',
+          description: '數據分析相關權限',
+          icon: 'BarChartOutlined'
+        },
+        {
+          id: 4,
+          name: 'ai_analysis',
+          display_name: 'AI 分析',
+          description: 'AI 分析相關權限',
+          icon: 'RobotOutlined'
+        },
+        {
+          id: 5,
+          name: 'system_settings',
+          display_name: '系統設定',
+          description: '系統設定相關權限',
+          icon: 'SettingOutlined'
+        }
+      ]);
 
-  const createRole = async (values) => {
-    try {
-      setLoading(true);
-      
-      // 構建權限對象
-      const permissions = {};
-      if (values.device_permissions) {
-        permissions.device = values.device_permissions;
-      }
-      if (values.user_permissions) {
-        permissions.user = values.user_permissions;
-      }
-      if (values.system_permissions) {
-        permissions.system = values.system_permissions;
-      }
-      
-      const roleData = {
-        name: values.name,
-        description: values.description,
-        permissions: permissions
-      };
-      
-      await axios.post('http://localhost:8000/roles/', roleData);
-      message.success('角色創建成功');
-      setModalVisible(false);
-      form.resetFields();
-      fetchRoles();
+      // 模擬權限數據
+      setPermissions([
+        {
+          id: 1,
+          category_id: 1,
+          name: 'dashboard:view',
+          display_name: '檢視儀表板',
+          description: '允許檢視儀表板'
+        },
+        {
+          id: 2,
+          category_id: 1,
+          name: 'dashboard:export',
+          display_name: '匯出儀表板',
+          description: '允許匯出儀表板數據'
+        },
+        {
+          id: 3,
+          category_id: 2,
+          name: 'device:view',
+          display_name: '檢視設備',
+          description: '允許檢視設備列表'
+        },
+        {
+          id: 4,
+          category_id: 2,
+          name: 'device:edit',
+          display_name: '編輯設備',
+          description: '允許編輯設備資訊'
+        },
+        {
+          id: 5,
+          category_id: 2,
+          name: 'device:delete',
+          display_name: '刪除設備',
+          description: '允許刪除設備'
+        },
+        {
+          id: 6,
+          category_id: 3,
+          name: 'data:view',
+          display_name: '檢視數據',
+          description: '允許檢視數據分析'
+        },
+        {
+          id: 7,
+          category_id: 3,
+          name: 'data:export',
+          display_name: '匯出數據',
+          description: '允許匯出數據'
+        },
+        {
+          id: 8,
+          category_id: 4,
+          name: 'ai:view',
+          display_name: '檢視 AI 分析',
+          description: '允許檢視 AI 分析結果'
+        },
+        {
+          id: 9,
+          category_id: 4,
+          name: 'ai:train',
+          display_name: '訓練 AI 模型',
+          description: '允許訓練 AI 模型'
+        },
+        {
+          id: 10,
+          category_id: 5,
+          name: 'settings:view',
+          display_name: '檢視設定',
+          description: '允許檢視系統設定'
+        },
+        {
+          id: 11,
+          category_id: 5,
+          name: 'settings:edit',
+          display_name: '編輯設定',
+          description: '允許編輯系統設定'
+        }
+      ]);
+
+      // 模擬頁面分類
+      setPageCategories([
+        {
+          id: 1,
+          name: 'core',
+          display_name: '核心功能',
+          description: '平台核心功能頁面'
+        },
+        {
+          id: 2,
+          name: 'analysis',
+          display_name: '分析功能',
+          description: '數據分析相關頁面'
+        },
+        {
+          id: 3,
+          name: 'management',
+          display_name: '管理功能',
+          description: '系統管理相關頁面'
+        },
+        {
+          id: 4,
+          name: 'advanced',
+          display_name: '進階功能',
+          description: '進階功能頁面'
+        }
+      ]);
+
+      // 模擬頁面數據
+      setPages([
+        {
+          id: 1,
+          category_id: 1,
+          name: 'dashboard',
+          display_name: '儀表板',
+          path: '/dashboard',
+          description: '主要儀表板頁面'
+        },
+        {
+          id: 2,
+          category_id: 1,
+          name: 'device_management',
+          display_name: '設備管理',
+          path: '/devices',
+          description: '設備管理頁面'
+        },
+        {
+          id: 3,
+          category_id: 2,
+          name: 'data_analysis',
+          display_name: '數據分析',
+          path: '/analysis',
+          description: '數據分析頁面'
+        },
+        {
+          id: 4,
+          category_id: 2,
+          name: 'ai_analysis',
+          display_name: 'AI 分析',
+          path: '/ai',
+          description: 'AI 分析頁面'
+        },
+        {
+          id: 5,
+          category_id: 3,
+          name: 'user_management',
+          display_name: '用戶管理',
+          path: '/users',
+          description: '用戶管理頁面'
+        },
+        {
+          id: 6,
+          category_id: 3,
+          name: 'role_management',
+          display_name: '角色管理',
+          path: '/roles',
+          description: '角色管理頁面'
+        },
+        {
+          id: 7,
+          category_id: 4,
+          name: 'video_recognition',
+          display_name: '串流影像辨識',
+          path: '/video',
+          description: '串流影像辨識頁面'
+        },
+        {
+          id: 8,
+          category_id: 4,
+          name: 'etl_flow_designer',
+          display_name: 'ETL 流程設計器',
+          path: '/etl-designer',
+          description: 'ETL 流程設計器頁面'
+        }
+      ]);
+
     } catch (error) {
-      message.error('角色創建失敗');
+      message.error('載入數據失敗');
     } finally {
       setLoading(false);
     }
   };
 
-  const getRoleLevel = (roleName) => {
-    switch (roleName) {
-      case 'admin': return 1;
-      case 'operator': return 2;
-      case 'viewer': return 3;
-      case 'maintenance': return 2;
-      default: return 4;
-    }
-  };
-
-  const getRoleColor = (roleName) => {
-    switch (roleName) {
-      case 'admin': return 'red';
-      case 'operator': return 'blue';
-      case 'viewer': return 'green';
-      case 'maintenance': return 'orange';
-      default: return 'default';
-    }
-  };
-
-  const getRoleText = (roleName) => {
-    switch (roleName) {
-      case 'admin': return '管理員';
-      case 'operator': return '操作員';
-      case 'viewer': return '檢視者';
-      case 'maintenance': return '維護員';
-      default: return roleName;
-    }
-  };
-
-  const roleColumns = [
-    {
-      title: '角色名稱',
-      dataIndex: 'name',
-      key: 'name',
-      render: (name) => (
-        <Tag color={getRoleColor(name)}>
-          {getRoleText(name)}
-        </Tag>
-      ),
-    },
-    {
-      title: '描述',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: '權限等級',
-      key: 'level',
-      render: (_, record) => getRoleLevel(record.name),
-      sorter: (a, b) => getRoleLevel(a.name) - getRoleLevel(b.name),
-    },
-    {
-      title: '用戶數量',
-      key: 'user_count',
-      render: (_, record) => {
-        const count = users.filter(user => user.role === record.name).length;
-        return count;
-      },
-    },
-    {
-      title: '創建時間',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (time) => time ? new Date(time).toLocaleString() : '-',
-    },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_, record) => (
-        <Space>
-          <Button size="small" icon={<EyeOutlined />}>
-            查看權限
-          </Button>
-          <Button size="small" icon={<EditOutlined />}>
-            編輯
-          </Button>
-          <Button size="small" danger icon={<DeleteOutlined />}>
-            刪除
-          </Button>
-        </Space>
-      ),
-    },
-  ];
-
+  // 用戶列表欄位定義
   const userColumns = [
     {
       title: '用戶名',
@@ -204,111 +387,189 @@ const RoleManagement = () => {
       key: 'username',
     },
     {
+      title: '電子郵件',
+      dataIndex: 'email',
+      key: 'email',
+    },
+    {
       title: '角色',
       dataIndex: 'role',
       key: 'role',
       render: (role) => (
-        <Tag color={getRoleColor(role)}>
-          {getRoleText(role)}
+        <Tag color={role === 'admin' ? 'red' : role === 'operator' ? 'blue' : 'green'}>
+          {role}
         </Tag>
       ),
-    },
-    {
-      title: '郵箱',
-      dataIndex: 'email',
-      key: 'email',
     },
     {
       title: '狀態',
       dataIndex: 'is_active',
       key: 'is_active',
-      render: (active) => (
-        <Tag color={active ? 'green' : 'red'}>
-          {active ? '啟用' : '停用'}
-        </Tag>
+      render: (isActive) => (
+        <Badge status={isActive ? 'success' : 'error'} text={isActive ? '啟用' : '停用'} />
       ),
     },
     {
       title: '最後登入',
       dataIndex: 'last_login',
       key: 'last_login',
-      render: (time) => time ? new Date(time).toLocaleString() : '從未登入',
     },
     {
       title: '操作',
       key: 'action',
       render: (_, record) => (
-        <Space>
-          <Button size="small" icon={<EditOutlined />}>
-            編輯角色
+        <Space size="small">
+          <Button type="link" size="small" icon={<EyeOutlined />}>
+            檢視
           </Button>
-          <Button size="small" icon={<LockOutlined />}>
-            重置密碼
+          <Button type="link" size="small" icon={<EditOutlined />}>
+            編輯
           </Button>
         </Space>
       ),
     },
   ];
 
-  const permissionTreeData = [
+  // 角色列表欄位定義
+  const roleColumns = [
     {
-      title: '設備管理',
-      key: 'device',
-      children: [
-        { title: '查看設備', key: 'device:read' },
-        { title: '創建設備', key: 'device:create' },
-        { title: '編輯設備', key: 'device:update' },
-        { title: '刪除設備', key: 'device:delete' },
-        { title: '控制設備', key: 'device:control' },
-      ]
+      title: '角色名稱',
+      dataIndex: 'name',
+      key: 'name',
     },
     {
-      title: '用戶管理',
-      key: 'user',
-      children: [
-        { title: '查看用戶', key: 'user:read' },
-        { title: '創建用戶', key: 'user:create' },
-        { title: '編輯用戶', key: 'user:update' },
-        { title: '刪除用戶', key: 'user:delete' },
-      ]
+      title: '顯示名稱',
+      dataIndex: 'display_name',
+      key: 'display_name',
     },
     {
-      title: '系統管理',
-      key: 'system',
-      children: [
-        { title: '查看日誌', key: 'system:audit' },
-        { title: '系統設定', key: 'system:settings' },
-        { title: '備份還原', key: 'system:backup' },
-      ]
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
     },
     {
-      title: '規則引擎',
-      key: 'rule',
-      children: [
-        { title: '查看規則', key: 'rule:read' },
-        { title: '創建規則', key: 'rule:create' },
-        { title: '編輯規則', key: 'rule:update' },
-        { title: '刪除規則', key: 'rule:delete' },
-      ]
+      title: '等級',
+      dataIndex: 'level',
+      key: 'level',
+      render: (level) => (
+        <Tag color={level >= 100 ? 'red' : level >= 50 ? 'blue' : 'green'}>
+          {level}
+        </Tag>
+      ),
     },
     {
-      title: '工作流程',
-      key: 'workflow',
-      children: [
-        { title: '查看工作流程', key: 'workflow:read' },
-        { title: '創建工作流程', key: 'workflow:create' },
-        { title: '編輯工作流程', key: 'workflow:update' },
-        { title: '執行工作流程', key: 'workflow:execute' },
-      ]
-    }
+      title: '用戶數',
+      dataIndex: 'user_count',
+      key: 'user_count',
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Space size="small">
+          <Button type="link" size="small" icon={<EyeOutlined />}>
+            檢視
+          </Button>
+          <Button type="link" size="small" icon={<EditOutlined />}>
+            編輯
+          </Button>
+          {!record.is_system && (
+            <Popconfirm
+              title="確定要刪除這個角色嗎？"
+              onConfirm={() => handleDeleteRole(record.id)}
+            >
+              <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                刪除
+              </Button>
+            </Popconfirm>
+          )}
+        </Space>
+      ),
+    },
   ];
 
+  const handleCreateRole = () => {
+    setSelectedRole(null);
+    form.resetFields();
+    setModalVisible(true);
+  };
+
+  const handleEditRole = (role) => {
+    setSelectedRole(role);
+    form.setFieldsValue(role);
+    setModalVisible(true);
+  };
+
+  const handleDeleteRole = async (roleId) => {
+    try {
+      // 這裡應該調用 API 刪除角色
+      message.success('角色刪除成功');
+      fetchData();
+    } catch (error) {
+      message.error('刪除失敗');
+    }
+  };
+
+  const handleSaveRole = async (values) => {
+    try {
+      if (selectedRole) {
+        // 更新角色
+        message.success('角色更新成功');
+      } else {
+        // 新增角色
+        message.success('角色新增成功');
+      }
+      setModalVisible(false);
+      fetchData();
+    } catch (error) {
+      message.error('儲存失敗');
+    }
+  };
+
+  // 建立角色函數
+  const createRole = async (values) => {
+    try {
+      // 這裡應該調用 API 建立角色
+      message.success('角色建立成功');
+      setModalVisible(false);
+      fetchData();
+    } catch (error) {
+      message.error('建立失敗');
+    }
+  };
+
+  // 權限樹狀數據
+  const permissionTreeData = permissionCategories.map(category => ({
+    title: (
+      <Space>
+        <Tag color="blue">{category.display_name}</Tag>
+        <Text type="secondary">({permissions.filter(p => p.category_id === category.id).length} 個權限)</Text>
+      </Space>
+    ),
+    key: `category-${category.id}`,
+    children: permissions
+      .filter(permission => permission.category_id === category.id)
+      .map(permission => ({
+        title: (
+          <Space>
+            <Text>{permission.display_name}</Text>
+            <Text type="secondary">({permission.name})</Text>
+          </Space>
+        ),
+        key: `permission-${permission.id}`,
+      }))
+  }));
+
   return (
-    <div>
+    <div style={{ padding: 24 }}>
+      <Title level={2}>
+        <KeyOutlined /> 角色與權限管理
+      </Title>
+
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card title="角色管理概覽" extra={
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalVisible(true)}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateRole}>
               新增角色
             </Button>
           }>
@@ -407,67 +668,34 @@ const RoleManagement = () => {
               <Form.Item
                 label="顯示名稱"
                 name="display_name"
+                rules={[{ required: true, message: '請輸入顯示名稱' }]}
               >
                 <Input placeholder="例如: 操作員" />
               </Form.Item>
             </Col>
           </Row>
-
           <Form.Item
             label="描述"
             name="description"
           >
-            <TextArea rows={3} placeholder="角色描述" />
+            <TextArea rows={3} placeholder="請輸入角色描述" />
           </Form.Item>
-
-          <Divider>權限設定</Divider>
-
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                label="設備權限"
-                name="device_permissions"
-              >
-                <Select mode="multiple" placeholder="選擇設備權限">
-                  <Option value="read">查看設備</Option>
-                  <Option value="create">創建設備</Option>
-                  <Option value="update">編輯設備</Option>
-                  <Option value="delete">刪除設備</Option>
-                  <Option value="control">控制設備</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="用戶權限"
-                name="user_permissions"
-              >
-                <Select mode="multiple" placeholder="選擇用戶權限">
-                  <Option value="read">查看用戶</Option>
-                  <Option value="create">創建用戶</Option>
-                  <Option value="update">編輯用戶</Option>
-                  <Option value="delete">刪除用戶</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="系統權限"
-                name="system_permissions"
-              >
-                <Select mode="multiple" placeholder="選擇系統權限">
-                  <Option value="audit">查看日誌</Option>
-                  <Option value="settings">系統設定</Option>
-                  <Option value="backup">備份還原</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
+          <Form.Item
+            label="權限等級"
+            name="level"
+            rules={[{ required: true, message: '請選擇權限等級' }]}
+          >
+            <Select placeholder="請選擇權限等級">
+              <Option value={10}>檢視者 (10)</Option>
+              <Option value={50}>操作員 (50)</Option>
+              <Option value={100}>管理員 (100)</Option>
+              <Option value={999}>超級管理員 (999)</Option>
+            </Select>
+          </Form.Item>
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                創建角色
+              <Button type="primary" htmlType="submit">
+                儲存
               </Button>
               <Button onClick={() => setModalVisible(false)}>
                 取消

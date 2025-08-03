@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Layout, Menu, theme } from 'antd';
+import { Layout, Menu, theme, Dropdown, Space, Avatar, Button, Modal, Form, Input, message } from 'antd';
 import {
   DashboardOutlined,
   DesktopOutlined,
@@ -18,7 +18,12 @@ import {
   TeamOutlined,
   DatabaseOutlined,
   TableOutlined,
-  VideoCameraOutlined
+  VideoCameraOutlined,
+  InfoCircleOutlined,
+  PhoneOutlined,
+  LogoutOutlined,
+  LoginOutlined,
+  SwapOutlined
 } from '@ant-design/icons';
 import Dashboard from './components/Dashboard';
 import DeviceManagement from './components/DeviceManagement';
@@ -27,6 +32,8 @@ import HistoryAnalysis from './components/HistoryAnalysis';
 import AIAnalysis from './components/AIAnalysis';
 import Settings from './components/Settings';
 import Login from './components/Login';
+import PlatformIntro from './components/PlatformIntro';
+import SystemSupport from './components/SystemSupport';
 
 // 新增的進階功能組件
 import DeviceControl from './components/DeviceControl';
@@ -48,11 +55,25 @@ function App() {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
+  const [currentUser, setCurrentUser] = useState({
+    username: 'admin',
+    role: 'admin',
+    avatar: 'https://joeschmoe.io/api/v1/admin'
+  });
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [switchUserModalVisible, setSwitchUserModalVisible] = useState(false);
+  const [loginForm] = Form.useForm();
+
   const menuItems = [
     {
       key: '/',
       icon: <DashboardOutlined />,
       label: <Link to="/">儀表板</Link>,
+    },
+    {
+      key: '/platform-intro',
+      icon: <InfoCircleOutlined />,
+      label: <Link to="/platform-intro">平台簡介</Link>,
     },
     {
       key: '/devices',
@@ -105,14 +126,14 @@ function App() {
       label: <Link to="/workflow">工作流程</Link>,
     },
     {
-      key: '/audit-trail',
+      key: '/audit',
       icon: <AuditOutlined />,
-      label: <Link to="/audit-trail">審計日誌</Link>,
+      label: <Link to="/audit">審計日誌</Link>,
     },
     {
-      key: '/role-management',
+      key: '/roles',
       icon: <KeyOutlined />,
-      label: <Link to="/role-management">角色管理</Link>,
+      label: <Link to="/roles">角色管理</Link>,
     },
     {
       key: '/database-connections',
@@ -122,14 +143,69 @@ function App() {
     {
       key: '/table-schemas',
       icon: <TableOutlined />,
-      label: <Link to="/table-schemas">資料表設定</Link>,
+      label: <Link to="/table-schemas">資料表結構</Link>,
     },
     {
       key: '/settings',
       icon: <SettingOutlined />,
       label: <Link to="/settings">系統設定</Link>,
     },
+    {
+      key: '/system-support',
+      icon: <PhoneOutlined />,
+      label: <Link to="/system-support">系統維運聯絡</Link>,
+    }
   ];
+
+  const handleSwitchUser = () => {
+    setSwitchUserModalVisible(true);
+  };
+
+  const handleLogout = () => {
+    Modal.confirm({
+      title: '確認登出',
+      content: '確定要登出系統嗎？',
+      onOk: () => {
+        setIsLoggedIn(false);
+        message.success('已成功登出');
+      }
+    });
+  };
+
+  const handleLogin = async (values) => {
+    try {
+      // 這裡應該調用登入 API
+      setCurrentUser({
+        username: values.username,
+        role: values.username === 'admin' ? 'admin' : 'operator',
+        avatar: `https://joeschmoe.io/api/v1/${values.username}`
+      });
+      setIsLoggedIn(true);
+      setSwitchUserModalVisible(false);
+      message.success('登入成功');
+    } catch (error) {
+      message.error('登入失敗');
+    }
+  };
+
+  const userMenuItems = [
+    {
+      key: 'switch-user',
+      icon: <SwapOutlined />,
+      label: '切換使用者',
+      onClick: handleSwitchUser
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '登出',
+      onClick: handleLogout
+    }
+  ];
+
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   return (
     <Router>
@@ -137,29 +213,16 @@ function App() {
         <Sider
           breakpoint="lg"
           collapsedWidth="0"
-          style={{
-            background: colorBgContainer,
+          onBreakpoint={(broken) => {
+            console.log(broken);
           }}
         >
-          <div style={{ 
-            height: 32, 
-            margin: 16, 
-            background: 'rgba(255, 255, 255, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#1890ff',
-            fontWeight: 'bold',
-            fontSize: '16px'
-          }}>
-            IIoT 平台
-          </div>
+          <div className="demo-logo-vertical" />
           <Menu
-            theme="light"
+            theme="dark"
             mode="inline"
             defaultSelectedKeys={['/']}
             items={menuItems}
-            style={{ borderRight: 0 }}
           />
         </Sider>
         <Layout>
@@ -168,19 +231,28 @@ function App() {
               padding: 0,
               background: colorBgContainer,
               display: 'flex',
-              alignItems: 'center',
               justifyContent: 'space-between',
-              paddingLeft: 16,
-              paddingRight: 16
+              alignItems: 'center',
+              paddingRight: 24
             }}
           >
-            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-              工廠物聯網平台
+            <div style={{ paddingLeft: 24 }}>
+              <h2 style={{ margin: 0, color: '#1890ff' }}>
+                工業物聯網平台
+              </h2>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <UserOutlined style={{ fontSize: '16px' }} />
-              <span>管理員</span>
-            </div>
+            <Dropdown
+              menu={{
+                items: userMenuItems
+              }}
+              placement="bottomRight"
+            >
+              <Space style={{ cursor: 'pointer' }}>
+                <Avatar src={currentUser.avatar} />
+                <span>{currentUser.username}</span>
+                <span style={{ color: '#666' }}>({currentUser.role})</span>
+              </Space>
+            </Dropdown>
           </Header>
           <Content
             style={{
@@ -193,6 +265,7 @@ function App() {
           >
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/platform-intro" element={<PlatformIntro />} />
               <Route path="/devices" element={<DeviceManagement />} />
               <Route path="/device-control" element={<DeviceControl />} />
               <Route path="/ota-update" element={<OTAUpdate />} />
@@ -203,16 +276,56 @@ function App() {
               <Route path="/ai" element={<AIAnalysis />} />
               <Route path="/rule-engine" element={<RuleEngine />} />
               <Route path="/workflow" element={<WorkflowAutomation />} />
-              <Route path="/audit-trail" element={<AuditTrail />} />
-              <Route path="/role-management" element={<RoleManagement />} />
+              <Route path="/audit" element={<AuditTrail />} />
+              <Route path="/roles" element={<RoleManagement />} />
               <Route path="/database-connections" element={<DatabaseConnectionManagement />} />
               <Route path="/table-schemas" element={<TableSchemaManagement />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/system-support" element={<SystemSupport />} />
             </Routes>
           </Content>
         </Layout>
       </Layout>
+
+      {/* 切換使用者模態框 */}
+      <Modal
+        title="切換使用者"
+        open={switchUserModalVisible}
+        onCancel={() => setSwitchUserModalVisible(false)}
+        footer={null}
+        width={400}
+      >
+        <Form
+          form={loginForm}
+          onFinish={handleLogin}
+          layout="vertical"
+        >
+          <Form.Item
+            label="使用者名稱"
+            name="username"
+            rules={[{ required: true, message: '請輸入使用者名稱' }]}
+          >
+            <Input placeholder="請輸入使用者名稱" />
+          </Form.Item>
+          <Form.Item
+            label="密碼"
+            name="password"
+            rules={[{ required: true, message: '請輸入密碼' }]}
+          >
+            <Input.Password placeholder="請輸入密碼" />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                登入
+              </Button>
+              <Button onClick={() => setSwitchUserModalVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </Router>
   );
 }
