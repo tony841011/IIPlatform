@@ -36,7 +36,10 @@ import {
   Transfer,
   DatePicker,
   TimePicker,
-  Image
+  Image,
+  Radio,
+  Checkbox,
+  Slider
 } from 'antd';
 import {
   VideoCameraOutlined,
@@ -59,7 +62,11 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
   CarOutlined,
-  BugOutlined
+  BugOutlined,
+  SearchOutlined,
+  WifiOutlined,
+  ApiOutlined,
+  ControlOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -79,7 +86,13 @@ const VideoRecognition = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [onvifModalVisible, setOnvifModalVisible] = useState(false);
+  const [discoveryModalVisible, setDiscoveryModalVisible] = useState(false);
+  const [ptzModalVisible, setPtzModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [onvifForm] = Form.useForm();
+  const [discoveryForm] = Form.useForm();
+  const [ptzForm] = Form.useForm();
 
   useEffect(() => {
     fetchData();
@@ -100,7 +113,12 @@ const VideoRecognition = () => {
           frame_rate: 30,
           bitrate: 4000,
           location: '生產線A',
-          status: 'online'
+          status: 'online',
+          onvif_enabled: true,
+          onvif_host: '192.168.1.100',
+          onvif_port: 80,
+          onvif_username: 'admin',
+          onvif_device_uri: 'http://192.168.1.100/onvif/device_service'
         },
         {
           id: 2,
@@ -112,7 +130,12 @@ const VideoRecognition = () => {
           frame_rate: 25,
           bitrate: 3000,
           location: '檢測站B',
-          status: 'online'
+          status: 'online',
+          onvif_enabled: true,
+          onvif_host: '192.168.1.101',
+          onvif_port: 80,
+          onvif_username: 'admin',
+          onvif_device_uri: 'http://192.168.1.101/onvif/device_service'
         },
         {
           id: 3,
@@ -124,7 +147,12 @@ const VideoRecognition = () => {
           frame_rate: 20,
           bitrate: 2000,
           location: '安全區域',
-          status: 'offline'
+          status: 'offline',
+          onvif_enabled: false,
+          onvif_host: null,
+          onvif_port: 80,
+          onvif_username: null,
+          onvif_device_uri: null
         }
       ]);
       
@@ -261,6 +289,91 @@ const VideoRecognition = () => {
     }
   };
 
+  // ONVIF 相關功能
+  const handleOnvifConfig = (device) => {
+    setSelectedItem(device);
+    setOnvifModalVisible(true);
+    onvifForm.setFieldsValue({
+      host: device.onvif_host || '',
+      port: device.onvif_port || 80,
+      username: device.onvif_username || '',
+      password: '',
+      is_ssl: false,
+      timeout: 30
+    });
+  };
+
+  const handleOnvifDiscovery = () => {
+    setDiscoveryModalVisible(true);
+    discoveryForm.setFieldsValue({
+      network_range: '192.168.1.0/24',
+      timeout: 30,
+      max_devices: 100
+    });
+  };
+
+  const handleOnvifDiscoverySubmit = async (values) => {
+    try {
+      setLoading(true);
+      // 模擬 ONVIF 設備發現
+      message.success(`發現了 ${Math.floor(Math.random() * 10) + 3} 個 ONVIF 設備`);
+      setDiscoveryModalVisible(false);
+    } catch (error) {
+      message.error('設備發現失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOnvifConfigSubmit = async (values) => {
+    try {
+      setLoading(true);
+      // 模擬 ONVIF 配置保存
+      message.success('ONVIF 配置已保存');
+      setOnvifModalVisible(false);
+    } catch (error) {
+      message.error('配置保存失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePtzControl = (device) => {
+    setSelectedItem(device);
+    setPtzModalVisible(true);
+    ptzForm.resetFields();
+  };
+
+  const handlePtzControlSubmit = async (values) => {
+    try {
+      setLoading(true);
+      // 模擬 PTZ 控制
+      message.success('PTZ 控制命令已發送');
+      setPtzModalVisible(false);
+    } catch (error) {
+      message.error('PTZ 控制失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTestOnvifConnection = async (deviceId) => {
+    try {
+      setLoading(true);
+      // 模擬 ONVIF 連線測試
+      const success = Math.random() > 0.2;
+      if (success) {
+        message.success('ONVIF 連線測試成功');
+      } else {
+        message.error('ONVIF 連線測試失敗');
+      }
+    } catch (error) {
+      message.error('連線測試失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deviceColumns = [
     { title: '設備名稱', dataIndex: 'name', key: 'name' },
     { title: '類型', dataIndex: 'device_type', key: 'device_type', render: (type) => (
@@ -269,12 +382,22 @@ const VideoRecognition = () => {
     { title: '位置', dataIndex: 'location', key: 'location' },
     { title: '解析度', dataIndex: 'resolution', key: 'resolution' },
     { title: '幀率', dataIndex: 'frame_rate', key: 'frame_rate', render: (fps) => `${fps} fps` },
+    { title: 'ONVIF', dataIndex: 'onvif_enabled', key: 'onvif_enabled', render: (enabled) => (
+      <Badge status={enabled ? 'success' : 'default'} text={enabled ? '啟用' : '停用'} />
+    ) },
     { title: '狀態', dataIndex: 'status', key: 'status', render: (status) => (
       <Badge status={status === 'online' ? 'success' : 'error'} text={status} />
     ) },
     { title: '操作', key: 'action', render: (_, record) => (
       <Space>
         <Button icon={<EyeOutlined />} onClick={() => handleViewStream(record)}>查看串流</Button>
+        {record.onvif_enabled && (
+          <>
+            <Button icon={<ApiOutlined />} onClick={() => handleOnvifConfig(record)}>ONVIF 配置</Button>
+            <Button icon={<ControlOutlined />} onClick={() => handlePtzControl(record)}>PTZ 控制</Button>
+            <Button icon={<WifiOutlined />} onClick={() => handleTestOnvifConnection(record.id)}>連線測試</Button>
+          </>
+        )}
         <Button icon={<SettingOutlined />} onClick={() => handleEditDevice(record)}>編輯</Button>
         <Button icon={<StopOutlined />} danger onClick={() => handleDeleteDevice(record.id)}>刪除</Button>
       </Space>
@@ -392,6 +515,16 @@ const VideoRecognition = () => {
             <Col span={6}>
               <Card>
                 <Statistic
+                  title="ONVIF 設備"
+                  value={devices.filter(d => d.onvif_enabled).length}
+                  prefix={<ApiOutlined />}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
                   title="今日警報"
                   value={alerts.length}
                   prefix={<AlertOutlined />}
@@ -399,21 +532,16 @@ const VideoRecognition = () => {
                 />
               </Card>
             </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="處理幀數"
-                  value={12345}
-                  prefix={<BarChartOutlined />}
-                  valueStyle={{ color: '#722ed1' }}
-                />
-              </Card>
-            </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Card title="即時串流狀態" extra={<Button icon={<ReloadOutlined />} onClick={fetchData}>刷新</Button>}>
+              <Card title="即時串流狀態" extra={
+                <Space>
+                  <Button icon={<SearchOutlined />} onClick={handleOnvifDiscovery}>ONVIF 發現</Button>
+                  <Button icon={<ReloadOutlined />} onClick={fetchData}>刷新</Button>
+                </Space>
+              }>
                 <List
                   dataSource={devices}
                   renderItem={device => (
@@ -424,7 +552,10 @@ const VideoRecognition = () => {
                         description={`${device.location} - ${device.resolution} @ ${device.frame_rate}fps`}
                       />
                       <div>
-                        <Badge status={device.status === 'online' ? 'success' : 'error'} text={device.status} />
+                        <Space>
+                          <Badge status={device.status === 'online' ? 'success' : 'error'} text={device.status} />
+                          {device.onvif_enabled && <Tag color="purple">ONVIF</Tag>}
+                        </Space>
                       </div>
                     </List.Item>
                   )}
@@ -462,7 +593,12 @@ const VideoRecognition = () => {
       key: 'devices',
       label: '設備管理',
       children: (
-        <Card title="影像設備" extra={<Button icon={<UploadOutlined />} onClick={handleCreateDevice}>新增設備</Button>}>
+        <Card title="影像設備" extra={
+          <Space>
+            <Button icon={<SearchOutlined />} onClick={handleOnvifDiscovery}>ONVIF 發現</Button>
+            <Button icon={<UploadOutlined />} onClick={handleCreateDevice}>新增設備</Button>
+          </Space>
+        }>
           <Table 
             dataSource={devices} 
             columns={deviceColumns} 
@@ -541,7 +677,7 @@ const VideoRecognition = () => {
         <VideoCameraOutlined /> 串流影像辨識
       </Title>
       <Paragraph>
-        管理影像設備、配置辨識模型、監控即時串流和處理警報。
+        管理影像設備、配置辨識模型、監控即時串流和處理警報。支援 ONVIF 協定。
       </Paragraph>
 
       <Tabs 
@@ -556,53 +692,66 @@ const VideoRecognition = () => {
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
+        width={800}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSaveDevice}
         >
-          <Form.Item
-            name="name"
-            label="設備名稱"
-            rules={[{ required: true }]}
-          >
-            <Input placeholder="請輸入設備名稱" />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="name"
+                label="設備名稱"
+                rules={[{ required: true }]}
+              >
+                <Input placeholder="請輸入設備名稱" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="device_type"
+                label="設備類型"
+                rules={[{ required: true }]}
+              >
+                <Select placeholder="請選擇設備類型">
+                  <Option value="ip_camera">IP 攝影機</Option>
+                  <Option value="usb_camera">USB 攝影機</Option>
+                  <Option value="rtsp_stream">RTSP 串流</Option>
+                  <Option value="onvif">ONVIF 設備</Option>
+                  <Option value="file">檔案</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="device_type"
-            label="設備類型"
-            rules={[{ required: true }]}
-          >
-            <Select placeholder="請選擇設備類型">
-              <Option value="ip_camera">IP 攝影機</Option>
-              <Option value="usb_camera">USB 攝影機</Option>
-              <Option value="rtsp_stream">RTSP 串流</Option>
-              <Option value="file">檔案</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="stream_url"
-            label="串流 URL"
-            rules={[{ required: true }]}
-          >
-            <Input placeholder="請輸入串流 URL" />
-          </Form.Item>
-
-          <Form.Item
-            name="stream_type"
-            label="串流類型"
-            rules={[{ required: true }]}
-          >
-            <Select placeholder="請選擇串流類型">
-              <Option value="rtsp">RTSP</Option>
-              <Option value="rtmp">RTMP</Option>
-              <Option value="http">HTTP</Option>
-              <Option value="file">檔案</Option>
-            </Select>
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="stream_url"
+                label="串流 URL"
+                rules={[{ required: true }]}
+              >
+                <Input placeholder="請輸入串流 URL" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="stream_type"
+                label="串流類型"
+                rules={[{ required: true }]}
+              >
+                <Select placeholder="請選擇串流類型">
+                  <Option value="rtsp">RTSP</Option>
+                  <Option value="rtmp">RTMP</Option>
+                  <Option value="http">HTTP</Option>
+                  <Option value="onvif">ONVIF</Option>
+                  <Option value="file">檔案</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Row gutter={16}>
             <Col span={12}>
@@ -627,12 +776,25 @@ const VideoRecognition = () => {
             </Col>
           </Row>
 
-          <Form.Item
-            name="location"
-            label="位置"
-          >
-            <Input placeholder="請輸入設備位置" />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="location"
+                label="位置"
+              >
+                <Input placeholder="請輸入設備位置" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="onvif_enabled"
+                label="啟用 ONVIF"
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
             name="description"
@@ -641,17 +803,211 @@ const VideoRecognition = () => {
             <TextArea rows={3} placeholder="請輸入設備描述" />
           </Form.Item>
 
+          <Form.Item>
+            <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+              保存
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* ONVIF 配置模態框 */}
+      <Modal
+        title="ONVIF 配置"
+        open={onvifModalVisible}
+        onCancel={() => setOnvifModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={onvifForm}
+          layout="vertical"
+          onFinish={handleOnvifConfigSubmit}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="host"
+                label="ONVIF 主機"
+                rules={[{ required: true }]}
+              >
+                <Input placeholder="192.168.1.100" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="port"
+                label="端口"
+                rules={[{ required: true }]}
+              >
+                <InputNumber min={1} max={65535} defaultValue={80} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="username"
+                label="用戶名"
+              >
+                <Input placeholder="admin" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="password"
+                label="密碼"
+              >
+                <Input.Password placeholder="密碼" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="is_ssl"
+                label="使用 SSL"
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="timeout"
+                label="超時時間 (秒)"
+              >
+                <InputNumber min={1} max={60} defaultValue={30} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                保存配置
+              </Button>
+              <Button onClick={() => handleTestOnvifConnection(selectedItem?.id)}>
+                測試連線
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* ONVIF 設備發現模態框 */}
+      <Modal
+        title="ONVIF 設備發現"
+        open={discoveryModalVisible}
+        onCancel={() => setDiscoveryModalVisible(false)}
+        footer={null}
+        width={500}
+      >
+        <Form
+          form={discoveryForm}
+          layout="vertical"
+          onFinish={handleOnvifDiscoverySubmit}
+        >
           <Form.Item
-            name="is_active"
-            label="啟用設備"
-            valuePropName="checked"
+            name="network_range"
+            label="網路範圍"
+            rules={[{ required: true }]}
           >
-            <Switch />
+            <Input placeholder="192.168.1.0/24" />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="timeout"
+                label="超時時間 (秒)"
+              >
+                <InputNumber min={1} max={300} defaultValue={30} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="max_devices"
+                label="最大設備數"
+              >
+                <InputNumber min={1} max={1000} defaultValue={100} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+              開始發現
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* PTZ 控制模態框 */}
+      <Modal
+        title="PTZ 控制"
+        open={ptzModalVisible}
+        onCancel={() => setPtzModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={ptzForm}
+          layout="vertical"
+          onFinish={handlePtzControlSubmit}
+        >
+          <Form.Item
+            name="action"
+            label="控制動作"
+            rules={[{ required: true }]}
+          >
+            <Radio.Group>
+              <Radio.Button value="move">移動</Radio.Button>
+              <Radio.Button value="stop">停止</Radio.Button>
+              <Radio.Button value="home">回原點</Radio.Button>
+              <Radio.Button value="preset">預設位置</Radio.Button>
+            </Radio.Group>
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="pan"
+                label="水平角度"
+              >
+                <Slider min={-180} max={180} defaultValue={0} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="tilt"
+                label="垂直角度"
+              >
+                <Slider min={-90} max={90} defaultValue={0} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="zoom"
+                label="縮放"
+              >
+                <Slider min={1} max={10} defaultValue={1} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            name="speed"
+            label="移動速度"
+          >
+            <Slider min={1} max={10} defaultValue={5} />
           </Form.Item>
 
           <Form.Item>
             <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
-              保存
+              發送控制命令
             </Button>
           </Form.Item>
         </Form>
