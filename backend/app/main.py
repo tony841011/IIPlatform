@@ -10,11 +10,14 @@ from typing import List, Optional, Dict, Any
 import numpy as np
 import json
 import asyncio
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, JSON, ForeignKey, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from .database import engine
 from .models import Base
+from datetime import datetime, timedelta
+import hashlib
+import secrets
 
 Base.metadata.create_all(bind=engine)
 Base = declarative_base()
@@ -650,8 +653,8 @@ class GPUDeviceUpdate(GPUDeviceBase):
 
 class GPUDeviceOut(GPUDeviceBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         orm_mode = True
 
@@ -673,7 +676,7 @@ class GPUMonitoringCreate(GPUMonitoringBase):
 
 class GPUMonitoringOut(GPUMonitoringBase):
     id: int
-    timestamp: datetime.datetime
+    timestamp: datetime
     class Config:
         orm_mode = True
 
@@ -693,8 +696,8 @@ class GPUResourceAllocationUpdate(GPUResourceAllocationBase):
 
 class GPUResourceAllocationOut(GPUResourceAllocationBase):
     id: int
-    started_at: datetime.datetime
-    ended_at: Optional[datetime.datetime] = None
+    started_at: datetime
+    ended_at: Optional[datetime] = None
     created_by: int
     class Config:
         orm_mode = True
@@ -718,8 +721,8 @@ class GPUAlertOut(GPUAlertBase):
     id: int
     is_acknowledged: bool
     acknowledged_by: Optional[int] = None
-    acknowledged_at: Optional[datetime.datetime] = None
-    created_at: datetime.datetime
+    acknowledged_at: Optional[datetime] = None
+    created_at: datetime
     class Config:
         orm_mode = True
 
@@ -741,8 +744,8 @@ class GPUPerformanceConfigUpdate(GPUPerformanceConfigBase):
 
 class GPUPerformanceConfigOut(GPUPerformanceConfigBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         orm_mode = True
 
@@ -1334,3 +1337,1394 @@ def get_platform_settings_categories(db: Session = Depends(database.get_db)):
     """獲取平台設定分類"""
     categories = database.get_platform_settings_categories(db)
     return {"categories": categories} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{webhook_id}/deliveries")
+def get_webhook_deliveries(webhook_id: int, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 發送歷史"""
+    return database.get_webhook_deliveries(db, webhook_id)
+
+@app.get("/developer/api-usage/")
+def get_api_usage(
+    token_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取 API 使用統計"""
+    return database.get_api_usage(db, token_id, start_date, end_date)
+
+@app.get("/developer/sdk-downloads/")
+def get_sdk_downloads(db: Session = Depends(database.get_db)):
+    """獲取 SDK 下載統計"""
+    return database.get_sdk_downloads(db)
+
+@app.post("/developer/sdk-downloads/")
+def record_sdk_download(download: schemas.SDKDownloadCreate, db: Session = Depends(database.get_db)):
+    """記錄 SDK 下載"""
+    return database.record_sdk_download(db, download)
+
+@app.get("/developer/documentation/")
+def get_api_documentation(version: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """獲取 API 文檔"""
+    return database.get_api_documentation(db, version)
+
+@app.post("/developer/documentation/", response_model=schemas.APIDocumentationOut)
+def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = Depends(database.get_db)):
+    """創建 API 文檔"""
+    return database.create_api_documentation(db, doc)
+
+@app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
+def get_developer_portal_stats(db: Session = Depends(database.get_db)):
+    """獲取開發者平台統計"""
+    return database.get_developer_portal_stats(db)
+
+# Swagger UI 端點
+@app.get("/docs")
+def get_swagger_ui():
+    """Swagger UI 文檔"""
+    return {"message": "Swagger UI available at /docs"}
+
+@app.get("/redoc")
+def get_redoc():
+    """ReDoc 文檔"""
+    return {"message": "ReDoc available at /redoc"} 
+```
+
+在現有的 import 語句後新增
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+在現有的 API 端點後新增使用者行為分析和開發者平台相關端點
+
+# 使用者行為分析 API
+@app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
+def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
+    """記錄使用者行為"""
+    return database.create_user_behavior(db, behavior)
+
+@app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
+def get_usage_analytics(db: Session = Depends(database.get_db)):
+    """獲取使用分析統計"""
+    return database.get_usage_analytics(db)
+
+@app.get("/analytics/feature-usage/")
+def get_feature_usage(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取功能使用統計"""
+    return database.get_feature_usage(db, start_date, end_date)
+
+@app.get("/analytics/user-sessions/")
+def get_user_sessions(
+    user_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取使用者會話統計"""
+    return database.get_user_sessions(db, user_id, start_date, end_date)
+
+# 開發者平台 API
+@app.post("/developer/tokens/", response_model=schemas.APITokenOut)
+def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
+    """創建 API Token"""
+    return database.create_api_token(db, token)
+
+@app.get("/developer/tokens/")
+def get_api_tokens(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 API Token 列表"""
+    return database.get_api_tokens(db, user_id)
+
+@app.delete("/developer/tokens/{token_id}")
+def delete_api_token(token_id: int, db: Session = Depends(database.get_db)):
+    """刪除 API Token"""
+    return database.delete_api_token(db, token_id)
+
+@app.post("/developer/webhooks/", response_model=schemas.WebhookOut)
+def create_webhook(webhook: schemas.WebhookCreate, db: Session = Depends(database.get_db)):
+    """創建 Webhook"""
+    return database.create_webhook(db, webhook)
+
+@app.get("/developer/webhooks/")
+def get_webhooks(user_id: Optional[int] = None, db: Session = Depends(database.get_db)):
+    """獲取 Webhook 列表"""
+    return database.get_webhooks(db, user_id)
+
+@app.post("/developer/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int, db: Session = Depends(database.get_db)):
+    """測試 Webhook"""
+    return database.test_webhook(db, webhook_id)
+
+@app.get("/developer/webhooks/{web

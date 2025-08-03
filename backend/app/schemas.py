@@ -752,3 +752,209 @@ class GPUResourceUsage(BaseModel):
     power_consumption: float
     available_for_ai: bool
     recommended_models: List[str] 
+
+# 在檔案末尾新增使用者行為分析和開發者平台相關的 schemas
+
+# 使用者行為分析相關 schemas
+class UserBehaviorBase(BaseModel):
+    user_id: int
+    session_id: str
+    page_path: str
+    page_name: str
+    action_type: str
+    action_details: Optional[Dict[str, Any]] = None
+    duration: Optional[int] = None
+    ip_address: str
+    user_agent: str
+    referrer: Optional[str] = None
+
+class UserBehaviorCreate(UserBehaviorBase):
+    pass
+
+class UserBehaviorOut(UserBehaviorBase):
+    id: int
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+class UserSessionBase(BaseModel):
+    user_id: int
+    session_id: str
+    login_time: datetime
+    logout_time: Optional[datetime] = None
+    duration: Optional[int] = None
+    ip_address: str
+    user_agent: str
+    is_active: bool = True
+    last_activity: datetime
+
+class UserSessionCreate(UserSessionBase):
+    pass
+
+class UserSessionOut(UserSessionBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class FeatureUsageBase(BaseModel):
+    feature_name: str
+    feature_path: str
+    user_id: int
+    usage_count: int = 1
+    total_duration: int = 0
+    first_used: datetime
+    last_used: datetime
+
+class FeatureUsageCreate(FeatureUsageBase):
+    pass
+
+class FeatureUsageOut(FeatureUsageBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# 開發者平台相關 schemas
+class APITokenBase(BaseModel):
+    name: str
+    user_id: int
+    permissions: List[str]
+    is_active: bool = True
+    expires_at: Optional[datetime] = None
+
+class APITokenCreate(APITokenBase):
+    pass
+
+class APITokenOut(APITokenBase):
+    id: int
+    token_hash: str
+    last_used: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class WebhookBase(BaseModel):
+    name: str
+    url: str
+    events: List[str]
+    headers: Optional[Dict[str, str]] = None
+    is_active: bool = True
+    secret_key: str
+    retry_count: int = 3
+    timeout: int = 30
+    created_by: int
+
+class WebhookCreate(WebhookBase):
+    pass
+
+class WebhookOut(WebhookBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class WebhookDeliveryBase(BaseModel):
+    webhook_id: int
+    event_type: str
+    payload: Dict[str, Any]
+    response_status: int
+    response_body: str
+    response_time: float
+    is_success: bool
+    error_message: Optional[str] = None
+    retry_count: int = 0
+
+class WebhookDeliveryCreate(WebhookDeliveryBase):
+    pass
+
+class WebhookDeliveryOut(WebhookDeliveryBase):
+    id: int
+    sent_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class APIUsageBase(BaseModel):
+    token_id: int
+    endpoint: str
+    method: str
+    status_code: int
+    response_time: float
+    request_size: int
+    response_size: int
+    ip_address: str
+    user_agent: str
+
+class APIUsageCreate(APIUsageBase):
+    pass
+
+class APIUsageOut(APIUsageBase):
+    id: int
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+class SDKDownloadBase(BaseModel):
+    sdk_name: str
+    version: str
+    download_count: int = 1
+    ip_address: str
+    user_agent: str
+
+class SDKDownloadCreate(SDKDownloadBase):
+    pass
+
+class SDKDownloadOut(SDKDownloadBase):
+    id: int
+    downloaded_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class APIDocumentationBase(BaseModel):
+    version: str
+    title: str
+    description: str
+    content: Dict[str, Any]
+    is_active: bool = True
+    is_default: bool = False
+    created_by: int
+
+class APIDocumentationCreate(APIDocumentationBase):
+    pass
+
+class APIDocumentationOut(APIDocumentationBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# 分析統計相關 schemas
+class UsageAnalytics(BaseModel):
+    total_users: int
+    active_users_today: int
+    active_users_week: int
+    active_users_month: int
+    total_sessions: int
+    avg_session_duration: float
+    most_used_features: List[Dict[str, Any]]
+    user_activity_timeline: List[Dict[str, Any]]
+
+class DeveloperPortalStats(BaseModel):
+    total_tokens: int
+    active_tokens: int
+    total_webhooks: int
+    active_webhooks: int
+    api_calls_today: int
+    api_calls_week: int 

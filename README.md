@@ -84,6 +84,19 @@ IIPlatform 是一個專為工業環境設計的綜合性物聯網平台，整合
 - 雲端邊緣同步
 - 斷線緩存機制
 
+### 使用者行為分析
+- 儀表板模組點擊率
+- 使用時長分析
+- 路徑分析
+- 活躍用戶統計 (DAU/MAU)
+- 功能使用排名
+
+### 🔧 開發者平台
+- Swagger/Redoc API 文檔
+- Token 註冊/管理 (過期/續期)
+- Webhook 測試/歷史
+- SDK 提供 (Python/JS/Go)
+
 ## 技術架構
 
 ### 後端技術棧
@@ -100,103 +113,145 @@ IIPlatform 是一個專為工業環境設計的綜合性物聯網平台，整合
 - **UI 庫**: Ant Design
 - **圖表**: ECharts
 - **路由**: React Router DOM
-- **狀態管理**: React Hooks
 - **HTTP 客戶端**: Axios
-
-### 部署架構
-- **容器化**: Docker
-- **反向代理**: Nginx
-- **負載平衡**: 支援水平擴展
-- **監控**: 整合 Prometheus + Grafana
 
 ## 快速開始
 
 ### 環境需求
-- Python 3.9+
+- Python 3.8+
 - Node.js 16+
-- Docker (可選)
+- SQLite (開發環境)
 
 ### 安裝步驟
 
-#### 1. 克隆專案
+1. **克隆專案**
 ```bash
-git clone <repository-url>
-cd IIPlatform
+git clone https://github.com/your-org/iiplatform.git
+cd iiplatform
 ```
 
-#### 2. 後端設置
-```bash
-cd backend/app
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
-pip install -r requirements.txt
-```
-
-#### 3. 初始化資料庫
+2. **後端設置**
 ```bash
 cd backend
+pip install -r requirements.txt
 python init_db.py
 python generate_test_data.py
+uvicorn app.main:app --reload
 ```
 
-#### 4. 啟動後端服務
-```bash
-cd backend/app
-uvicorn main:app --reload
-```
-
-#### 5. 前端設置
+3. **前端設置**
 ```bash
 cd frontend
 npm install
 npm start
 ```
 
-#### 6. 訪問平台
+4. **訪問平台**
 - 前端: http://localhost:3000
 - 後端 API: http://localhost:8000
 - API 文檔: http://localhost:8000/docs
 
-### 預設帳號
-- **管理員**: admin / admin123
-- **操作員**: operator1 / op123
-- **檢視者**: viewer1 / view123
-- **維護員**: maintenance1 / maint123
-
 ## 功能模組
 
-### 核心模組
-1. **儀表板** - 系統概覽與即時監控
-2. **設備管理** - 設備註冊、控制、更新
-3. **數據監控** - 即時數據與歷史分析
-4. **AI 分析** - 機器學習與預測分析
-5. **警報中心** - 警報管理與通知
-6. **通訊協定** - 多協議支援配置
+### 平台簡介
+- 平台概述與架構圖
+- 功能特色介紹
+- 常見問題 (Q&A)
+- 系統維護聯絡
 
-### 進階模組
-7. **MLOps** - AI 模型生命週期管理
-8. **視頻識別** - ONVIF 設備與 AI 分析
-9. **ETL 處理** - 數據轉換與品質管理
-10. **報表系統** - 自定義報表與排程
-11. **GIS 整合** - 地理資訊與設備分佈
-12. **邊緣網關** - 邊緣計算與本地處理
+### 總覽儀表板
+- 設備狀態總覽
+- 即時數據監控
+- 警報統計
+- 系統健康狀態
 
-### 管理模組
-13. **角色權限** - 用戶與權限管理
-14. **通知偏好** - 個人化通知設定
-15. **自動化工作流** - 規則引擎與流程
-16. **審計日誌** - 系統操作記錄
-17. **平台設定** - 系統配置管理
+### 監控分析
+- 歷史數據分析
+- AI 智能分析
+- 警報中心
+
+### 數據處理
+- 通訊協定管理
+- 資料庫連線管理
+- 資料表結構管理
+
+### AI 應用
+- AI 異常偵測系統
+- 串流影像辨識
+- MLOps
+
+### 設備管理
+- 設備管理
+- 設備控制
+- OTA 更新
+- 邊緣閘道
+- 地理資訊
+
+### 自動化工作流
+- 規則引擎
+- 工作流程
+- 審計日誌
+- 報表系統
+
+### 系統管理
+- 系統設定
+- 通知偏好
+- 角色管理
+- 資料庫連線
+- 系統維護聯絡
+- 使用者行為分析
+- 開發者平台
 
 ## 開發指南
 
-### 專案結構
+### 新增功能模組
+1. 在 `backend/app/models.py` 中定義資料模型
+2. 在 `backend/app/schemas.py` 中定義 Pydantic 模式
+3. 在 `backend/app/database.py` 中實作資料庫操作
+4. 在 `backend/app/main.py` 中新增 API 端點
+5. 在 `frontend/src/components/` 中建立 React 組件
+6. 在 `frontend/src/App.js` 中新增路由
+
+### 資料庫遷移
+```bash
+# 重新初始化資料庫
+python init_db.py
+
+# 生成測試資料
+python generate_test_data.py
 ```
-IIPlatform/
-├── backend/                 # 後端服務
-│   ├── app/
-│   │   ├── main.py         # FastAPI 應用
-│   │   ├── models.py       # 資料庫模型
-│   │   ├── schemas.py      #
+
+## 部署指南
+
+### 生產環境部署
+1. 使用 PostgreSQL 替代 SQLite
+2. 配置環境變數
+3. 設置反向代理 (Nginx)
+4. 配置 SSL 憑證
+5. 設置監控與日誌
+
+### Docker 部署
+```bash
+# 建立 Docker 映像
+docker build -t iiplatform .
+
+# 執行容器
+docker run -p 8000:8000 iiplatform
 ```
+
+## 貢獻指南
+
+1. Fork 專案
+2. 建立功能分支
+3. 提交變更
+4. 發起 Pull Request
+
+## 授權
+
+本專案採用 MIT 授權條款。
+
+## 聯絡資訊
+
+- 專案維護者: [Your Name]
+- Email: [your.email@example.com]
+- 專案網站: [https://github.com/your-org/iiplatform]

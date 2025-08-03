@@ -575,3 +575,136 @@ class RolePagePermission(Base):
     can_edit = Column(Boolean, default=False)  # 是否可以編輯
     granted_by = Column(Integer, ForeignKey("users.id"))  # 授權者
     granted_at = Column(DateTime, default=datetime.datetime.utcnow) 
+
+# 在檔案末尾新增使用者行為分析相關模型
+
+# 使用者行為分析
+class UserBehavior(Base):
+    __tablename__ = "user_behaviors"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    session_id = Column(String)  # 會話 ID
+    page_path = Column(String)  # 頁面路徑
+    page_name = Column(String)  # 頁面名稱
+    action_type = Column(String)  # 動作類型 (view, click, submit, etc.)
+    action_details = Column(JSON)  # 動作詳細資訊
+    duration = Column(Integer, nullable=True)  # 停留時間 (秒)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    ip_address = Column(String)
+    user_agent = Column(String)
+    referrer = Column(String, nullable=True)  # 來源頁面
+
+# 使用者會話
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    session_id = Column(String, unique=True)
+    login_time = Column(DateTime, default=datetime.datetime.utcnow)
+    logout_time = Column(DateTime, nullable=True)
+    duration = Column(Integer, nullable=True)  # 會話持續時間 (秒)
+    ip_address = Column(String)
+    user_agent = Column(String)
+    is_active = Column(Boolean, default=True)
+    last_activity = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 功能使用統計
+class FeatureUsage(Base):
+    __tablename__ = "feature_usage"
+    id = Column(Integer, primary_key=True, index=True)
+    feature_name = Column(String)  # 功能名稱
+    feature_path = Column(String)  # 功能路徑
+    user_id = Column(Integer, ForeignKey("users.id"))
+    usage_count = Column(Integer, default=1)  # 使用次數
+    total_duration = Column(Integer, default=0)  # 總使用時間 (秒)
+    first_used = Column(DateTime, default=datetime.datetime.utcnow)
+    last_used = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 開發者平台相關模型
+
+# API Token 管理
+class APIToken(Base):
+    __tablename__ = "api_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)  # Token 名稱
+    token_hash = Column(String, unique=True)  # Token 雜湊值
+    user_id = Column(Integer, ForeignKey("users.id"))
+    permissions = Column(JSON)  # 權限列表
+    is_active = Column(Boolean, default=True)
+    expires_at = Column(DateTime, nullable=True)  # 過期時間
+    last_used = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# Webhook 管理
+class Webhook(Base):
+    __tablename__ = "webhooks"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)  # Webhook 名稱
+    url = Column(String)  # 目標 URL
+    events = Column(JSON)  # 觸發事件列表
+    headers = Column(JSON)  # 自定義標頭
+    is_active = Column(Boolean, default=True)
+    secret_key = Column(String)  # 簽名密鑰
+    retry_count = Column(Integer, default=3)  # 重試次數
+    timeout = Column(Integer, default=30)  # 超時時間 (秒)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# Webhook 發送歷史
+class WebhookDelivery(Base):
+    __tablename__ = "webhook_deliveries"
+    id = Column(Integer, primary_key=True, index=True)
+    webhook_id = Column(Integer, ForeignKey("webhooks.id"))
+    event_type = Column(String)  # 事件類型
+    payload = Column(JSON)  # 發送內容
+    response_status = Column(Integer)  # 回應狀態碼
+    response_body = Column(String)  # 回應內容
+    response_time = Column(Float)  # 回應時間 (秒)
+    is_success = Column(Boolean)  # 是否成功
+    error_message = Column(String, nullable=True)  # 錯誤訊息
+    retry_count = Column(Integer, default=0)  # 重試次數
+    sent_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# API 使用統計
+class APIUsage(Base):
+    __tablename__ = "api_usage"
+    id = Column(Integer, primary_key=True, index=True)
+    token_id = Column(Integer, ForeignKey("api_tokens.id"))
+    endpoint = Column(String)  # API 端點
+    method = Column(String)  # HTTP 方法
+    status_code = Column(Integer)  # 狀態碼
+    response_time = Column(Float)  # 回應時間 (秒)
+    request_size = Column(Integer)  # 請求大小 (bytes)
+    response_size = Column(Integer)  # 回應大小 (bytes)
+    ip_address = Column(String)
+    user_agent = Column(String)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+# SDK 下載統計
+class SDKDownload(Base):
+    __tablename__ = "sdk_downloads"
+    id = Column(Integer, primary_key=True, index=True)
+    sdk_name = Column(String)  # SDK 名稱 (python, javascript, go)
+    version = Column(String)  # 版本號
+    download_count = Column(Integer, default=1)  # 下載次數
+    ip_address = Column(String)
+    user_agent = Column(String)
+    downloaded_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# API 文檔版本
+class APIDocumentation(Base):
+    __tablename__ = "api_documentation"
+    id = Column(Integer, primary_key=True, index=True)
+    version = Column(String)  # 文檔版本
+    title = Column(String)  # 標題
+    description = Column(String)  # 描述
+    content = Column(JSON)  # 文檔內容 (OpenAPI 格式)
+    is_active = Column(Boolean, default=True)
+    is_default = Column(Boolean, default=False)  # 是否為預設版本
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow) 

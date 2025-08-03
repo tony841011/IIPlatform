@@ -31,7 +31,22 @@ import {
   Tabs,
   Image,
   Upload,
-  Carousel
+  Carousel,
+  Table,
+  Switch,
+  DatePicker,
+  TimePicker,
+  Radio,
+  Checkbox,
+  Slider,
+  Rate,
+  Cascader,
+  Transfer,
+  TreeSelect,
+  Mentions,
+  AutoComplete,
+  InputNumber,
+  Upload as AntUpload
 } from 'antd';
 import {
   InfoCircleOutlined,
@@ -62,7 +77,60 @@ import {
   PictureOutlined,
   CameraOutlined,
   EnvironmentOutlined,
-  BankOutlined
+  BankOutlined,
+  UserOutlined,
+  LockOutlined,
+  KeyOutlined,
+  DatabaseOutlined,
+  CloudOutlined,
+  ThunderboltOutlined,
+  ToolOutlined,
+  BranchesOutlined,
+  AuditOutlined,
+  FileTextOutlined,
+  BellOutlined,
+  GatewayOutlined,
+  GlobalOutlined as GlobalIcon,
+  MonitorOutlined,
+  ControlOutlined,
+  RocketOutlined,
+  BugOutlined,
+  ExperimentOutlined,
+  BarChartOutlined,
+  CodeOutlined,
+  DownloadOutlined,
+  UploadOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  SortAscendingOutlined,
+  SortDescendingOutlined,
+  CalendarOutlined,
+  FieldTimeOutlined,
+  ScheduleOutlined,
+  NotificationOutlined,
+  SoundOutlined,
+  FileImageOutlined,
+  FilePdfOutlined,
+  FileExcelOutlined,
+  FileWordOutlined,
+  FilePptOutlined,
+  FileZipOutlined,
+  FileUnknownOutlined,
+  FileMarkdownOutlined,
+  FileCodeOutlined,
+  FileProtectOutlined,
+  FileSearchOutlined,
+  FileSyncOutlined,
+  FileExclamationOutlined,
+  FileDoneOutlined,
+  FileAddOutlined,
+  FileRemoveOutlined,
+  FileJpgOutlined,
+  FilePngOutlined,
+  FileGifOutlined,
+  FileBmpOutlined,
+  FileTiffOutlined,
+  FileSvgOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -70,6 +138,7 @@ const { Title, Text, Paragraph } = Typography;
 const { Panel } = Collapse;
 const { Option } = Select;
 const { TextArea } = Input;
+const { RangePicker } = DatePicker;
 
 const PlatformIntro = () => {
   const [loading, setLoading] = useState(false);
@@ -77,6 +146,36 @@ const PlatformIntro = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedContent, setSelectedContent] = useState(null);
   const [form] = Form.useForm();
+  const [photoUploadModalVisible, setPhotoUploadModalVisible] = useState(false);
+  const [uploadType, setUploadType] = useState('');
+  const [fileList, setFileList] = useState([]);
+  const [platformSettings, setPlatformSettings] = useState({
+    platformName: 'IIPlatform 工業物聯網平台',
+    version: 'v2.0.0',
+    description: '完整的工業物聯網解決方案，支援設備管理、數據分析、AI 預測等功能',
+    companyName: '智慧製造科技有限公司',
+    contactEmail: 'support@smartmanufacturing.com',
+    website: 'https://www.smartmanufacturing.com',
+    logoUrl: '/logo.png',
+    themeConfig: {
+      primaryColor: '#1890ff',
+      secondaryColor: '#52c41a',
+      darkMode: false,
+      fontFamily: 'Arial, sans-serif',
+      borderRadius: '6px'
+    },
+    features: {
+      deviceManagement: true,
+      dataAnalysis: true,
+      aiPrediction: true,
+      gpuMonitoring: true,
+      ruleEngine: true,
+      workflowAutomation: true,
+      auditTrail: true,
+      roleManagement: true,
+      communicationProtocols: true
+    }
+  });
 
   // 公司照片數據
   const [companyPhotos, setCompanyPhotos] = useState([
@@ -98,18 +197,10 @@ const PlatformIntro = () => {
     },
     {
       id: 3,
-      title: '生產線',
-      description: '智能製造生產線展示',
-      imageUrl: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&h=600&fit=crop',
-      category: 'production',
-      is_active: true
-    },
-    {
-      id: 4,
-      title: '團隊合照',
-      description: '專業的技術團隊',
-      imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop',
-      category: 'team',
+      title: '會議室',
+      description: '現代化的會議設施',
+      imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop',
+      category: 'meeting',
       is_active: true
     }
   ]);
@@ -118,286 +209,538 @@ const PlatformIntro = () => {
   const [systemPhotos, setSystemPhotos] = useState([
     {
       id: 1,
-      title: '控制中心',
-      description: '工業物聯網平台控制中心',
+      title: '儀表板介面',
+      description: '直觀的數據視覺化介面',
       imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
-      category: 'control',
+      category: 'dashboard',
       is_active: true
     },
     {
       id: 2,
-      title: '數據中心',
-      description: '高性能數據處理中心',
-      imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop',
-      category: 'data',
-      is_active: true
-    },
-    {
-      id: 3,
-      title: '監控螢幕',
-      description: '實時監控系統介面',
-      imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
+      title: '設備監控',
+      description: '即時設備狀態監控',
+      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop',
       category: 'monitoring',
       is_active: true
     },
     {
-      id: 4,
-      title: '設備展示',
-      description: '工業設備連接展示',
-      imageUrl: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&h=600&fit=crop',
-      category: 'equipment',
+      id: 3,
+      title: 'AI 分析',
+      description: '智能異常檢測系統',
+      imageUrl: 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&h=600&fit=crop',
+      category: 'ai',
       is_active: true
     }
   ]);
-
-  // 平台架構樹狀圖數據
-  const platformArchitecture = [
-    {
-      title: '工業物聯網平台 (IIoT Platform)',
-      key: 'platform',
-      children: [
-        {
-          title: '前端層 (Frontend Layer)',
-          key: 'frontend',
-          children: [
-            {
-              title: 'React 用戶介面',
-              key: 'react-ui',
-              children: [
-                { title: '儀表板', key: 'dashboard' },
-                { title: '設備管理', key: 'device-management' },
-                { title: '數據分析', key: 'data-analysis' },
-                { title: 'AI 分析', key: 'ai-analysis' },
-                { title: '告警中心', key: 'alert-center' },
-                { title: '系統設定', key: 'system-settings' }
-              ]
-            },
-            {
-              title: 'Ant Design 組件庫',
-              key: 'antd-components'
-            }
-          ]
-        },
-        {
-          title: '後端層 (Backend Layer)',
-          key: 'backend',
-          children: [
-            {
-              title: 'FastAPI 服務',
-              key: 'fastapi-service',
-              children: [
-                { title: 'RESTful API', key: 'rest-api' },
-                { title: 'WebSocket', key: 'websocket' },
-                { title: '認證授權', key: 'auth' },
-                { title: '數據處理', key: 'data-processing' }
-              ]
-            },
-            {
-              title: 'Python 核心',
-              key: 'python-core',
-              children: [
-                { title: '設備通訊', key: 'device-communication' },
-                { title: '數據分析', key: 'data-analytics' },
-                { title: 'AI 模型', key: 'ai-models' },
-                { title: '規則引擎', key: 'rule-engine' }
-              ]
-            }
-          ]
-        },
-        {
-          title: '數據層 (Data Layer)',
-          key: 'data-layer',
-          children: [
-            {
-              title: 'PostgreSQL',
-              key: 'postgresql',
-              children: [
-                { title: '用戶數據', key: 'user-data' },
-                { title: '設備數據', key: 'device-data' },
-                { title: '系統配置', key: 'system-config' }
-              ]
-            },
-            {
-              title: 'InfluxDB',
-              key: 'influxdb',
-              children: [
-                { title: '時序數據', key: 'time-series' },
-                { title: '監控數據', key: 'monitoring-data' }
-              ]
-            },
-            {
-              title: 'Redis',
-              key: 'redis',
-              children: [
-                { title: '快取', key: 'cache' },
-                { title: '會話管理', key: 'session' }
-              ]
-            }
-          ]
-        },
-        {
-          title: '通訊層 (Communication Layer)',
-          key: 'communication',
-          children: [
-            { title: 'MQTT', key: 'mqtt' },
-            { title: 'RESTful API', key: 'rest' },
-            { title: 'Modbus TCP', key: 'modbus-tcp' },
-            { title: 'OPC UA', key: 'opc-ua' },
-            { title: 'ONVIF', key: 'onvif' }
-          ]
-        },
-        {
-          title: '設備層 (Device Layer)',
-          key: 'device-layer',
-          children: [
-            { title: '感測器', key: 'sensors' },
-            { title: '控制器', key: 'controllers' },
-            { title: '攝影機', key: 'cameras' },
-            { title: 'PLC', key: 'plc' },
-            { title: 'SCADA', key: 'scada' }
-          ]
-        }
-      ]
-    }
-  ];
 
   // Q&A 數據
   const [qaData, setQaData] = useState([
     {
       id: 1,
-      question: '什麼是工業物聯網平台？',
-      answer: '工業物聯網平台是一個整合了設備管理、數據收集、分析和可視化的綜合性平台，專為工業環境設計，提供實時監控、預測性維護和智能決策支援。',
+      question: '如何新增設備到平台？',
+      answer: '您可以透過設備管理頁面，點擊「新增設備」按鈕，填寫設備資訊並選擇通訊協定即可完成設備註冊。',
       category: 'basic',
       is_active: true
     },
     {
       id: 2,
-      question: '平台支援哪些通訊協定？',
-      answer: '平台支援多種工業通訊協定，包括 MQTT、RESTful API、Modbus TCP、OPC UA 和 ONVIF，確保與各種工業設備的兼容性。',
+      question: '支援哪些通訊協定？',
+      answer: '平台支援 MQTT、RESTful API、Modbus TCP、OPC UA 等多種工業通訊協定。',
       category: 'communication',
       is_active: true
     },
     {
       id: 3,
-      question: '如何進行設備註冊？',
-      answer: '設備註冊可以通過 API 自動註冊或手動註冊兩種方式。自動註冊適用於支援自動發現的設備，手動註冊則需要輸入設備的基本資訊和通訊參數。',
-      category: 'device',
-      is_active: true
-    },
-    {
-      id: 4,
-      question: 'AI 分析功能包含哪些？',
-      answer: 'AI 分析功能包括異常檢測、預測性維護、圖像識別、自然語言處理等，支援自定義模型訓練和部署。',
-      category: 'ai',
-      is_active: true
-    },
-    {
-      id: 5,
       question: '如何設定告警規則？',
-      answer: '可以通過規則引擎設定告警規則，支援複雜的邏輯條件和 AI 評分，可以設定多種告警方式和自動化動作。',
+      answer: '在規則引擎頁面，您可以建立自定義的告警規則，設定觸發條件和通知方式。',
       category: 'alert',
       is_active: true
     }
   ]);
 
-  // 平台特色數據
-  const platformFeatures = [
+  // 平台架構數據
+  const platformArchitecture = [
     {
-      title: '多協定支援',
-      description: '支援 MQTT、RESTful、Modbus TCP、OPC UA、ONVIF 等多種工業通訊協定',
+      title: '前端層 (Frontend)',
+      key: 'frontend',
+      icon: <DesktopOutlined />,
+      children: [
+        {
+          title: 'React 18',
+          key: 'react',
+          icon: <CodeOutlined />
+        },
+        {
+          title: 'Ant Design',
+          key: 'antd',
+          icon: <ToolOutlined />
+        },
+        {
+          title: 'ECharts',
+          key: 'echarts',
+          icon: <BarChartOutlined />
+        }
+      ]
+    },
+    {
+      title: '後端層 (Backend)',
+      key: 'backend',
       icon: <ApiOutlined />,
-      color: '#1890ff'
+      children: [
+        {
+          title: 'FastAPI',
+          key: 'fastapi',
+          icon: <RocketOutlined />
+        },
+        {
+          title: 'SQLAlchemy',
+          key: 'sqlalchemy',
+          icon: <DatabaseOutlined />
+        },
+        {
+          title: 'Celery',
+          key: 'celery',
+          icon: <ThunderboltOutlined />
+        }
+      ]
     },
     {
-      title: 'AI 驅動分析',
-      description: '整合機器學習和深度學習，提供智能異常檢測和預測性維護',
-      icon: <RobotOutlined />,
-      color: '#52c41a'
+      title: '數據層 (Data Layer)',
+      key: 'data',
+      icon: <DatabaseOutlined />,
+      children: [
+        {
+          title: 'PostgreSQL',
+          key: 'postgresql',
+          icon: <DatabaseOutlined />
+        },
+        {
+          title: 'Redis',
+          key: 'redis',
+          icon: <DatabaseOutlined />
+        }
+      ]
     },
     {
-      title: '實時監控',
-      description: '提供實時數據監控和可視化，支援多種圖表類型',
-      icon: <DashboardOutlined />,
-      color: '#faad14'
-    },
-    {
-      title: '安全可靠',
-      description: '多重安全機制，包括身份驗證、授權、數據加密和審計日誌',
-      icon: <SafetyCertificateOutlined />,
-      color: '#f5222d'
-    },
-    {
-      title: '可擴展架構',
-      description: '微服務架構設計，支援水平擴展和模組化部署',
-      icon: <GlobalOutlined />,
-      color: '#722ed1'
-    },
-    {
-      title: '易於使用',
-      description: '直觀的用戶介面和豐富的配置選項，降低學習成本',
-      icon: <StarOutlined />,
-      color: '#eb2f96'
+      title: '設備層 (Device Layer)',
+      key: 'device',
+      icon: <DesktopOutlined />,
+      children: [
+        {
+          title: 'MQTT',
+          key: 'mqtt',
+          icon: <ApiOutlined />
+        },
+        {
+          title: 'Modbus TCP',
+          key: 'modbus',
+          icon: <ApiOutlined />
+        },
+        {
+          title: 'OPC UA',
+          key: 'opcua',
+          icon: <ApiOutlined />
+        }
+      ]
     }
   ];
 
+  // 平台特色數據
+  const platformFeatures = [
+    {
+      title: '設備管理',
+      description: '完整的設備生命週期管理，支援設備註冊、分組、標籤等功能',
+      icon: <DesktopOutlined />,
+      color: '#1890ff'
+    },
+    {
+      title: '數據分析',
+      description: '即時數據監控與歷史趨勢分析，提供多維度數據統計',
+      icon: <BarChartOutlined />,
+      color: '#52c41a'
+    },
+    {
+      title: 'AI 智能分析',
+      description: '異常檢測與預測性維護，機器學習模型管理',
+      icon: <RobotOutlined />,
+      color: '#722ed1'
+    },
+    {
+      title: '告警系統',
+      description: '即時告警通知，多管道通知整合',
+      icon: <BellOutlined />,
+      color: '#fa8c16'
+    },
+    {
+      title: '安全權限',
+      description: '角色基礎存取控制，用戶權限管理',
+      icon: <SafetyCertificateOutlined />,
+      color: '#eb2f96'
+    },
+    {
+      title: '自動化工作流',
+      description: '規則引擎配置，工作流程自動化',
+      icon: <BranchesOutlined />,
+      color: '#13c2c2'
+    }
+  ];
+
+  // 處理編輯內容
   const handleEditContent = (content) => {
     setSelectedContent(content);
-    form.setFieldsValue(content);
+    if (content) {
+      form.setFieldsValue({
+        question: content.question,
+        answer: content.answer,
+        category: content.category
+      });
+    } else {
+      form.resetFields();
+    }
     setEditModalVisible(true);
   };
 
+  // 處理儲存內容
   const handleSaveContent = async (values) => {
     try {
-      // 這裡應該調用 API 儲存內容
-      message.success('內容更新成功');
+      setLoading(true);
+      
+      if (selectedContent) {
+        // 更新現有內容
+        const updatedQa = qaData.map(item => 
+          item.id === selectedContent.id 
+            ? { ...item, ...values }
+            : item
+        );
+        setQaData(updatedQa);
+        message.success('問題更新成功');
+      } else {
+        // 新增內容
+        const newQa = {
+          id: Date.now(),
+          ...values,
+          is_active: true
+        };
+        setQaData([...qaData, newQa]);
+        message.success('問題新增成功');
+      }
+      
       setEditModalVisible(false);
-      // 重新載入數據
+      form.resetFields();
+      setSelectedContent(null);
     } catch (error) {
-      message.error('儲存失敗');
+      message.error('操作失敗');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // 處理新增照片
   const handleAddPhoto = (type) => {
-    // 新增照片邏輯
-    message.info(`新增${type === 'company' ? '公司' : '系統'}照片功能`);
+    setUploadType(type);
+    setPhotoUploadModalVisible(true);
   };
 
+  // 處理刪除照片
   const handleDeletePhoto = (id, type) => {
-    // 刪除照片邏輯
-    message.success(`刪除${type === 'company' ? '公司' : '系統'}照片成功`);
+    Modal.confirm({
+      title: '確認刪除',
+      content: '確定要刪除這張照片嗎？',
+      onOk: () => {
+        if (type === 'company') {
+          setCompanyPhotos(companyPhotos.filter(photo => photo.id !== id));
+        } else if (type === 'system') {
+          setSystemPhotos(systemPhotos.filter(photo => photo.id !== id));
+        }
+        message.success('照片刪除成功');
+      }
+    });
+  };
+
+  // 處理照片上傳
+  const handlePhotoUpload = async (values) => {
+    try {
+      setLoading(true);
+      
+      const newPhoto = {
+        id: Date.now(),
+        title: values.title,
+        description: values.description,
+        imageUrl: values.imageUrl || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop',
+        category: values.category,
+        is_active: true
+      };
+
+      if (uploadType === 'company') {
+        setCompanyPhotos([...companyPhotos, newPhoto]);
+      } else if (uploadType === 'system') {
+        setSystemPhotos([...systemPhotos, newPhoto]);
+      }
+
+      message.success('照片新增成功');
+      setPhotoUploadModalVisible(false);
+      form.resetFields();
+    } catch (error) {
+      message.error('上傳失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理平台設定更新
+  const handlePlatformSettingsUpdate = async (values) => {
+    try {
+      setLoading(true);
+      setPlatformSettings({ ...platformSettings, ...values });
+      message.success('平台設定更新成功');
+    } catch (error) {
+      message.error('更新失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理功能開關
+  const handleFeatureToggle = (feature, checked) => {
+    const updatedFeatures = {
+      ...platformSettings.features,
+      [feature]: checked
+    };
+    setPlatformSettings({
+      ...platformSettings,
+      features: updatedFeatures
+    });
+    message.success(`${checked ? '啟用' : '停用'} ${feature} 功能`);
+  };
+
+  // 處理主題設定
+  const handleThemeUpdate = (themeKey, value) => {
+    const updatedTheme = {
+      ...platformSettings.themeConfig,
+      [themeKey]: value
+    };
+    setPlatformSettings({
+      ...platformSettings,
+      themeConfig: updatedTheme
+    });
+    message.success('主題設定更新成功');
+  };
+
+  // 處理 Q&A 刪除
+  const handleDeleteQa = (id) => {
+    Modal.confirm({
+      title: '確認刪除',
+      content: '確定要刪除這個問題嗎？',
+      onOk: () => {
+        setQaData(qaData.filter(item => item.id !== id));
+        message.success('問題刪除成功');
+      }
+    });
+  };
+
+  // 處理 Q&A 狀態切換
+  const handleQaStatusToggle = (id) => {
+    const updatedQa = qaData.map(item =>
+      item.id === id ? { ...item, is_active: !item.is_active } : item
+    );
+    setQaData(updatedQa);
+    message.success('狀態更新成功');
+  };
+
+  // 處理照片狀態切換
+  const handlePhotoStatusToggle = (id, type) => {
+    if (type === 'company') {
+      const updatedPhotos = companyPhotos.map(photo =>
+        photo.id === id ? { ...photo, is_active: !photo.is_active } : photo
+      );
+      setCompanyPhotos(updatedPhotos);
+    } else if (type === 'system') {
+      const updatedPhotos = systemPhotos.map(photo =>
+        photo.id === id ? { ...photo, is_active: !photo.is_active } : photo
+      );
+      setSystemPhotos(updatedPhotos);
+    }
+    message.success('照片狀態更新成功');
+  };
+
+  // 處理批量操作
+  const handleBatchOperation = (operation, ids) => {
+    Modal.confirm({
+      title: '確認批量操作',
+      content: `確定要${operation}選中的項目嗎？`,
+      onOk: () => {
+        if (operation === 'delete') {
+          setQaData(qaData.filter(item => !ids.includes(item.id)));
+          message.success('批量刪除成功');
+        } else if (operation === 'activate') {
+          const updatedQa = qaData.map(item =>
+            ids.includes(item.id) ? { ...item, is_active: true } : item
+          );
+          setQaData(updatedQa);
+          message.success('批量啟用成功');
+        } else if (operation === 'deactivate') {
+          const updatedQa = qaData.map(item =>
+            ids.includes(item.id) ? { ...item, is_active: false } : item
+          );
+          setQaData(updatedQa);
+          message.success('批量停用成功');
+        }
+      }
+    });
+  };
+
+  // 處理匯出功能
+  const handleExport = (type) => {
+    let data = '';
+    let filename = '';
+
+    if (type === 'qa') {
+      data = JSON.stringify(qaData, null, 2);
+      filename = 'platform_qa.json';
+    } else if (type === 'photos') {
+      data = JSON.stringify([...companyPhotos, ...systemPhotos], null, 2);
+      filename = 'platform_photos.json';
+    } else if (type === 'settings') {
+      data = JSON.stringify(platformSettings, null, 2);
+      filename = 'platform_settings.json';
+    }
+
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    message.success('匯出成功');
+  };
+
+  // 處理匯入功能
+  const handleImport = (type, file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        
+        if (type === 'qa') {
+          setQaData(data);
+          message.success('Q&A 匯入成功');
+        } else if (type === 'photos') {
+          const companyPhotos = data.filter(photo => photo.category === 'company');
+          const systemPhotos = data.filter(photo => photo.category === 'system');
+          setCompanyPhotos(companyPhotos);
+          setSystemPhotos(systemPhotos);
+          message.success('照片匯入成功');
+        } else if (type === 'settings') {
+          setPlatformSettings(data);
+          message.success('設定匯入成功');
+        }
+      } catch (error) {
+        message.error('匯入失敗：檔案格式錯誤');
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={2}>
-        <InfoCircleOutlined /> 平台簡介
-      </Title>
-
+    <div style={{ padding: '24px' }}>
       <Row gutter={[16, 16]}>
+        {/* 頁面標題和操作按鈕 */}
+        <Col span={24}>
+          <Card>
+            <Row justify="space-between" align="middle">
+              <Col>
+                <Title level={2}>
+                  <InfoCircleOutlined /> 平台簡介
+                </Title>
+              </Col>
+              <Col>
+                <Space>
+                  <Button 
+                    type={editMode ? 'primary' : 'default'}
+                    icon={<EditOutlined />}
+                    onClick={() => setEditMode(!editMode)}
+                  >
+                    {editMode ? '退出編輯' : '編輯模式'}
+                  </Button>
+                  <Button 
+                    icon={<ReloadOutlined />}
+                    onClick={() => {
+                      setLoading(true);
+                      setTimeout(() => {
+                        setLoading(false);
+                        message.success('頁面重新載入成功');
+                      }, 1000);
+                    }}
+                  >
+                    重新載入
+                  </Button>
+                  <Button 
+                    type="primary"
+                    icon={<DownloadOutlined />}
+                    onClick={() => handleExport('settings')}
+                  >
+                    匯出設定
+                  </Button>
+                </Space>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+
         {/* 平台概覽 */}
         <Col span={24}>
           <Card 
-            title="平台概覽" 
+            title={
+              <Space>
+                <DashboardOutlined />
+                平台概覽
+              </Space>
+            }
             extra={
-              <Button 
-                type="primary" 
-                icon={<EditOutlined />}
-                onClick={() => setEditMode(!editMode)}
-              >
-                {editMode ? '檢視模式' : '編輯模式'}
-              </Button>
+              editMode && (
+                <Button 
+                  type="primary" 
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: '編輯平台概覽',
+                      content: (
+                        <Form layout="vertical">
+                          <Form.Item label="平台名稱">
+                            <Input defaultValue={platformSettings.platformName} />
+                          </Form.Item>
+                          <Form.Item label="版本">
+                            <Input defaultValue={platformSettings.version} />
+                          </Form.Item>
+                          <Form.Item label="描述">
+                            <TextArea rows={3} defaultValue={platformSettings.description} />
+                          </Form.Item>
+                        </Form>
+                      ),
+                      onOk: () => message.success('平台概覽更新成功')
+                    });
+                  }}
+                >
+                  編輯概覽
+                </Button>
+              )
             }
           >
             <Row gutter={[16, 16]}>
               <Col span={16}>
+                <Title level={4}>{platformSettings.platformName}</Title>
                 <Paragraph>
-                  工業物聯網平台是一個專為工業環境設計的綜合性物聯網解決方案。
-                  平台整合了設備管理、數據收集、實時分析、AI 智能分析、告警管理等功能，
-                  為工業企業提供完整的數位化轉型支援。
+                  {platformSettings.description}
                 </Paragraph>
+                <Descriptions column={2}>
+                  <Descriptions.Item label="版本">{platformSettings.version}</Descriptions.Item>
+                  <Descriptions.Item label="公司">{platformSettings.companyName}</Descriptions.Item>
+                  <Descriptions.Item label="聯絡信箱">{platformSettings.contactEmail}</Descriptions.Item>
+                  <Descriptions.Item label="網站">{platformSettings.website}</Descriptions.Item>
+                </Descriptions>
                 <Paragraph>
-                  平台採用現代化的微服務架構，支援多種工業通訊協定，具備高可用性、
-                  可擴展性和安全性，能夠滿足不同規模企業的需求。
+                  平台採用現代化的微服務架構，提供高可用性、高可擴展性和安全性，能夠滿足不同規模企業的需求。
                 </Paragraph>
               </Col>
               <Col span={8}>
@@ -434,19 +777,27 @@ const PlatformIntro = () => {
               </Space>
             }
             extra={
-              editMode && (
+              <Space>
+                {editMode && (
+                  <Button 
+                    type="primary" 
+                    icon={<PlusOutlined />}
+                    onClick={() => handleAddPhoto('company')}
+                  >
+                    新增照片
+                  </Button>
+                )}
                 <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />}
-                  onClick={() => handleAddPhoto('company')}
+                  icon={<DownloadOutlined />}
+                  onClick={() => handleExport('photos')}
                 >
-                  新增照片
+                  匯出照片
                 </Button>
-              )
+              </Space>
             }
           >
             <Carousel autoplay dots={{ position: 'bottom' }}>
-              {companyPhotos.map((photo) => (
+              {companyPhotos.filter(photo => photo.is_active).map((photo) => (
                 <div key={photo.id}>
                   <div style={{ position: 'relative', height: 400 }}>
                     <Image
@@ -478,16 +829,22 @@ const PlatformIntro = () => {
                         {photo.description}
                       </Text>
                       {editMode && (
-                        <Button 
-                          type="primary" 
-                          danger 
-                          size="small"
-                          icon={<DeleteOutlined />}
-                          style={{ position: 'absolute', top: 10, right: 10 }}
-                          onClick={() => handleDeletePhoto(photo.id, 'company')}
-                        >
-                          刪除
-                        </Button>
+                        <Space style={{ position: 'absolute', top: 10, right: 10 }}>
+                          <Switch
+                            size="small"
+                            checked={photo.is_active}
+                            onChange={() => handlePhotoStatusToggle(photo.id, 'company')}
+                          />
+                          <Button 
+                            type="primary" 
+                            danger 
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            onClick={() => handleDeletePhoto(photo.id, 'company')}
+                          >
+                            刪除
+                          </Button>
+                        </Space>
                       )}
                     </div>
                   </div>
@@ -519,7 +876,7 @@ const PlatformIntro = () => {
             }
           >
             <Row gutter={[16, 16]}>
-              {systemPhotos.map((photo) => (
+              {systemPhotos.filter(photo => photo.is_active).map((photo) => (
                 <Col span={12} key={photo.id}>
                   <Card
                     hoverable
@@ -539,16 +896,22 @@ const PlatformIntro = () => {
                           }}
                         />
                         {editMode && (
-                          <Button 
-                            type="primary" 
-                            danger 
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            style={{ position: 'absolute', top: 10, right: 10 }}
-                            onClick={() => handleDeletePhoto(photo.id, 'system')}
-                          >
-                            刪除
-                          </Button>
+                          <Space style={{ position: 'absolute', top: 10, right: 10 }}>
+                            <Switch
+                              size="small"
+                              checked={photo.is_active}
+                              onChange={() => handlePhotoStatusToggle(photo.id, 'system')}
+                            />
+                            <Button 
+                              type="primary" 
+                              danger 
+                              size="small"
+                              icon={<DeleteOutlined />}
+                              onClick={() => handleDeletePhoto(photo.id, 'system')}
+                            >
+                              刪除
+                            </Button>
+                          </Space>
                         )}
                       </div>
                     }
@@ -569,7 +932,20 @@ const PlatformIntro = () => {
 
         {/* 平台架構 */}
         <Col span={24}>
-          <Card title="平台架構圖">
+          <Card 
+            title="平台架構圖"
+            extra={
+              <Button 
+                icon={<DownloadOutlined />}
+                onClick={() => {
+                  // 匯出架構圖
+                  message.success('架構圖匯出成功');
+                }}
+              >
+                匯出架構圖
+              </Button>
+            }
+          >
             <Tree
               treeData={platformArchitecture}
               defaultExpandAll
@@ -581,7 +957,26 @@ const PlatformIntro = () => {
 
         {/* 平台特色 */}
         <Col span={24}>
-          <Card title="平台特色">
+          <Card 
+            title="平台特色"
+            extra={
+              editMode && (
+                <Button 
+                  type="primary" 
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: '編輯平台特色',
+                      content: '您可以在此編輯平台特色描述',
+                      onOk: () => message.success('平台特色更新成功')
+                    });
+                  }}
+                >
+                  編輯特色
+                </Button>
+              )
+            }
+          >
             <Row gutter={[16, 16]}>
               {platformFeatures.map((feature, index) => (
                 <Col span={8} key={index}>
@@ -607,23 +1002,55 @@ const PlatformIntro = () => {
           <Card 
             title="常見問題 (Q&A)" 
             extra={
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                onClick={() => handleEditContent({ type: 'qa' })}
-              >
-                新增問題
-              </Button>
+              <Space>
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />}
+                  onClick={() => handleEditContent({ type: 'qa' })}
+                >
+                  新增問題
+                </Button>
+                <Button 
+                  icon={<DownloadOutlined />}
+                  onClick={() => handleExport('qa')}
+                >
+                  匯出 Q&A
+                </Button>
+                {editMode && (
+                  <Button 
+                    icon={<UploadOutlined />}
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = '.json';
+                      input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleImport('qa', file);
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    匯入 Q&A
+                  </Button>
+                )}
+              </Space>
             }
           >
             <Collapse defaultActiveKey={['1']}>
-              {qaData.map((item) => (
+              {qaData.filter(item => item.is_active).map((item) => (
                 <Panel 
                   header={item.question} 
                   key={item.id}
                   extra={
                     editMode && (
                       <Space>
+                        <Switch
+                          size="small"
+                          checked={item.is_active}
+                          onChange={() => handleQaStatusToggle(item.id)}
+                        />
                         <Button 
                           type="link" 
                           size="small" 
@@ -637,9 +1064,7 @@ const PlatformIntro = () => {
                         </Button>
                         <Popconfirm
                           title="確定要刪除這個問題嗎？"
-                          onConfirm={() => {
-                            // 刪除邏輯
-                          }}
+                          onConfirm={() => handleDeleteQa(item.id)}
                         >
                           <Button 
                             type="link" 
@@ -662,6 +1087,115 @@ const PlatformIntro = () => {
             </Collapse>
           </Card>
         </Col>
+
+        {/* 平台設定 */}
+        {editMode && (
+          <Col span={24}>
+            <Card title="平台設定">
+              <Tabs defaultActiveKey="basic">
+                <Tabs.TabPane tab="基本設定" key="basic">
+                  <Form layout="vertical">
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item label="平台名稱">
+                          <Input 
+                            defaultValue={platformSettings.platformName}
+                            onChange={(e) => handlePlatformSettingsUpdate({ platformName: e.target.value })}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col span={12}>
+                        <Form.Item label="版本">
+                          <Input 
+                            defaultValue={platformSettings.version}
+                            onChange={(e) => handlePlatformSettingsUpdate({ version: e.target.value })}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    <Form.Item label="描述">
+                      <TextArea 
+                        rows={3}
+                        defaultValue={platformSettings.description}
+                        onChange={(e) => handlePlatformSettingsUpdate({ description: e.target.value })}
+                      />
+                    </Form.Item>
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item label="公司名稱">
+                          <Input 
+                            defaultValue={platformSettings.companyName}
+                            onChange={(e) => handlePlatformSettingsUpdate({ companyName: e.target.value })}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col span={12}>
+                        <Form.Item label="聯絡信箱">
+                          <Input 
+                            defaultValue={platformSettings.contactEmail}
+                            onChange={(e) => handlePlatformSettingsUpdate({ contactEmail: e.target.value })}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Form>
+                </Tabs.TabPane>
+                <Tabs.TabPane tab="功能開關" key="features">
+                  <Row gutter={16}>
+                    {Object.entries(platformSettings.features).map(([key, value]) => (
+                      <Col span={8} key={key}>
+                        <Form.Item label={key}>
+                          <Switch
+                            checked={value}
+                            onChange={(checked) => handleFeatureToggle(key, checked)}
+                          />
+                        </Form.Item>
+                      </Col>
+                    ))}
+                  </Row>
+                </Tabs.TabPane>
+                <Tabs.TabPane tab="主題設定" key="theme">
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Form.Item label="主要顏色">
+                        <Input 
+                          type="color"
+                          defaultValue={platformSettings.themeConfig.primaryColor}
+                          onChange={(e) => handleThemeUpdate('primaryColor', e.target.value)}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                      <Form.Item label="次要顏色">
+                        <Input 
+                          type="color"
+                          defaultValue={platformSettings.themeConfig.secondaryColor}
+                          onChange={(e) => handleThemeUpdate('secondaryColor', e.target.value)}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                  <Form.Item label="字體">
+                    <Select
+                      defaultValue={platformSettings.themeConfig.fontFamily}
+                      onChange={(value) => handleThemeUpdate('fontFamily', value)}
+                    >
+                      <Option value="Arial, sans-serif">Arial</Option>
+                      <Option value="Helvetica, sans-serif">Helvetica</Option>
+                      <Option value="Times New Roman, serif">Times New Roman</Option>
+                    </Select>
+                  </Form.Item>
+                  <Form.Item label="深色模式">
+                    <Switch
+                      checked={platformSettings.themeConfig.darkMode}
+                      onChange={(checked) => handleThemeUpdate('darkMode', checked)}
+                    />
+                  </Form.Item>
+                </Tabs.TabPane>
+              </Tabs>
+            </Card>
+          </Col>
+        )}
       </Row>
 
       {/* 編輯模態框 */}
@@ -706,10 +1240,71 @@ const PlatformIntro = () => {
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={loading}>
                 儲存
               </Button>
               <Button onClick={() => setEditModalVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 照片上傳模態框 */}
+      <Modal
+        title="新增照片"
+        open={photoUploadModalVisible}
+        onCancel={() => setPhotoUploadModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={form}
+          onFinish={handlePhotoUpload}
+          layout="vertical"
+        >
+          <Form.Item
+            label="照片標題"
+            name="title"
+            rules={[{ required: true, message: '請輸入標題' }]}
+          >
+            <Input placeholder="請輸入照片標題" />
+          </Form.Item>
+          <Form.Item
+            label="照片描述"
+            name="description"
+            rules={[{ required: true, message: '請輸入描述' }]}
+          >
+            <TextArea rows={3} placeholder="請輸入照片描述" />
+          </Form.Item>
+          <Form.Item
+            label="照片 URL"
+            name="imageUrl"
+            rules={[{ required: true, message: '請輸入照片 URL' }]}
+          >
+            <Input placeholder="請輸入照片 URL" />
+          </Form.Item>
+          <Form.Item
+            label="分類"
+            name="category"
+            rules={[{ required: true, message: '請選擇分類' }]}
+          >
+            <Select placeholder="請選擇分類">
+              <Option value="building">建築</Option>
+              <Option value="rd">研發</Option>
+              <Option value="meeting">會議</Option>
+              <Option value="dashboard">儀表板</Option>
+              <Option value="monitoring">監控</Option>
+              <Option value="ai">AI 分析</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                新增
+              </Button>
+              <Button onClick={() => setPhotoUploadModalVisible(false)}>
                 取消
               </Button>
             </Space>
