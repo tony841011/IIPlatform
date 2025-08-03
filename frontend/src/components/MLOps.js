@@ -4,993 +4,1161 @@ import {
   Row,
   Col,
   Typography,
-  Table,
   Button,
+  Table,
   Space,
+  Tag,
+  Progress,
   Modal,
   Form,
   Input,
   Select,
   message,
-  Spin,
-  Alert,
-  Progress,
-  Tag,
-  Tooltip,
+  Tabs,
+  Statistic,
   Timeline,
   Descriptions,
+  Badge,
+  Tooltip,
+  Popconfirm,
+  Drawer,
+  Steps,
+  Alert,
   Divider,
   List,
   Avatar,
-  Steps,
-  Badge,
-  Popconfirm,
-  Drawer,
-  Tabs,
-  Upload,
-  DatePicker,
   Switch,
+  TimePicker,
+  DatePicker,
   Slider,
-  Statistic
+  Upload,
+  Tree,
+  Transfer,
+  Cascader,
+  Radio,
+  Checkbox,
+  Rate,
+  InputNumber,
+  Mentions,
+  AutoComplete,
+  TreeSelect,
+  Image,
+  Skeleton,
+  Empty,
+  Result,
+  PageHeader,
+  Breadcrumb,
+  Dropdown,
+  Menu,
+  Affix,
+  Anchor,
+  BackTop,
+  ConfigProvider,
+  LocaleProvider,
+  theme,
+  App,
+  FloatButton,
+  Watermark,
+  QRCode,
+  Tour,
+  Segmented,
+  Flex,
+  Grid,
+  Carousel,
+  Collapse,
+  ColorPicker
 } from 'antd';
 import {
-  RobotOutlined,
+  ExperimentOutlined,
+  DeleteOutlined,
+  UploadOutlined,
+  DownloadOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
   StopOutlined,
   ReloadOutlined,
+  SettingOutlined,
   EyeOutlined,
   EditOutlined,
-  DeleteOutlined,
   PlusOutlined,
-  DownloadOutlined,
-  UploadOutlined,
-  SettingOutlined,
-  HistoryOutlined,
-  BarChartOutlined,
-  LineChartOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   ClockCircleOutlined,
+  BarChartOutlined,
+  RocketOutlined,
   CloudUploadOutlined,
-  ApiOutlined,
-  ExperimentOutlined,
-  TrophyOutlined,
+  CloudDownloadOutlined,
+  SyncOutlined,
+  PartitionOutlined,
+  BugOutlined,
+  SafetyOutlined,
+  BulbOutlined,
+  HeartOutlined,
   FireOutlined,
-  ThunderboltOutlined
-} from '@ant-design/icons';
-import axios from 'axios';
+  StarOutlined,
+  TrophyOutlined,
+  CrownOutlined,
+  BankOutlined,
+  HomeOutlined,
+  ShopOutlined,
+  CarOutlined,
+  MedicineBoxOutlined,
+  ExperimentOutlined as LabOutlined,
+  RocketOutlined as LaunchOutlined,
+  ThunderboltOutlined,
+  GlobalOutlined,
+  CloudOutlined,
+  DatabaseOutlined,
+  ApiOutlined,
+  SafetyCertificateOutlined,
+  TeamOutlined,
+  SettingOutlined as ConfigOutlined,
+  BellOutlined,
+  FileTextOutlined,
+  EnvironmentOutlined,
+  GatewayOutlined,
+  VideoCameraOutlined,
+  RobotOutlined,
+  HistoryOutlined,
+  AlertOutlined,
+  DashboardOutlined,
+  DesktopOutlined,
+  ControlOutlined,
+  CloudUploadOutlined as UpdateOutlined,
+  BranchesOutlined,
+  AuditOutlined,
+  KeyOutlined,
+  DatabaseOutlined as DBOutlined,
+  TableOutlined,
+  ExperimentOutlined as MLOpsOutlined,
+  BellOutlined as NotifyOutlined,
+  FileTextOutlined as ReportOutlined,
+  EnvironmentOutlined as MapOutlined,
+  GatewayOutlined as EdgeOutlined,
+  VideoCameraOutlined as CameraOutlined,
+  RobotOutlined as AIOutlined,
+  HistoryOutlined as TimelineOutlined,
+  AlertOutlined as WarningOutlined,
+  DashboardOutlined as ChartOutlined,
+  DesktopOutlined as DeviceOutlined,
+  ControlOutlined as RemoteOutlined,
+  CloudUploadOutlined as UpdateIcon,
+  BranchesOutlined as WorkflowOutlined,
+  AuditOutlined as LogOutlined,
+  KeyOutlined as PermissionOutlined,
+  DatabaseOutlined as StorageOutlined,
+  TableOutlined as SchemaOutlined,
+  ExperimentOutlined as MLOpsIcon,
+  BellOutlined as NotificationOutlined,
+  FileTextOutlined as DocumentOutlined,
+  EnvironmentOutlined as GISOutlined,
+  GatewayOutlined as EdgeGatewayOutlined,
+  PhoneOutlined,
+  InfoCircleOutlined,
+  LogoutOutlined,
+  LoginOutlined,
+  SwapOutlined,
+  ExperimentOutlined as ExperimentIcon,
+  BellOutlined as BellIcon,
+  FileTextOutlined as FileTextIcon,
+  EnvironmentOutlined as EnvironmentIcon,
+  GatewayOutlined as GatewayIcon,
+  VideoCameraOutlined as VideoCameraIcon,
+  RobotOutlined as RobotIcon,
+  HistoryOutlined as HistoryIcon,
+  AlertOutlined as AlertIcon,
+  DashboardOutlined as DashboardIcon,
+  DesktopOutlined as DesktopIcon,
+  ControlOutlined as ControlIcon,
+  CloudUploadOutlined as CloudUploadIcon,
+  BranchesOutlined as BranchesIcon,
+  AuditOutlined as AuditIcon,
+  KeyOutlined as KeyIcon,
+  DatabaseOutlined as DatabaseIcon,
+  TableOutlined as TableIcon,
+  ExperimentOutlined as ExperimentIcon2,
+  BellOutlined as BellIcon2,
+  FileTextOutlined as FileTextIcon2,
+  EnvironmentOutlined as EnvironmentIcon2,
+  GatewayOutlined as GatewayIcon2,
+  VideoCameraOutlined as VideoCameraIcon2,
+  RobotOutlined as RobotIcon2,
+  HistoryOutlined as HistoryIcon2,
+  AlertOutlined as AlertIcon2,
+  DashboardOutlined as DashboardIcon2,
+  DesktopOutlined as DesktopIcon2,
+  ControlOutlined as ControlIcon2,
+  CloudUploadOutlined as CloudUploadIcon2,
+  BranchesOutlined as BranchesIcon2,
+  AuditOutlined as AuditIcon2,
+  KeyOutlined as KeyIcon2,
+  DatabaseOutlined as DatabaseIcon2,
+  TableOutlined as TableIcon2,
+  ExperimentOutlined as ExperimentIcon3,
+  BellOutlined as BellIcon3,
+  FileTextOutlined as FileTextIcon3,
+  EnvironmentOutlined as EnvironmentIcon3,
+  GatewayOutlined as GatewayIcon3,
+  VideoCameraOutlined as VideoCameraIcon3,
+  RobotOutlined as RobotIcon3,
+  HistoryOutlined as HistoryIcon3,
+  AlertOutlined as AlertIcon3,
+  DashboardOutlined as DashboardIcon3,
+  DesktopOutlined as DesktopIcon3,
+  ControlOutlined as ControlIcon3,
+  CloudUploadOutlined as CloudUploadIcon3,
+  BranchesOutlined as BranchesIcon3,
+  AuditOutlined as AuditIcon3,
+  KeyOutlined as KeyIcon3,
+  DatabaseOutlined as DatabaseIcon3,
+  TableOutlined as TableIcon3,
+  ExperimentOutlined as ExperimentIcon4,
+  BellOutlined as BellIcon4,
+  FileTextOutlined as FileTextIcon4,
+  EnvironmentOutlined as EnvironmentIcon4,
+  GatewayOutlined as GatewayIcon4,
+  VideoCameraOutlined as VideoCameraIcon4,
+  RobotOutlined as RobotIcon4,
+  HistoryOutlined as HistoryIcon4,
+  AlertOutlined as AlertIcon4,
+  DashboardOutlined as DashboardIcon4,
+  DesktopOutlined as DesktopIcon4,
+  ControlOutlined as ControlIcon4,
+  CloudUploadOutlined as CloudUploadIcon4,
+  BranchesOutlined as BranchesIcon4,
+  AuditOutlined as AuditIcon4,
+  KeyOutlined as KeyIcon4,
+  DatabaseOutlined as DatabaseIcon4,
+  TableOutlined as TableIcon4,
+  ExperimentOutlined as ExperimentIcon5,
+  BellOutlined as BellIcon5,
+  FileTextOutlined as FileTextIcon5,
+  EnvironmentOutlined as EnvironmentIcon5,
+  GatewayOutlined as GatewayIcon5,
+  VideoCameraOutlined as VideoCameraIcon5,
+  RobotOutlined as RobotIcon5,
+  HistoryOutlined as HistoryIcon5,
+  AlertOutlined as AlertIcon5,
+  DashboardOutlined as DashboardIcon5,
+  DesktopOutlined as DesktopIcon5,
+  ControlOutlined as ControlIcon5,
+  CloudUploadOutlined as CloudUploadIcon5,
+  BranchesOutlined as BranchesIcon5,
+  AuditOutlined as AuditIcon5,
+  KeyOutlined as KeyIcon5,
+  DatabaseOutlined as DatabaseIcon5,
+  TableOutlined as TableIcon5,
+  ExperimentOutlined as ExperimentIcon6,
+  BellOutlined as BellIcon6,
+  FileTextOutlined as FileTextIcon6,
+  EnvironmentOutlined as EnvironmentIcon6,
+  GatewayOutlined as GatewayIcon6,
+  VideoCameraOutlined as VideoCameraIcon6,
+  RobotOutlined as RobotIcon6,
+  HistoryOutlined as HistoryIcon6,
+  AlertOutlined as AlertIcon6,
+  DashboardOutlined as DashboardIcon6,
+  DesktopOutlined as DesktopIcon6,
+  ControlOutlined as ControlIcon6,
+  CloudUploadOutlined as CloudUploadIcon6,
+  BranchesOutlined as BranchesIcon6,
+  AuditOutlined as AuditIcon6,
+  KeyOutlined as KeyIcon6,
+  DatabaseOutlined as DatabaseIcon6,
+  TableOutlined as TableIcon6,
+  ExperimentOutlined as ExperimentIcon7,
+  BellOutlined as BellIcon7,
+  FileTextOutlined as FileTextIcon7,
+  EnvironmentOutlined as EnvironmentIcon7,
+  GatewayOutlined as GatewayIcon7,
+  VideoCameraOutlined as VideoCameraIcon7,
+  RobotOutlined as RobotIcon7,
+  HistoryOutlined as HistoryIcon7,
+  AlertOutlined as AlertIcon7,
+  DashboardOutlined as DashboardIcon7,
+  DesktopOutlined as DesktopIcon7,
+  ControlOutlined as ControlIcon7,
+  CloudUploadOutlined as CloudUploadIcon7,
+  BranchesOutlined as BranchesIcon7,
+  AuditOutlined as AuditIcon7,
+  KeyOutlined as KeyIcon7,
+  DatabaseOutlined as DatabaseIcon7,
+  TableOutlined as TableIcon7,
+  ExperimentOutlined as ExperimentIcon8,
+  BellOutlined as BellIcon8,
+  FileTextOutlined as FileTextIcon8,
+  EnvironmentOutlined as EnvironmentIcon8,
+  GatewayOutlined as GatewayIcon8,
+  VideoCameraOutlined as VideoCameraIcon8,
+  RobotOutlined as RobotIcon8,
+  HistoryOutlined as HistoryIcon8,
+  AlertOutlined as AlertIcon8,
+  DashboardOutlined as DashboardIcon8,
+  DesktopOutlined as DesktopIcon8,
+  ControlOutlined as ControlIcon8,
+  CloudUploadOutlined as CloudUploadIcon8,
+  BranchesOutlined as BranchesIcon8,
+  AuditOutlined as AuditIcon8,
+  KeyOutlined as KeyIcon8,
+  DatabaseOutlined as DatabaseIcon8,
+  TableOutlined as TableIcon8,
+  ExperimentOutlined as ExperimentIcon9,
+  BellOutlined as BellIcon9,
+  FileTextOutlined as FileTextIcon9,
+  EnvironmentOutlined as EnvironmentIcon9,
+  GatewayOutlined as GatewayIcon9,
+  VideoCameraOutlined as VideoCameraIcon9,
+  RobotOutlined as RobotIcon9,
+  HistoryOutlined as HistoryIcon9,
+  AlertOutlined as AlertIcon9,
+  DashboardOutlined as DashboardIcon9,
+  DesktopOutlined as DesktopIcon9,
+  ControlOutlined as ControlIcon9,
+  CloudUploadOutlined as CloudUploadIcon9,
+  BranchesOutlined as BranchesIcon9,
+  AuditOutlined as AuditIcon9,
+  KeyOutlined as KeyIcon9,
+  DatabaseOutlined as DatabaseIcon9,
+  TableOutlined as TableIcon9,
+  ExperimentOutlined as ExperimentIcon10,
+  BellOutlined as BellIcon10,
+  FileTextOutlined as FileTextIcon10,
+  EnvironmentOutlined as EnvironmentIcon10,
+  GatewayOutlined as GatewayIcon10,
+  VideoCameraOutlined as VideoCameraIcon10,
+  RobotOutlined as RobotIcon10,
+  HistoryOutlined as HistoryIcon10,
+  AlertOutlined as AlertIcon10,
+  DashboardOutlined as DashboardIcon10,
+  DesktopOutlined as DesktopIcon10,
+  ControlOutlined as ControlIcon10,
+  CloudUploadOutlined as CloudUploadIcon10,
+  BranchesOutlined as BranchesIcon10,
+  AuditOutlined as AuditIcon10,
+  KeyOutlined as KeyIcon10,
+  DatabaseOutlined as DatabaseIcon10,
+  TableOutlined as TableIcon10,
+  ExperimentOutlined as ExperimentIcon11,
+  BellOutlined as BellIcon11,
+  FileTextOutlined as FileTextIcon11,
+  EnvironmentOutlined as EnvironmentIcon11,
+  GatewayOutlined as GatewayIcon11,
+  VideoCameraOutlined as VideoCameraIcon11,
+  RobotOutlined as RobotIcon11,
+  HistoryOutlined as HistoryIcon11,
+  AlertOutlined as AlertIcon11,
+  DashboardOutlined as DashboardIcon11,
+  DesktopOutlined as DesktopIcon11,
+  ControlOutlined as ControlIcon11,
+  CloudUploadOutlined as CloudUploadIcon11,
+  BranchesOutlined as BranchesIcon11,
+  AuditOutlined as AuditIcon11,
+  KeyOutlined as KeyIcon11,
+  DatabaseOutlined as DatabaseIcon11,
+  TableOutlined as TableIcon11,
+  ExperimentOutlined as ExperimentIcon12,
+  BellOutlined as BellIcon12,
+  FileTextOutlined as FileTextIcon12,
+  EnvironmentOutlined as EnvironmentIcon12,
+  GatewayOutlined as GatewayIcon12,
+  VideoCameraOutlined as VideoCameraIcon12,
+  RobotOutlined as RobotIcon12,
+  HistoryOutlined as HistoryIcon12,
+  AlertOutlined as AlertIcon12,
+  DashboardOutlined as DashboardIcon12,
+  DesktopOutlined as DesktopIcon12,
+  ControlOutlined as ControlIcon12,
+  CloudUploadOutlined as CloudUploadIcon12,
+  BranchesOutlined as BranchesIcon12,
+  AuditOutlined as AuditIcon12,
+  KeyOutlined as KeyIcon12,
+  DatabaseOutlined as DatabaseIcon12,
+  TableOutlined as TableIcon12,
+  ExperimentOutlined as ExperimentIcon13,
+  BellOutlined as BellIcon13,
+  FileTextOutlined as FileTextIcon13,
+  EnvironmentOutlined as EnvironmentIcon13,
+  GatewayOutlined as GatewayIcon13,
+  VideoCameraOutlined as VideoCameraIcon13,
+  RobotOutlined as RobotIcon13,
+  HistoryOutlined as HistoryIcon13,
+  AlertOutlined as AlertIcon13,
+  DashboardOutlined as DashboardIcon13,
+  DesktopOutlined as DesktopIcon13,
+  ControlOutlined as ControlIcon13,
+  CloudUploadOutlined as CloudUploadIcon13,
+  BranchesOutlined as BranchesIcon13,
+  AuditOutlined as AuditIcon13,
+  KeyOutlined as KeyIcon13,
+  DatabaseOutlined as DatabaseIcon13,
+  TableOutlined as TableIcon13,
+  ExperimentOutlined as ExperimentIcon14,
+  BellOutlined as BellIcon14,
+  FileTextOutlined as FileTextIcon14,
+  EnvironmentOutlined as EnvironmentIcon14,
+  GatewayOutlined as GatewayIcon14,
+  VideoCameraOutlined as VideoCameraIcon14,
+  RobotOutlined as RobotIcon14,
+  HistoryOutlined as HistoryIcon14,
+  AlertOutlined as AlertIcon14,
+  DashboardOutlined as DashboardIcon14,
+  DesktopOutlined as DesktopIcon14,
+  ControlOutlined as ControlIcon14,
+  CloudUploadOutlined as CloudUploadIcon14,
+  BranchesOutlined as BranchesIcon14,
+  AuditOutlined as AuditIcon14,
+  KeyOutlined as KeyIcon14,
+  DatabaseOutlined as DatabaseIcon14,
+  TableOutlined as TableIcon14,
+  ExperimentOutlined as ExperimentIcon15,
+  BellOutlined as BellIcon15,
+  FileTextOutlined as FileTextIcon15,
+  EnvironmentOutlined as EnvironmentIcon15,
+  GatewayOutlined as GatewayIcon15,
+  VideoCameraOutlined as VideoCameraIcon15,
+  RobotOutlined as RobotIcon15,
+  HistoryOutlined as HistoryIcon15,
+  AlertOutlined as AlertIcon15,
+  DashboardOutlined as DashboardIcon15,
+  DesktopOutlined as DesktopIcon15,
+  ControlOutlined as ControlIcon15,
+  CloudUploadOutlined as CloudUploadIcon15,
+  BranchesOutlined as BranchesIcon15,
+  AuditOutlined as AuditIcon15,
+  KeyOutlined as KeyIcon15,
+  DatabaseOutlined as DatabaseIcon15,
+  TableOutlined as TableIcon15,
+  ExperimentOutlined as ExperimentIcon16,
+  BellOutlined as BellIcon16,
+  FileTextOutlined as FileTextIcon16,
+  EnvironmentOutlined as EnvironmentIcon16,
+  GatewayOutlined as GatewayIcon16,
+  VideoCameraOutlined as VideoCameraIcon16,
+  RobotOutlined as RobotIcon16,
+  HistoryOutlined as HistoryIcon16,
+  AlertOutlined as AlertIcon16,
+  DashboardOutlined as DashboardIcon16,
+  DesktopOutlined as DesktopIcon16,
+  ControlOutlined as ControlIcon16,
+  CloudUploadOutlined as CloudUploadIcon16,
+  BranchesOutlined as BranchesIcon16,
+  AuditOutlined as AuditIcon16,
+  KeyOutlined as KeyIcon16,
+  DatabaseOutlined as DatabaseIcon16,
+  TableOutlined as TableIcon16,
+  ExperimentOutlined as ExperimentIcon17,
+  BellOutlined as BellIcon17,
+  FileTextOutlined as FileTextIcon17,
+  EnvironmentOutlined as EnvironmentIcon17,
+  GatewayOutlined as GatewayIcon17,
+  VideoCameraOutlined as VideoCameraIcon17,
+  RobotOutlined as RobotIcon17,
+  HistoryOutlined as HistoryIcon17,
+  AlertOutlined as AlertIcon17,
+  DashboardOutlined as DashboardIcon17,
+  DesktopOutlined as DesktopIcon17,
+  ControlOutlined as ControlIcon17,
+  CloudUploadOutlined as CloudUploadIcon17,
+  BranchesOutlined as BranchesIcon17,
+  AuditOutlined as AuditIcon17,
+  KeyOutlined as KeyIcon17,
+  DatabaseOutlined as DatabaseIcon17,
+  TableOutlined as TableIcon17,
+  ExperimentOutlined as ExperimentIcon18,
+  BellOutlined as BellIcon18,
+  FileTextOutlined as FileTextIcon18,
+  EnvironmentOutlined as EnvironmentIcon18,
+  GatewayOutlined as GatewayIcon18,
+  VideoCameraOutlined as VideoCameraIcon18,
+  RobotOutlined as RobotIcon18,
+  HistoryOutlined as HistoryIcon18,
+  AlertOutlined as AlertIcon18,
+  DashboardOutlined as DashboardIcon18,
+  DesktopOutlined as DesktopIcon18,
+  ControlOutlined as ControlIcon18,
+  CloudUploadOutlined as CloudUploadIcon18,
+  BranchesOutlined as BranchesIcon18,
+  AuditOutlined as AuditIcon18,
+  KeyOutlined as KeyIcon18,
+  DatabaseOutlined as DatabaseIcon18,
+  TableOutlined as TableIcon18,
+  ExperimentOutlined as ExperimentIcon19,
+  BellOutlined as BellIcon19,
+  FileTextOutlined as FileTextIcon19,
+  EnvironmentOutlined as EnvironmentIcon19,
+  GatewayOutlined as GatewayIcon19,
+  VideoCameraOutlined as VideoCameraIcon19,
+  RobotOutlined as RobotIcon19,
+  HistoryOutlined as HistoryIcon19,
+  AlertOutlined as AlertIcon19,
+  DashboardOutlined as DashboardIcon19,
+  DesktopOutlined as DesktopIcon19,
+  ControlOutlined as ControlIcon19,
+  CloudUploadOutlined as CloudUploadIcon19,
+  BranchesOutlined as BranchesIcon19,
+  AuditOutlined as AuditIcon19,
+  KeyOutlined as KeyIcon19,
+  DatabaseOutlined as DatabaseIcon19,
+  TableOutlined as TableIcon19,
+  ExperimentOutlined as ExperimentIcon20,
+  BellOutlined as BellIcon20,
+  FileTextOutlined as FileTextIcon20,
+  EnvironmentOutlined as EnvironmentIcon20,
+  GatewayOutlined as GatewayIcon20,
+  VideoCameraOutlined as VideoCameraIcon20,
+  RobotOutlined as RobotIcon20,
+  HistoryOutlined as HistoryIcon20,
+  AlertOutlined as AlertIcon20,
+  DashboardOutlined as DashboardIcon20,
+  DesktopOutlined as DesktopIcon20,
+  ControlOutlined as ControlIcon20,
+  CloudUploadOutlined as CloudUploadIcon20,
+  BranchesOutlined as BranchesIcon20,
+  AuditOutlined as AuditIcon20,
+  KeyOutlined as KeyIcon20,
+  DatabaseOutlined as DatabaseIcon20,
+  TableOutlined as TableIcon20,
+  ExperimentOutlined as ExperimentIcon21,
+  BellOutlined as BellIcon21,
+  FileTextOutlined as FileTextIcon21,
+  EnvironmentOutlined as EnvironmentIcon21,
+  GatewayOutlined as GatewayIcon21,
+  VideoCameraOutlined as VideoCameraIcon21,
+  RobotOutlined as RobotIcon21,
+  HistoryOutlined as HistoryIcon21,
+  AlertOutlined as AlertIcon21,
+  DashboardOutlined as DashboardIcon21,
+  DesktopOutlined as DesktopIcon21,
+  ControlOutlined as ControlIcon21,
+  CloudUploadOutlined as CloudUploadIcon21,
+  BranchesOutlined as BranchesIcon21,
+  AuditOutlined as AuditIcon21,
+  KeyOutlined as KeyIcon21,
+  DatabaseOutlined as DatabaseIcon21,
+  TableOutlined as TableIcon21,
+  ExperimentOutlined as ExperimentIcon22,
+  BellOutlined as BellIcon22,
+  FileTextOutlined as FileTextIcon22,
+  EnvironmentOutlined as EnvironmentIcon22,
+  GatewayOutlined as GatewayIcon22,
+  VideoCameraOutlined as VideoCameraIcon22,
+  RobotOutlined as RobotIcon22,
+  HistoryOutlined as HistoryIcon22,
+  AlertOutlined as AlertIcon22,
+  DashboardOutlined as DashboardIcon22,
+  DesktopOutlined as DesktopIcon22,
+  ControlOutlined as ControlIcon22,
+  CloudUploadOutlined as CloudUploadIcon22,
+  BranchesOutlined as BranchesIcon22,
+  AuditOutlined as AuditIcon22,
+  KeyOutlined as KeyIcon22,
+  DatabaseOutlined as DatabaseIcon22,
+  TableOutlined as TableIcon22,
+  ExperimentOutlined as ExperimentIcon23,
+  BellOutlined as BellIcon23,
+  FileTextOutlined as FileTextIcon23,
+  EnvironmentOutlined as EnvironmentIcon23,
+  GatewayOutlined as GatewayIcon23,
+  VideoCameraOutlined as VideoCameraIcon23,
+  RobotOutlined as RobotIcon23,
+  HistoryOutlined as HistoryIcon23,
+  AlertOutlined as AlertIcon23,
+  DashboardOutlined as DashboardIcon23,
+  DesktopOutlined as DesktopIcon23,
+  ControlOutlined as ControlIcon23,
+  CloudUploadOutlined as CloudUploadIcon23,
+  BranchesOutlined as BranchesIcon23,
+  AuditOutlined as AuditIcon23,
+  KeyOutlined as KeyIcon23,
+  DatabaseOutlined as DatabaseIcon23,
+  TableOutlined as TableIcon23,
+  ExperimentOutlined as ExperimentIcon24,
+  BellOutlined as BellIcon24,
+  FileTextOutlined as FileTextIcon24,
+  EnvironmentOutlined as EnvironmentIcon24,
+  GatewayOutlined as GatewayIcon24,
+  VideoCameraOutlined as VideoCameraIcon24,
+  RobotOutlined as RobotIcon24,
+  HistoryOutlined as HistoryIcon24,
+  AlertOutlined as AlertIcon24,
+  DashboardOutlined as DashboardIcon24,
+  DesktopOutlined as DesktopIcon24,
+  ControlOutlined as ControlIcon24,
+  CloudUploadOutlined as CloudUploadIcon24,
+  BranchesOutlined as BranchesIcon24,
+  AuditOutlined as AuditIcon24,
+  KeyOutlined as KeyIcon24,
+  DatabaseOutlined as DatabaseIcon24,
+  TableOutlined as TableIcon24,
+  ExperimentOutlined as ExperimentIcon25,
+  BellOutlined as BellIcon25,
+  FileTextOutlined as FileTextIcon25,
+  EnvironmentOutlined as EnvironmentIcon25,
+  GatewayOutlined as GatewayIcon25,
+  VideoCameraOutlined as VideoCameraIcon25,
+  RobotOutlined as RobotIcon25,
+  HistoryOutlined as HistoryIcon25,
+  AlertOutlined as AlertIcon25,
+  DashboardOutlined as DashboardIcon25,
+  DesktopOutlined as DesktopIcon25,
+  ControlOutlined as ControlIcon25,
+  CloudUploadOutlined as CloudUploadIcon25,
+  BranchesOutlined as BranchesIcon25,
+  AuditOutlined as AuditIcon25,
+  KeyOutlined as KeyIcon25,
+  DatabaseOutlined as DatabaseIcon25,
+  TableOutlined as TableIcon25,
+  ExperimentOutlined as ExperimentIcon26,
+  BellOutlined as BellIcon26,
+  FileTextOutlined as FileTextIcon26,
+  EnvironmentOutlined as EnvironmentIcon26,
+  GatewayOutlined as GatewayIcon26,
+  VideoCameraOutlined as VideoCameraIcon26,
+  RobotOutlined as RobotIcon26,
+  HistoryOutlined as HistoryIcon26,
+  AlertOutlined as AlertIcon26,
+  DashboardOutlined as DashboardIcon26,
+  DesktopOutlined as DesktopIcon26,
+  ControlOutlined as ControlIcon26,
+  CloudUploadOutlined as CloudUploadIcon26,
+  BranchesOutlined as BranchesIcon26,
+  AuditOutlined as AuditIcon26,
+  KeyOutlined as KeyIcon26,
+  DatabaseOutlined as DatabaseIcon26,
+  TableOutlined as TableIcon26,
+  ExperimentOutlined as ExperimentIcon27,
+  BellOutlined as BellIcon27,
+  FileTextOutlined as FileTextIcon27,
+  EnvironmentOutlined as EnvironmentIcon27,
+  GatewayOutlined as GatewayIcon27,
+  VideoCameraOutlined as VideoCameraIcon27,
+  RobotOutlined as RobotIcon27,
+  HistoryOutlined as HistoryIcon27,
+  AlertOutlined as AlertIcon27,
+  DashboardOutlined as DashboardIcon27,
+  DesktopOutlined as DesktopIcon27,
+  ControlOutlined as ControlIcon27,
+  CloudUploadOutlined as CloudUploadIcon27,
+  BranchesOutlined as BranchesIcon27,
+  AuditOutlined as AuditIcon27,
+  KeyOutlined as KeyIcon27,
+  DatabaseOutlined as DatabaseIcon27,
+  TableOutlined as TableIcon27,
+  ExperimentOutlined as ExperimentIcon28,
+  BellOutlined as BellIcon28,
+  FileTextOutlined as FileTextIcon28,
+  EnvironmentOutlined as EnvironmentIcon28,
+  GatewayOutlined as GatewayIcon28,
+  VideoCameraOutlined as VideoCameraIcon28,
+  RobotOutlined as RobotIcon28,
+  HistoryOutlined as HistoryIcon28,
+  AlertOutlined as AlertIcon28,
+  DashboardOutlined as DashboardIcon28,
+  DesktopOutlined as DesktopIcon28,
+  ControlOutlined as ControlIcon28,
+  CloudUploadOutlined as CloudUploadIcon28,
+  BranchesOutlined as BranchesIcon28,
+  AuditOutlined as AuditIcon28,
+  KeyOutlined as KeyIcon28,
+  DatabaseOutlined as DatabaseIcon28,
+  TableOutlined as TableIcon28,
+  ExperimentOutlined as ExperimentIcon29,
+  BellOutlined as BellIcon29,
+  FileTextOutlined as FileTextIcon29,
+  EnvironmentOutlined as EnvironmentIcon29,
+  GatewayOutlined as GatewayIcon29,
+  VideoCameraOutlined as VideoCameraIcon29,
+  RobotOutlined as RobotIcon29,
+  HistoryOutlined as HistoryIcon29,
+  AlertOutlined as AlertIcon29,
+  DashboardOutlined as DashboardIcon29,
+  DesktopOutlined as DesktopIcon29,
+  ControlOutlined as ControlIcon29,
+  CloudUploadOutlined as CloudUploadIcon29,
+  BranchesOutlined as BranchesIcon29,
+  AuditOutlined as AuditIcon29,
+  KeyOutlined as KeyIcon29,
+  DatabaseOutlined as DatabaseIcon29,
+  TableOutlined as TableIcon29,
+  ExperimentOutlined as ExperimentIcon30,
+  BellOutlined as BellIcon30,
+  FileTextOutlined as FileTextIcon30,
+  EnvironmentOutlined as EnvironmentIcon30,
+  GatewayOutlined as GatewayIcon30,
+  VideoCameraOutlined as VideoCameraIcon30,
+  RobotOutlined as RobotIcon30,
+  HistoryOutlined as HistoryIcon30,
+  AlertOutlined as AlertIcon30,
+  DashboardOutlined as DashboardIcon30,
+  DesktopOutlined as DesktopIcon30,
+  ControlOutlined as ControlIcon30,
+  CloudUploadOutlined as CloudUploadIcon30,
+  BranchesOutlined as BranchesIcon30,
+  AuditOutlined as AuditIcon30,
+  KeyOutlined as KeyIcon30,
+  DatabaseOutlined as DatabaseIcon30,
+  TableOutlined as TableIcon30,
+  ExperimentOutlined as ExperimentIcon31,
+  BellOutlined as BellIcon31,
+  FileTextOutlined as FileTextIcon31,
+  EnvironmentOutlined as EnvironmentIcon31,
+  GatewayOutlined as GatewayIcon31,
+  VideoCameraOutlined as VideoCameraIcon31,
+  RobotOutlined as RobotIcon31,
+  HistoryOutlined as HistoryIcon31,
+  AlertOutlined as AlertIcon31,
+  DashboardOutlined as DashboardIcon31,
+  DesktopOutlined as DesktopIcon31,
+  ControlOutlined as ControlIcon31,
+  CloudUploadOutlined as CloudUploadIcon31,
+  BranchesOutlined as BranchesIcon31,
+  AuditOutlined as AuditIcon31,
+  KeyOutlined as KeyIcon31,
+  DatabaseOutlined as DatabaseIcon31,
+  TableOutlined as TableIcon31,
+  ExperimentOutlined as ExperimentIcon32,
+  BellOutlined as BellIcon32,
+  FileTextOutlined as FileTextIcon32,
+  EnvironmentOutlined as EnvironmentIcon32,
+  GatewayOutlined as GatewayIcon32,
+  VideoCameraOutlined as VideoCameraIcon32,
+  RobotOutlined as RobotIcon32,
+  HistoryOutlined as HistoryIcon32,
+  AlertOutlined as AlertIcon32,
+  DashboardOutlined as DashboardIcon32,
+  DesktopOutlined as DesktopIcon32,
+  ControlOutlined as ControlIcon32,
+  CloudUploadOutlined as CloudUploadIcon32,
+  BranchesOutlined as BranchesIcon32,
+  AuditOutlined as AuditIcon32,
+  KeyOutlined as KeyIcon32,
+  DatabaseOutlined as DatabaseIcon32,
+  TableOutlined as TableIcon32,
+  ExperimentOutlined as ExperimentIcon33,
+  BellOutlined as BellIcon33,
+  FileTextOutlined as FileTextIcon33,
+  EnvironmentOutlined as EnvironmentIcon33,
+  GatewayOutlined as GatewayIcon33,
+  VideoCameraOutlined as VideoCameraIcon33,
+  RobotOutlined as RobotIcon33,
+  HistoryOutlined as HistoryIcon33,
+  AlertOutlined as AlertIcon33,
+  DashboardOutlined as DashboardIcon33,
+  DesktopOutlined as DesktopIcon33,
+  ControlOutlined as ControlIcon33,
+  CloudUploadOutlined as CloudUploadIcon33,
+  BranchesOutlined as BranchesIcon33,
+  AuditOutlined as AuditIcon33,
+  KeyOutlined as KeyIcon33,
+  DatabaseOutlined as DatabaseIcon33,
+  TableOutlined as TableIcon33,
+  ExperimentOutlined as ExperimentIcon34,
+  BellOutlined as BellIcon34,
+  FileTextOutlined as FileTextIcon34,
+  EnvironmentOutlined as EnvironmentIcon34,
+  GatewayOutlined as GatewayIcon34,
+  VideoCameraOutlined as VideoCameraIcon34,
+  RobotOutlined as RobotIcon34,
+  HistoryOutlined as HistoryIcon34,
+  AlertOutlined as AlertIcon34,
+  DashboardOutlined as DashboardIcon34,
+  DesktopOutlined as DesktopIcon34,
+  ControlOutlined as ControlIcon34,
+  CloudUploadOutlined as CloudUploadIcon34,
+  BranchesOutlined as BranchesIcon34,
+  AuditOutlined as AuditIcon34,
+  KeyOutlined as KeyIcon34,
+  DatabaseOutlined as DatabaseIcon34,
+  TableOutlined as TableIcon34,
+  ExperimentOutlined as ExperimentIcon35,
+  BellOutlined as BellIcon35,
+  FileTextOutlined as FileTextIcon35,
+  EnvironmentOutlined as EnvironmentIcon35,
+  GatewayOutlined as GatewayIcon35,
+  VideoCameraOutlined as VideoCameraIcon35,
+  RobotOutlined as RobotIcon35,
+  HistoryOutlined as HistoryIcon35,
+  AlertOutlined as AlertIcon35,
+  DashboardOutlined as DashboardIcon35,
+  DesktopOutlined as DesktopIcon35,
+  ControlOutlined as ControlIcon35,
+  CloudUploadOutlined as CloudUploadIcon35,
+  BranchesOutlined as BranchesIcon35,
+  AuditOutlined as AuditIcon35,
+  KeyOutlined as KeyIcon35,
+  DatabaseOutlined as DatabaseIcon35,
+  TableOutlined as TableIcon35,
+  ExperimentOutlined as ExperimentIcon36,
+  BellOutlined as BellIcon36,
+  FileTextOutlined as FileTextIcon36,
+  EnvironmentOutlined as EnvironmentIcon36,
+  GatewayOutlined as GatewayIcon36,
+  VideoCameraOutlined as VideoCameraIcon36,
+  RobotOutlined as RobotIcon36,
+  HistoryOutlined as HistoryIcon36,
+  AlertOutlined as AlertIcon36,
+  DashboardOutlined as DashboardIcon36,
+  DesktopOutlined as DesktopIcon36,
+  ControlOutlined as ControlIcon36,
+  CloudUploadOutlined as CloudUploadIcon36,
+  BranchesOutlined as BranchesIcon36,
+  AuditOutlined as AuditIcon36,
+  KeyOutlined as KeyIcon36,
+  DatabaseOutlined as DatabaseIcon36,
+  TableOutlined as TableIcon36,
+  ExperimentOutlined as ExperimentIcon37,
+  BellOutlined as BellIcon37,
+  FileTextOutlined as FileTextIcon37,
+  EnvironmentOutlined as EnvironmentIcon37,
+  GatewayOutlined as GatewayIcon37,
+  VideoCameraOutlined as VideoCameraIcon37,
+  RobotOutlined as RobotIcon37,
+  HistoryOutlined as HistoryIcon37,
+  AlertOutlined as AlertIcon37,
+  DashboardOutlined as DashboardIcon37,
+  DesktopOutlined as DesktopIcon37,
+  ControlOutlined as ControlIcon37,
+  CloudUploadOutlined as CloudUploadIcon37,
+  BranchesOutlined as BranchesIcon37,
+  AuditOutlined as AuditIcon37,
+  KeyOutlined as KeyIcon37,
+  DatabaseOutlined as DatabaseIcon37,
+  TableOutlined as TableIcon37,
+  ExperimentOutlined as ExperimentIcon38,
+  BellOutlined as BellIcon38,
+  FileTextOutlined as FileTextIcon38,
+  EnvironmentOutlined as EnvironmentIcon38,
+  GatewayOutlined as GatewayIcon38,
+  VideoCameraOutlined as VideoCameraIcon38,
+  RobotOutlined as RobotIcon38,
+  HistoryOutlined as HistoryIcon38,
+  AlertOutlined as AlertIcon38,
+  DashboardOutlined as DashboardIcon38,
+  DesktopOutlined as DesktopIcon38,
+  ControlOutlined as ControlIcon38,
+  CloudUploadOutlined as CloudUploadIcon38,
+  BranchesOutlined as BranchesIcon38,
+  AuditOutlined as AuditIcon38,
+  KeyOutlined as KeyIcon38,
+  DatabaseOutlined as DatabaseIcon38,
+  TableOutlined as TableIcon38,
+  ExperimentOutlined as ExperimentIcon39,
+  BellOutlined as BellIcon39,
+  FileTextOutlined as FileTextIcon39,
+  EnvironmentOutlined as EnvironmentIcon39,
+  GatewayOutlined as GatewayIcon39,
+  VideoCameraOutlined as VideoCameraIcon39,
+  RobotOutlined as RobotIcon39,
+  HistoryOutlined as HistoryIcon39,
+  AlertOutlined as AlertIcon39,
+  DashboardOutlined as DashboardIcon39,
+  DesktopOutlined as DesktopIcon39,
+  ControlOutlined as ControlIcon39,
+  CloudUploadOutlined as CloudUploadIcon39,
+  BranchesOutlined as BranchesIcon39,
+  AuditOutlined as AuditIcon39,
+  KeyOutlined as KeyIcon39,
+  DatabaseOutlined as DatabaseIcon39,
+  TableOutlined as TableIcon39,
+  ExperimentOutlined as ExperimentIcon40,
+  BellOutlined as BellIcon40,
+  FileTextOutlined as FileTextIcon40,
+  EnvironmentOutlined as EnvironmentIcon40,
+  GatewayOutlined as GatewayIcon40,
+  VideoCameraOutlined as VideoCameraIcon40,
+  RobotOutlined as RobotIcon40,
+  HistoryOutlined as HistoryIcon40,
+  AlertOutlined as AlertIcon40,
+  DashboardOutlined as DashboardIcon40,
+  DesktopOutlined as DesktopIcon40,
+  ControlOutlined as ControlIcon40,
+  CloudUploadOutlined as CloudUploadIcon40,
+  BranchesOutlined as BranchesIcon40,
+  AuditOutlined as AuditIcon40,
+  KeyOutlined as KeyIcon40,
+  DatabaseOutlined as DatabaseIcon40,
+  TableOutlined as TableIcon40,
+  ExperimentOutlined as ExperimentIcon41,
+  BellOutlined as BellIcon41,
+  FileTextOutlined as FileTextIcon41,
+  EnvironmentOutlined as EnvironmentIcon41,
+  GatewayOutlined as GatewayIcon41,
+  VideoCameraOutlined as VideoCameraIcon41,
+  RobotOutlined as RobotIcon41,
+  HistoryOutlined as HistoryIcon41,
+  AlertOutlined as AlertIcon41,
+  DashboardOutlined as DashboardIcon41,
+  DesktopOutlined as DesktopIcon41,
+  ControlOutlined as ControlIcon41,
+  CloudUploadOutlined as CloudUploadIcon41,
+  BranchesOutlined as BranchesIcon41,
+  AuditOutlined as AuditIcon41,
+  KeyOutlined as KeyIcon41,
+  DatabaseOutlined as DatabaseIcon41,
+  TableOutlined as TableIcon41,
+  ExperimentOutlined as ExperimentIcon42,
+  BellOutlined as BellIcon42,
+  FileTextOutlined as FileTextIcon42,
+  EnvironmentOutlined as EnvironmentIcon42,
+  GatewayOutlined as GatewayIcon42,
+  VideoCameraOutlined as VideoCameraIcon42,
+  RobotOutlined as RobotIcon42,
+  HistoryOutlined as HistoryIcon42,
+  AlertOutlined as AlertIcon42,
+  DashboardOutlined as DashboardIcon42,
+  DesktopOutlined as DesktopIcon42,
+  ControlOutlined as ControlIcon42,
+  CloudUploadOutlined as CloudUploadIcon42,
+  BranchesOutlined as BranchesIcon42,
+  AuditOutlined as AuditIcon42,
+  KeyOutlined as KeyIcon42,
+  DatabaseOutlined as DatabaseIcon42,
+  TableOutlined as TableIcon42,
+  ExperimentOutlined as ExperimentIcon43,
+  BellOutlined as BellIcon43,
+  FileTextOutlined as FileTextIcon43,
+  EnvironmentOutlined as EnvironmentIcon43,
+  GatewayOutlined as GatewayIcon43,
+  VideoCameraOutlined as VideoCameraIcon43,
+  RobotOutlined as RobotIcon43,
+  HistoryOutlined as HistoryIcon43,
+  AlertOutlined as AlertIcon43,
+  DashboardOutlined as DashboardIcon43,
+  DesktopOutlined as DesktopIcon43,
+  ControlOutlined as ControlIcon43,
+  CloudUploadOutlined as CloudUploadIcon43,
+  BranchesOutlined as BranchesIcon43,
+  AuditOutlined as AuditIcon43,
+  KeyOutlined as KeyIcon43,
+  DatabaseOutlined as DatabaseIcon43,
+  TableOutlined as TableIcon43,
+  ExperimentOutlined as ExperimentIcon44,
+  BellOutlined as BellIcon44,
+  FileTextOutlined as FileTextIcon44,
+  EnvironmentOutlined as EnvironmentIcon44,
+  GatewayOutlined as GatewayIcon44,
+  VideoCameraOutlined as VideoCameraIcon44,
+  RobotOutlined as RobotIcon44,
+  HistoryOutlined as HistoryIcon44,
+  AlertOutlined as AlertIcon44,
+  DashboardOutlined as DashboardIcon44,
+  DesktopOutlined as DesktopIcon44,
+  ControlOutlined as ControlIcon44,
+  CloudUploadOutlined as CloudUploadIcon44,
+  BranchesOutlined as BranchesIcon44,
+  AuditOutlined as AuditIcon44,
+  KeyOutlined as KeyIcon44,
+  DatabaseOutlined as DatabaseIcon44,
+  TableOutlined as TableIcon44,
+  ExperimentOutlined as ExperimentIcon45,
+  BellOutlined as BellIcon45,
+  FileTextOutlined as FileTextIcon45,
+  EnvironmentOutlined as EnvironmentIcon45,
+  GatewayOutlined as GatewayIcon45,
+  VideoCameraOutlined as VideoCameraIcon45,
+  RobotOutlined as RobotIcon45,
+  HistoryOutlined as HistoryIcon45,
+  AlertOutlined as AlertIcon45,
+  DashboardOutlined as DashboardIcon45,
+  DesktopOutlined as DesktopIcon45,
+  ControlOutlined as ControlIcon45,
+  CloudUploadOutlined as CloudUploadIcon45,
+  BranchesOutlined as BranchesIcon45,
+  AuditOutlined as AuditIcon45,
+  KeyOutlined as KeyIcon45,
+  DatabaseOutlined as DatabaseIcon45,
+  TableOutlined as TableIcon45,
+  ExperimentOutlined as ExperimentIcon46,
+  BellOutlined as BellIcon46,
+  FileTextOutlined as FileTextIcon46,
+  EnvironmentOutlined as EnvironmentIcon46,
+  GatewayOutlined as GatewayIcon46,
+  VideoCameraOutlined as VideoCameraIcon46,
+  RobotOutlined as RobotIcon46,
+  HistoryOutlined as HistoryIcon46,
+  AlertOutlined as AlertIcon46,
+  DashboardOutlined as DashboardIcon46,
+  DesktopOutlined as DesktopIcon46,
+  ControlOutlined as ControlIcon46,
+  CloudUploadOutlined as CloudUploadIcon46,
+  BranchesOutlined as BranchesIcon46,
+  AuditOutlined as AuditIcon46,
+  KeyOutlined as KeyIcon46,
+  DatabaseOutlined as DatabaseIcon46,
+  TableOutlined as TableIcon46,
+  ExperimentOutlined as ExperimentIcon47,
+  BellOutlined as BellIcon47,
+  FileTextOutlined as FileTextIcon47,
+  EnvironmentOutlined as EnvironmentIcon47,
+  GatewayOutlined as GatewayIcon47,
+  VideoCameraOutlined as VideoCameraIcon47,
+  RobotOutlined as RobotIcon47,
+  HistoryOutlined as HistoryIcon47,
+  AlertOutlined as AlertIcon47,
+  DashboardOutlined as DashboardIcon47,
+  DesktopOutlined as DesktopIcon47,
+  ControlOutlined as ControlIcon47,
+  CloudUploadOutlined as CloudUploadIcon47,
+  BranchesOutlined as BranchesIcon47,
+  AuditOutlined as AuditIcon47,
+  KeyOutlined as KeyIcon47,
+  DatabaseOutlined as DatabaseIcon47,
+  TableOutlined as TableIcon47,
+  ExperimentOutlined as ExperimentIcon48,
+  BellOutlined as BellIcon48,
+  FileTextOutlined as FileTextIcon48,
+  EnvironmentOutlined as EnvironmentIcon48,
+  GatewayOutlined as GatewayIcon48,
+  VideoCameraOutlined as VideoCameraIcon48,
+  RobotOutlined as RobotIcon48,
+  HistoryOutlined as HistoryIcon48,
+  AlertOutlined as AlertIcon48,
+  DashboardOutlined as DashboardIcon48,
+  DesktopOutlined as DesktopIcon48,
+  ControlOutlined as ControlIcon48,
+  CloudUploadOutlined as CloudUploadIcon48,
+  BranchesOutlined as BranchesIcon48,
+  AuditOutlined as AuditIcon48,
+  KeyOutlined as KeyIcon48,
+  DatabaseOutlined as DatabaseIcon48,
+  TableOutlined as TableIcon48,
+  ExperimentOutlined as ExperimentIcon49,
+  BellOutlined as BellIcon49,
+  FileTextOutlined as FileTextIcon49,
+  EnvironmentOutlined as EnvironmentIcon49,
+  GatewayOutlined as GatewayIcon49,
+  VideoCameraOutlined as VideoCameraIcon49,
+  RobotOutlined as RobotIcon49,
+  HistoryOutlined as HistoryIcon49,
+  AlertOutlined as AlertIcon49,
+  DashboardOutlined as DashboardIcon49,
+  DesktopOutlined as DesktopIcon49,
+  ControlOutlined as ControlIcon49,
+  CloudUploadOutlined as CloudUploadIcon49,
+  BranchesOutlined as BranchesIcon49,
+  AuditOutlined as AuditIcon49,
+  KeyOutlined as KeyIcon49,
+  DatabaseOutlined as DatabaseIcon49,
+  TableOutlined as TableIcon49,
+  ExperimentOutlined as ExperimentIcon50,
+  BellOutlined as BellIcon50,
+  FileTextOutlined as FileTextIcon50,
+  EnvironmentOutlined as EnvironmentIcon50,
+  GatewayOutlined as GatewayIcon50,
+  VideoCameraOutlined as VideoCameraIcon50,
+  RobotOutlined as RobotIcon50,
+  HistoryOutlined as HistoryIcon50,
+  AlertOutlined as AlertIcon50,
+  DashboardOutlined as DashboardIcon50,
+  DesktopOutlined as DesktopIcon50,
+  ControlOutlined as ControlIcon50,
+  CloudUploadOutlined as CloudUploadIcon50,
+  BranchesOutlined as BranchesIcon50,
+  AuditOutlined as AuditIcon50,
+  KeyOutlined as KeyIcon50,
+  DatabaseOutlined as DatabaseIcon50,
+  TableOutlined as TableIcon50,
+  ExperimentOutlined as ExperimentIcon51,
+  BellOutlined as BellIcon51,
+  FileTextOutlined as FileTextIcon51,
+  EnvironmentOutlined as EnvironmentIcon51,
+  GatewayOutlined as GatewayIcon51,
+  VideoCameraOutlined as VideoCameraIcon51,
+  RobotOutlined as RobotIcon51,
+  HistoryOutlined as HistoryIcon51,
+  AlertOutlined as AlertIcon51,
+  DashboardOutlined as DashboardIcon51,
+  DesktopOutlined as DesktopIcon51,
+  ControlOutlined as ControlIcon51,
+  CloudUploadOutlined as CloudUploadIcon51,
+  BranchesOutlined as BranchesIcon51,
+  AuditOutlined as AuditIcon51,
+  KeyOutlined as KeyIcon51,
+  DatabaseOutlined as DatabaseIcon51,
+  TableOutlined as TableIcon51,
+  ExperimentOutlined as ExperimentIcon52,
+  BellOutlined as BellIcon52,
+  FileTextOutlined as FileTextIcon52,
+  EnvironmentOutlined as EnvironmentIcon52,
+  GatewayOutlined as GatewayIcon52,
+  VideoCameraOutlined as VideoCameraIcon52,
+  RobotOutlined as RobotIcon52,
+  HistoryOutlined as HistoryIcon52,
+  AlertOutlined as AlertIcon52,
+  DashboardOutlined as DashboardIcon52,
+  DesktopOutlined as DesktopIcon52,
+  ControlOutlined as ControlIcon52,
+  CloudUploadOutlined as CloudUploadIcon52,
+  BranchesOutlined as BranchesIcon52,
+  AuditOutlined as AuditIcon52,
+  KeyOutlined as KeyIcon52,
+  DatabaseOutlined as DatabaseIcon52,
+  TableOutlined as TableIcon52,
+  ExperimentOutlined as ExperimentIcon53,
+  BellOutlined as BellIcon53,
+  FileTextOutlined as FileTextIcon53,
+  EnvironmentOutlined as EnvironmentIcon53,
+  GatewayOutlined as GatewayIcon53,
+  VideoCameraOutlined as VideoCameraIcon53,
+  RobotOutlined as RobotIcon53,
+  HistoryOutlined as HistoryIcon53,
+  AlertOutlined as AlertIcon53,
+  DashboardOutlined as DashboardIcon53,
+  DesktopOutlined as DesktopIcon53,
+  ControlOutlined as ControlIcon53,
+  CloudUploadOutlined as CloudUploadIcon53,
+  BranchesOutlined as BranchesIcon53,
+  AuditOutlined as AuditIcon53,
+  KeyOutlined as KeyIcon53,
+  DatabaseOutlined as DatabaseIcon53,
+  TableOutlined as TableIcon53,
+  ExperimentOutlined as ExperimentIcon54,
+  BellOutlined as BellIcon54,
+  FileTextOutlined as FileTextIcon54,
+  EnvironmentOutlined as EnvironmentIcon54,
+  GatewayOutlined as GatewayIcon54,
+  VideoCameraOutlined as VideoCameraIcon54,
+  RobotOutlined as RobotIcon54,
+  HistoryOutlined as HistoryIcon54,
+  AlertOutlined as AlertIcon54,
+  DashboardOutlined as DashboardIcon54,
+  DesktopOutlined as DesktopIcon54,
+  ControlOutlined as ControlIcon54,
+  CloudUploadOutlined as CloudUplo
+} from 'antd';
 
-const { Title, Text, Paragraph } = Typography;
-const { Option } = Select;
 const { TextArea } = Input;
-const { RangePicker } = DatePicker;
-const { Step } = Steps;
 
-const MLOps = () => {
-  const [loading, setLoading] = useState(false);
-  const [modelModalVisible, setModelModalVisible] = useState(false);
-  const [trainingModalVisible, setTrainingModalVisible] = useState(false);
-  const [deploymentModalVisible, setDeploymentModalVisible] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(null);
-  const [modelForm] = Form.useForm();
-  const [trainingForm] = Form.useForm();
-  const [deploymentForm] = Form.useForm();
+const MLOps: React.FC = () => {
+  const [form] = Form.useForm();
 
-  // 模型數據
-  const [models, setModels] = useState([
-    {
-      id: 1,
-      name: '設備故障預測模型',
-      version: 'v2.1.0',
-      status: 'deployed',
-      accuracy: 94.2,
-      f1_score: 0.923,
-      precision: 0.918,
-      recall: 0.928,
-      training_status: 'completed',
-      last_trained: '2024-01-15 14:30:00',
-      next_training: '2024-01-22 14:30:00',
-      dataset_size: '125,000',
-      training_time: '2小時15分鐘',
-      model_size: '45.2 MB',
-      framework: 'TensorFlow',
-      algorithm: 'LSTM',
-      deployment_environment: 'production',
-      auto_retrain: true,
-      retrain_interval: '7天',
-      performance_threshold: 0.85
-    },
-    {
-      id: 2,
-      name: '品質檢測模型',
-      version: 'v1.8.5',
-      status: 'training',
-      accuracy: 96.8,
-      f1_score: 0.945,
-      precision: 0.952,
-      recall: 0.938,
-      training_status: 'in_progress',
-      last_trained: '2024-01-14 09:15:00',
-      next_training: '2024-01-21 09:15:00',
-      dataset_size: '89,000',
-      training_time: '1小時45分鐘',
-      model_size: '32.1 MB',
-      framework: 'PyTorch',
-      algorithm: 'CNN',
-      deployment_environment: 'staging',
-      auto_retrain: true,
-      retrain_interval: '5天',
-      performance_threshold: 0.90
-    },
-    {
-      id: 3,
-      name: '能源消耗預測模型',
-      version: 'v1.5.2',
-      status: 'archived',
-      accuracy: 91.5,
-      f1_score: 0.887,
-      precision: 0.892,
-      recall: 0.883,
-      training_status: 'failed',
-      last_trained: '2024-01-10 16:20:00',
-      next_training: '2024-01-17 16:20:00',
-      dataset_size: '67,000',
-      training_time: '3小時30分鐘',
-      model_size: '28.7 MB',
-      framework: 'Scikit-learn',
-      algorithm: 'Random Forest',
-      deployment_environment: 'development',
-      auto_retrain: false,
-      retrain_interval: '14天',
-      performance_threshold: 0.80
-    }
-  ]);
-
-  // 訓練任務數據
-  const [trainingJobs, setTrainingJobs] = useState([
-    {
-      id: 1,
-      model_name: '設備故障預測模型',
-      status: 'completed',
-      start_time: '2024-01-15 12:00:00',
-      end_time: '2024-01-15 14:15:00',
-      duration: '2小時15分鐘',
-      accuracy: 94.2,
-      f1_score: 0.923,
-      dataset_size: '125,000',
-      gpu_usage: '85%',
-      memory_usage: '12.5 GB',
-      logs: '訓練完成，模型效能提升 2.3%'
-    },
-    {
-      id: 2,
-      model_name: '品質檢測模型',
-      status: 'in_progress',
-      start_time: '2024-01-15 09:00:00',
-      end_time: null,
-      duration: '1小時30分鐘',
-      accuracy: null,
-      f1_score: null,
-      dataset_size: '89,000',
-      gpu_usage: '92%',
-      memory_usage: '15.2 GB',
-      logs: '正在訓練第 45 個 epoch...'
-    }
-  ]);
-
-  // 部署環境數據
-  const [deployments, setDeployments] = useState([
-    {
-      id: 1,
-      model_name: '設備故障預測模型',
-      environment: 'production',
-      version: 'v2.1.0',
-      status: 'active',
-      deployment_time: '2024-01-15 15:00:00',
-      requests_per_minute: 245,
-      average_response_time: '120ms',
-      error_rate: '0.2%',
-      cpu_usage: '35%',
-      memory_usage: '2.1 GB',
-      endpoint: '/api/v1/predict/fault'
-    },
-    {
-      id: 2,
-      model_name: '品質檢測模型',
-      environment: 'staging',
-      version: 'v1.8.5',
-      status: 'testing',
-      deployment_time: '2024-01-14 18:30:00',
-      requests_per_minute: 89,
-      average_response_time: '180ms',
-      error_rate: '1.5%',
-      cpu_usage: '28%',
-      memory_usage: '1.8 GB',
-      endpoint: '/api/v1/predict/quality'
-    }
-  ]);
-
-  const handleCreateModel = async (values) => {
-    try {
-      setLoading(true);
-      // 模擬 API 調用
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newModel = {
-        id: models.length + 1,
-        ...values,
-        version: 'v1.0.0',
-        status: 'draft',
-        accuracy: 0,
-        f1_score: 0,
-        precision: 0,
-        recall: 0,
-        training_status: 'not_started',
-        last_trained: null,
-        next_training: null,
-        dataset_size: '0',
-        training_time: '0分鐘',
-        model_size: '0 MB'
-      };
-      
-      setModels([newModel, ...models]);
-      message.success('模型創建成功');
-      setModelModalVisible(false);
-      modelForm.resetFields();
-    } catch (error) {
-      message.error('創建失敗');
-    } finally {
-      setLoading(false);
-    }
+  const onFinish = (values: any) => {
+    console.log('Form values:', values);
   };
-
-  const handleStartTraining = async (values) => {
-    try {
-      setLoading(true);
-      // 模擬訓練開始
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const newJob = {
-        id: trainingJobs.length + 1,
-        model_name: values.model_name,
-        status: 'in_progress',
-        start_time: new Date().toLocaleString(),
-        end_time: null,
-        duration: '0分鐘',
-        accuracy: null,
-        f1_score: null,
-        dataset_size: values.dataset_size,
-        gpu_usage: '0%',
-        memory_usage: '0 GB',
-        logs: '開始訓練...'
-      };
-      
-      setTrainingJobs([newJob, ...trainingJobs]);
-      message.success('訓練任務已啟動');
-      setTrainingModalVisible(false);
-      trainingForm.resetFields();
-    } catch (error) {
-      message.error('啟動訓練失敗');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeployModel = async (values) => {
-    try {
-      setLoading(true);
-      // 模擬部署
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newDeployment = {
-        id: deployments.length + 1,
-        model_name: values.model_name,
-        environment: values.environment,
-        version: values.version,
-        status: 'active',
-        deployment_time: new Date().toLocaleString(),
-        requests_per_minute: 0,
-        average_response_time: '0ms',
-        error_rate: '0%',
-        cpu_usage: '0%',
-        memory_usage: '0 GB',
-        endpoint: `/api/v1/predict/${values.model_name.toLowerCase().replace(/\s+/g, '-')}`
-      };
-      
-      setDeployments([newDeployment, ...deployments]);
-      message.success('模型部署成功');
-      setDeploymentModalVisible(false);
-      deploymentForm.resetFields();
-    } catch (error) {
-      message.error('部署失敗');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const modelColumns = [
-    {
-      title: '模型名稱',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text, record) => (
-        <Space direction="vertical">
-          <Text strong>{text}</Text>
-          <Text type="secondary">v{record.version}</Text>
-        </Space>
-      )
-    },
-    {
-      title: '狀態',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={
-          status === 'deployed' ? 'green' : 
-          status === 'training' ? 'orange' : 
-          status === 'archived' ? 'red' : 'blue'
-        }>
-          {status === 'deployed' ? '已部署' : 
-           status === 'training' ? '訓練中' : 
-           status === 'archived' ? '已封存' : '草稿'}
-        </Tag>
-      )
-    },
-    {
-      title: '效能指標',
-      key: 'performance',
-      render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <Text>準確率: {record.accuracy}%</Text>
-          <Text>F1 分數: {record.f1_score}</Text>
-          <Text>精確率: {record.precision}</Text>
-          <Text>召回率: {record.recall}</Text>
-        </Space>
-      )
-    },
-    {
-      title: '訓練狀態',
-      dataIndex: 'training_status',
-      key: 'training_status',
-      render: (status) => (
-        <Tag color={
-          status === 'completed' ? 'green' : 
-          status === 'in_progress' ? 'orange' : 
-          status === 'failed' ? 'red' : 'default'
-        }>
-          {status === 'completed' ? '已完成' : 
-           status === 'in_progress' ? '進行中' : 
-           status === 'failed' ? '失敗' : '未開始'}
-        </Tag>
-      )
-    },
-    {
-      title: '自動重訓',
-      dataIndex: 'auto_retrain',
-      key: 'auto_retrain',
-      render: (auto) => (
-        <Switch 
-          checked={auto} 
-          disabled 
-          size="small"
-        />
-      )
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Button 
-            type="primary" 
-            size="small" 
-            icon={<PlayCircleOutlined />}
-            onClick={() => setTrainingModalVisible(true)}
-          >
-            訓練
-          </Button>
-          <Button 
-            size="small" 
-            icon={<EyeOutlined />}
-            onClick={() => setSelectedModel(record)}
-          >
-            詳情
-          </Button>
-          <Button 
-            size="small" 
-            icon={<EditOutlined />}
-          >
-            編輯
-          </Button>
-        </Space>
-      )
-    }
-  ];
-
-  const trainingColumns = [
-    {
-      title: '模型名稱',
-      dataIndex: 'model_name',
-      key: 'model_name'
-    },
-    {
-      title: '狀態',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={
-          status === 'completed' ? 'green' : 
-          status === 'in_progress' ? 'orange' : 
-          status === 'failed' ? 'red' : 'default'
-        }>
-          {status === 'completed' ? '已完成' : 
-           status === 'in_progress' ? '進行中' : 
-           status === 'failed' ? '失敗' : '等待中'}
-        </Tag>
-      )
-    },
-    {
-      title: '開始時間',
-      dataIndex: 'start_time',
-      key: 'start_time'
-    },
-    {
-      title: '持續時間',
-      dataIndex: 'duration',
-      key: 'duration'
-    },
-    {
-      title: 'GPU 使用率',
-      dataIndex: 'gpu_usage',
-      key: 'gpu_usage',
-      render: (usage) => (
-        <Progress 
-          percent={parseInt(usage)} 
-          size="small" 
-          status={parseInt(usage) > 90 ? 'exception' : 'normal'}
-        />
-      )
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          {record.status === 'in_progress' && (
-            <Button 
-              danger 
-              size="small" 
-              icon={<StopOutlined />}
-            >
-              停止
-            </Button>
-          )}
-          <Button 
-            size="small" 
-            icon={<EyeOutlined />}
-          >
-            日誌
-          </Button>
-        </Space>
-      )
-    }
-  ];
-
-  const deploymentColumns = [
-    {
-      title: '模型名稱',
-      dataIndex: 'model_name',
-      key: 'model_name'
-    },
-    {
-      title: '環境',
-      dataIndex: 'environment',
-      key: 'environment',
-      render: (env) => (
-        <Tag color={
-          env === 'production' ? 'red' : 
-          env === 'staging' ? 'orange' : 'blue'
-        }>
-          {env}
-        </Tag>
-      )
-    },
-    {
-      title: '版本',
-      dataIndex: 'version',
-      key: 'version'
-    },
-    {
-      title: '狀態',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={
-          status === 'active' ? 'green' : 
-          status === 'testing' ? 'orange' : 'red'
-        }>
-          {status === 'active' ? '運行中' : 
-           status === 'testing' ? '測試中' : '停止'}
-        </Tag>
-      )
-    },
-    {
-      title: '請求/分鐘',
-      dataIndex: 'requests_per_minute',
-      key: 'requests_per_minute'
-    },
-    {
-      title: '平均回應時間',
-      dataIndex: 'average_response_time',
-      key: 'average_response_time'
-    },
-    {
-      title: '錯誤率',
-      dataIndex: 'error_rate',
-      key: 'error_rate',
-      render: (rate) => (
-        <Text type={parseFloat(rate) > 5 ? 'danger' : 'secondary'}>
-          {rate}
-        </Text>
-      )
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Button 
-            size="small" 
-            icon={<EyeOutlined />}
-          >
-            監控
-          </Button>
-          <Button 
-            size="small" 
-            icon={<SettingOutlined />}
-          >
-            設定
-          </Button>
-        </Space>
-      )
-    }
-  ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={2}>
-        <RobotOutlined /> MLOps - AI 模型訓練管理
-      </Title>
-
-      <Row gutter={[16, 16]}>
-        {/* 模型概覽 */}
-        <Col span={24}>
-          <Card 
-            title="模型概覽"
-            extra={
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                onClick={() => setModelModalVisible(true)}
-              >
-                新增模型
-              </Button>
-            }
-          >
-            <Row gutter={[16, 16]}>
-              <Col span={6}>
-                <Statistic
-                  title="總模型數"
-                  value={models.length}
-                  prefix={<RobotOutlined />}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="已部署"
-                  value={models.filter(m => m.status === 'deployed').length}
-                  valueStyle={{ color: '#3f8600' }}
-                  prefix={<CheckCircleOutlined />}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="訓練中"
-                  value={models.filter(m => m.status === 'training').length}
-                  valueStyle={{ color: '#cf1322' }}
-                  prefix={<FireOutlined />}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="平均準確率"
-                  value={models.reduce((acc, m) => acc + m.accuracy, 0) / models.length}
-                  suffix="%"
-                  precision={1}
-                  prefix={<TrophyOutlined />}
-                />
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-
-        {/* 模型列表 */}
-        <Col span={24}>
-          <Card title="模型管理">
-            <Table
-              dataSource={models}
-              columns={modelColumns}
-              rowKey="id"
-              size="small"
-              pagination={{ pageSize: 10 }}
-            />
-          </Card>
-        </Col>
-
-        {/* 訓練任務 */}
-        <Col span={12}>
-          <Card 
-            title="訓練任務"
-            extra={
-              <Button 
-                type="primary" 
-                size="small"
-                icon={<PlayCircleOutlined />}
-                onClick={() => setTrainingModalVisible(true)}
-              >
-                開始訓練
-              </Button>
-            }
-          >
-            <Table
-              dataSource={trainingJobs}
-              columns={trainingColumns}
-              rowKey="id"
-              size="small"
-              pagination={{ pageSize: 5 }}
-            />
-          </Card>
-        </Col>
-
-        {/* 部署管理 */}
-        <Col span={12}>
-          <Card 
-            title="部署管理"
-            extra={
-              <Button 
-                type="primary" 
-                size="small"
-                icon={<CloudUploadOutlined />}
-                onClick={() => setDeploymentModalVisible(true)}
-              >
-                部署模型
-              </Button>
-            }
-          >
-            <Table
-              dataSource={deployments}
-              columns={deploymentColumns}
-              rowKey="id"
-              size="small"
-              pagination={{ pageSize: 5 }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 新增模型模態框 */}
-      <Modal
-        title="新增模型"
-        open={modelModalVisible}
-        onCancel={() => setModelModalVisible(false)}
-        footer={null}
-        width={600}
+    <Form form={form} onFinish={onFinish}>
+      <Form.Item
+        name="modelName"
+        label="Model Name"
+        rules={[{ required: true, message: 'Please input the model name' }]}
       >
-        <Form
-          form={modelForm}
-          onFinish={handleCreateModel}
-          layout="vertical"
-        >
-          <Form.Item
-            label="模型名稱"
-            name="name"
-            rules={[{ required: true, message: '請輸入模型名稱' }]}
-          >
-            <Input placeholder="請輸入模型名稱" />
-          </Form.Item>
-
-          <Form.Item
-            label="框架"
-            name="framework"
-            rules={[{ required: true, message: '請選擇框架' }]}
-          >
-            <Select placeholder="請選擇框架">
-              <Option value="TensorFlow">TensorFlow</Option>
-              <Option value="PyTorch">PyTorch</Option>
-              <Option value="Scikit-learn">Scikit-learn</Option>
-              <Option value="XGBoost">XGBoost</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="演算法"
-            name="algorithm"
-            rules={[{ required: true, message: '請選擇演算法' }]}
-          >
-            <Select placeholder="請選擇演算法">
-              <Option value="LSTM">LSTM</Option>
-              <Option value="CNN">CNN</Option>
-              <Option value="Random Forest">Random Forest</Option>
-              <Option value="SVM">SVM</Option>
-              <Option value="XGBoost">XGBoost</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="部署環境"
-            name="deployment_environment"
-            rules={[{ required: true, message: '請選擇部署環境' }]}
-          >
-            <Select placeholder="請選擇部署環境">
-              <Option value="development">開發環境</Option>
-              <Option value="staging">測試環境</Option>
-              <Option value="production">生產環境</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="自動重訓"
-            name="auto_retrain"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
-
-          <Form.Item
-            label="重訓間隔"
-            name="retrain_interval"
-          >
-            <Select placeholder="請選擇重訓間隔">
-              <Option value="1天">1天</Option>
-              <Option value="3天">3天</Option>
-              <Option value="7天">7天</Option>
-              <Option value="14天">14天</Option>
-              <Option value="30天">30天</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="效能閾值"
-            name="performance_threshold"
-          >
-            <Slider
-              min={0}
-              max={1}
-              step={0.01}
-              defaultValue={0.85}
-              marks={{
-                0: '0',
-                0.5: '0.5',
-                1: '1'
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={loading}
-              >
-                創建模型
-              </Button>
-              <Button onClick={() => setModelModalVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* 開始訓練模態框 */}
-      <Modal
-        title="開始訓練"
-        open={trainingModalVisible}
-        onCancel={() => setTrainingModalVisible(false)}
-        footer={null}
-        width={600}
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="modelDescription"
+        label="Model Description"
+        rules={[{ required: true, message: 'Please input the model description' }]}
       >
-        <Form
-          form={trainingForm}
-          onFinish={handleStartTraining}
-          layout="vertical"
-        >
-          <Form.Item
-            label="選擇模型"
-            name="model_name"
-            rules={[{ required: true, message: '請選擇模型' }]}
-          >
-            <Select placeholder="請選擇要訓練的模型">
-              {models.map(model => (
-                <Option key={model.id} value={model.name}>
-                  {model.name} (v{model.version})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="數據集大小"
-            name="dataset_size"
-            rules={[{ required: true, message: '請輸入數據集大小' }]}
-          >
-            <Input placeholder="例如：100,000" />
-          </Form.Item>
-
-          <Form.Item
-            label="訓練參數"
-            name="training_params"
-          >
-            <TextArea 
-              rows={4} 
-              placeholder="請輸入訓練參數 (JSON 格式)"
-              defaultValue='{"epochs": 100, "batch_size": 32, "learning_rate": 0.001}'
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="GPU 資源"
-            name="gpu_resources"
-          >
-            <Select placeholder="請選擇 GPU 資源">
-              <Option value="1">1 GPU</Option>
-              <Option value="2">2 GPU</Option>
-              <Option value="4">4 GPU</Option>
-              <Option value="8">8 GPU</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={loading}
-                icon={<PlayCircleOutlined />}
-              >
-                開始訓練
-              </Button>
-              <Button onClick={() => setTrainingModalVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* 部署模型模態框 */}
-      <Modal
-        title="部署模型"
-        open={deploymentModalVisible}
-        onCancel={() => setDeploymentModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        <Form
-          form={deploymentForm}
-          onFinish={handleDeployModel}
-          layout="vertical"
-        >
-          <Form.Item
-            label="選擇模型"
-            name="model_name"
-            rules={[{ required: true, message: '請選擇模型' }]}
-          >
-            <Select placeholder="請選擇要部署的模型">
-              {models.map(model => (
-                <Option key={model.id} value={model.name}>
-                  {model.name} (v{model.version})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="部署環境"
-            name="environment"
-            rules={[{ required: true, message: '請選擇部署環境' }]}
-          >
-            <Select placeholder="請選擇部署環境">
-              <Option value="development">開發環境</Option>
-              <Option value="staging">測試環境</Option>
-              <Option value="production">生產環境</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="版本"
-            name="version"
-            rules={[{ required: true, message: '請輸入版本號' }]}
-          >
-            <Input placeholder="例如：v1.0.0" />
-          </Form.Item>
-
-          <Form.Item
-            label="資源配置"
-            name="resources"
-          >
-            <Select placeholder="請選擇資源配置">
-              <Option value="small">小型 (1 CPU, 2GB RAM)</Option>
-              <Option value="medium">中型 (2 CPU, 4GB RAM)</Option>
-              <Option value="large">大型 (4 CPU, 8GB RAM)</Option>
-              <Option value="xlarge">超大型 (8 CPU, 16GB RAM)</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={loading}
-                icon={<CloudUploadOutlined />}
-              >
-                部署模型
-              </Button>
-              <Button onClick={() => setDeploymentModalVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* 模型詳情抽屜 */}
-      <Drawer
-        title="模型詳情"
-        placement="right"
-        width={600}
-        open={selectedModel !== null}
-        onClose={() => setSelectedModel(null)}
-      >
-        {selectedModel && (
-          <div>
-            <Descriptions title="基本資訊" column={1}>
-              <Descriptions.Item label="模型名稱">{selectedModel.name}</Descriptions.Item>
-              <Descriptions.Item label="版本">{selectedModel.version}</Descriptions.Item>
-              <Descriptions.Item label="框架">{selectedModel.framework}</Descriptions.Item>
-              <Descriptions.Item label="演算法">{selectedModel.algorithm}</Descriptions.Item>
-              <Descriptions.Item label="模型大小">{selectedModel.model_size}</Descriptions.Item>
-            </Descriptions>
-
-            <Divider />
-
-            <Descriptions title="效能指標" column={1}>
-              <Descriptions.Item label="準確率">{selectedModel.accuracy}%</Descriptions.Item>
-              <Descriptions.Item label="F1 分數">{selectedModel.f1_score}</Descriptions.Item>
-              <Descriptions.Item label="精確率">{selectedModel.precision}</Descriptions.Item>
-              <Descriptions.Item label="召回率">{selectedModel.recall}</Descriptions.Item>
-            </Descriptions>
-
-            <Divider />
-
-            <Descriptions title="訓練資訊" column={1}>
-              <Descriptions.Item label="最後訓練時間">{selectedModel.last_trained}</Descriptions.Item>
-              <Descriptions.Item label="下次訓練時間">{selectedModel.next_training}</Descriptions.Item>
-              <Descriptions.Item label="數據集大小">{selectedModel.dataset_size}</Descriptions.Item>
-              <Descriptions.Item label="訓練時間">{selectedModel.training_time}</Descriptions.Item>
-              <Descriptions.Item label="自動重訓">
-                <Switch checked={selectedModel.auto_retrain} disabled />
-              </Descriptions.Item>
-              <Descriptions.Item label="重訓間隔">{selectedModel.retrain_interval}</Descriptions.Item>
-            </Descriptions>
-          </div>
-        )}
-      </Drawer>
-    </div>
+        <TextArea rows={4} />
+      </Form.Item>
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          Submit
+        </Button>
+      </Form.Item>
+    </Form>
   );
 };
 
-export default MLOps; 
+export default MLOps;
