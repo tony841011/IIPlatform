@@ -114,7 +114,7 @@ import DatabaseConnectionManagement from './components/DatabaseConnectionManagem
 import TableSchemaManagement from './components/TableSchemaManagement';
 import VideoRecognition from './components/VideoRecognition';
 import MLOps from './components/MLOps';
-import DeviceControl from './components/DeviceControl';
+
 import OTAUpdate from './components/OTAUpdate';
 import EdgeGateway from './components/EdgeGateway';
 import GISIntegration from './components/GISIntegration';
@@ -308,9 +308,6 @@ const App = () => {
               <Menu.Item key="device-management" icon={<DesktopOutlined />}>
                 <Link to="/device-management">設備管理</Link>
               </Menu.Item>
-              <Menu.Item key="device-control" icon={<ControlOutlined />}>
-                <Link to="/device-control">設備控制</Link>
-              </Menu.Item>
               <Menu.Item key="ota-update" icon={<CloudUploadOutlined />}>
                 <Link to="/ota-update">OTA更新</Link>
               </Menu.Item>
@@ -390,7 +387,6 @@ const App = () => {
                 <Route path="/table-schema" element={<TableSchemaManagement />} />
                 <Route path="/video-recognition" element={<VideoRecognition />} />
                 <Route path="/mlops" element={<MLOps />} />
-                <Route path="/device-control" element={<DeviceControl />} />
                 <Route path="/ota-update" element={<OTAUpdate />} />
                 <Route path="/edge-gateway" element={<EdgeGateway />} />
                 <Route path="/gis-integration" element={<GISIntegration />} />

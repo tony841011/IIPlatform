@@ -1,9 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Tooltip, Card, Row, Col, Statistic, Progress, Alert, Divider, Badge, Timeline, Descriptions, Steps, Drawer, Tabs, List, Avatar, Switch, TimePicker, DatePicker, Slider, Upload, Tree, Transfer, Cascader, Radio, Checkbox, Rate, InputNumber, Mentions, AutoComplete, TreeSelect, Image, Skeleton, Empty, Result, PageHeader, Breadcrumb, Dropdown, Menu, Affix, Anchor, BackTop, ConfigProvider, LocaleProvider, theme, App, FloatButton, Watermark, Tour, QRCode } from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
+import {
+  Card,
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Space,
+  Tag,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Alert,
+  message,
+  Tooltip,
+  Popconfirm,
+  Drawer,
+  Tabs,
+  List,
+  Avatar,
+  Switch,
+  TimePicker,
+  DatePicker,
+  Slider,
+  Upload,
+  Tree,
+  Transfer,
+  Cascader,
+  Radio,
+  Checkbox,
+  Rate,
+  InputNumber,
+  Mentions,
+  AutoComplete,
+  TreeSelect,
+  Image,
+  Skeleton,
+  Empty,
+  Result,
+  PageHeader,
+  Breadcrumb,
+  Dropdown,
+  Menu,
+  Affix,
+  Anchor,
+  BackTop,
+  ConfigProvider,
+  LocaleProvider,
+  theme,
+  App,
+  FloatButton,
+  Watermark,
+  Tour,
+  QRCode,
+  Divider,
+  Badge,
+  Timeline,
+  Steps,
+  Descriptions,
+  Collapse
+} from 'antd';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   ReloadOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
@@ -45,898 +107,901 @@ import {
   QuestionCircleOutlined,
   WarningOutlined,
   CloseCircleOutlined,
-  CheckCircleOutlined as CheckCircleIcon,
-  ExclamationCircleOutlined as ExclamationCircleIcon,
-  InfoCircleOutlined as InfoCircleIcon,
-  QuestionCircleOutlined as QuestionCircleIcon,
-  WarningOutlined as WarningIcon,
-  CloseCircleOutlined as CloseCircleIcon,
-  CheckCircleOutlined as CheckCircleIcon2,
-  ExclamationCircleOutlined as ExclamationCircleIcon2,
-  InfoCircleOutlined as InfoCircleIcon2,
-  QuestionCircleOutlined as QuestionCircleIcon2,
-  WarningOutlined as WarningIcon2,
-  CloseCircleOutlined as CloseCircleIcon2,
-  CheckCircleOutlined as CheckCircleIcon3,
-  ExclamationCircleOutlined as ExclamationCircleIcon3,
-  InfoCircleOutlined as InfoCircleIcon3,
-  QuestionCircleOutlined as QuestionCircleIcon3,
-  WarningOutlined as WarningIcon3,
-  CloseCircleOutlined as CloseCircleIcon3,
-  CheckCircleOutlined as CheckCircleIcon4,
-  ExclamationCircleOutlined as ExclamationCircleIcon4,
-  InfoCircleOutlined as InfoCircleIcon4,
-  QuestionCircleOutlined as QuestionCircleIcon4,
-  WarningOutlined as WarningIcon4,
-  CloseCircleOutlined as CloseCircleIcon4,
-  CheckCircleOutlined as CheckCircleIcon5,
-  ExclamationCircleOutlined as ExclamationCircleIcon5,
-  InfoCircleOutlined as InfoCircleIcon5,
-  QuestionCircleOutlined as QuestionCircleIcon5,
-  WarningOutlined as WarningIcon5,
-  CloseCircleOutlined as CloseCircleIcon5,
-  CheckCircleOutlined as CheckCircleIcon6,
-  ExclamationCircleOutlined as ExclamationCircleIcon6,
-  InfoCircleOutlined as InfoCircleIcon6,
-  QuestionCircleOutlined as QuestionCircleIcon6,
-  WarningOutlined as WarningIcon6,
-  CloseCircleOutlined as CloseCircleIcon6,
-  CheckCircleOutlined as CheckCircleIcon7,
-  ExclamationCircleOutlined as ExclamationCircleIcon7,
-  InfoCircleOutlined as InfoCircleIcon7,
-  QuestionCircleOutlined as QuestionCircleIcon7,
-  WarningOutlined as WarningIcon7,
-  CloseCircleOutlined as CloseCircleIcon7,
-  CheckCircleOutlined as CheckCircleIcon8,
-  ExclamationCircleOutlined as ExclamationCircleIcon8,
-  InfoCircleOutlined as InfoCircleIcon8,
-  QuestionCircleOutlined as QuestionCircleIcon8,
-  WarningOutlined as WarningIcon8,
-  CloseCircleOutlined as CloseCircleIcon8,
-  CheckCircleOutlined as CheckCircleIcon9,
-  ExclamationCircleOutlined as ExclamationCircleIcon9,
-  InfoCircleOutlined as InfoCircleIcon9,
-  QuestionCircleOutlined as QuestionCircleIcon9,
-  WarningOutlined as WarningIcon9,
-  CloseCircleOutlined as CloseCircleIcon9,
-  CheckCircleOutlined as CheckCircleIcon10,
-  ExclamationCircleOutlined as ExclamationCircleIcon10,
-  InfoCircleOutlined as InfoCircleIcon10,
-  QuestionCircleOutlined as QuestionCircleIcon10,
-  WarningOutlined as WarningIcon10,
-  CloseCircleOutlined as CloseCircleIcon10,
-  CheckCircleOutlined as CheckCircleIcon11,
-  ExclamationCircleOutlined as ExclamationCircleIcon11,
-  InfoCircleOutlined as InfoCircleIcon11,
-  QuestionCircleOutlined as QuestionCircleIcon11,
-  WarningOutlined as WarningIcon11,
-  CloseCircleOutlined as CloseCircleIcon11,
-  CheckCircleOutlined as CheckCircleIcon12,
-  ExclamationCircleOutlined as ExclamationCircleIcon12,
-  InfoCircleOutlined as InfoCircleIcon12,
-  QuestionCircleOutlined as QuestionCircleIcon12,
-  WarningOutlined as WarningIcon12,
-  CloseCircleOutlined as CloseCircleIcon12,
-  CheckCircleOutlined as CheckCircleIcon13,
-  ExclamationCircleOutlined as ExclamationCircleIcon13,
-  InfoCircleOutlined as InfoCircleIcon13,
-  QuestionCircleOutlined as QuestionCircleIcon13,
-  WarningOutlined as WarningIcon13,
-  CloseCircleOutlined as CloseCircleIcon13,
-  CheckCircleOutlined as CheckCircleIcon14,
-  ExclamationCircleOutlined as ExclamationCircleIcon14,
-  InfoCircleOutlined as InfoCircleIcon14,
-  QuestionCircleOutlined as QuestionCircleIcon14,
-  WarningOutlined as WarningIcon14,
-  CloseCircleOutlined as CloseCircleIcon14,
-  CheckCircleOutlined as CheckCircleIcon15,
-  ExclamationCircleOutlined as ExclamationCircleIcon15,
-  InfoCircleOutlined as InfoCircleIcon15,
-  QuestionCircleOutlined as QuestionCircleIcon15,
-  WarningOutlined as WarningIcon15,
-  CloseCircleOutlined as CloseCircleIcon15,
-  CheckCircleOutlined as CheckCircleIcon16,
-  ExclamationCircleOutlined as ExclamationCircleIcon16,
-  InfoCircleOutlined as InfoCircleIcon16,
-  QuestionCircleOutlined as QuestionCircleIcon16,
-  WarningOutlined as WarningIcon16,
-  CloseCircleOutlined as CloseCircleIcon16,
-  CheckCircleOutlined as CheckCircleIcon17,
-  ExclamationCircleOutlined as ExclamationCircleIcon17,
-  InfoCircleOutlined as InfoCircleIcon17,
-  QuestionCircleOutlined as QuestionCircleIcon17,
-  WarningOutlined as WarningIcon17,
-  CloseCircleOutlined as CloseCircleIcon17,
-  CheckCircleOutlined as CheckCircleIcon18,
-  ExclamationCircleOutlined as ExclamationCircleIcon18,
-  InfoCircleOutlined as InfoCircleIcon18,
-  QuestionCircleOutlined as QuestionCircleIcon18,
-  WarningOutlined as WarningIcon18,
-  CloseCircleOutlined as CloseCircleIcon18,
-  CheckCircleOutlined as CheckCircleIcon19,
-  ExclamationCircleOutlined as ExclamationCircleIcon19,
-  InfoCircleOutlined as InfoCircleIcon19,
-  QuestionCircleOutlined as QuestionCircleIcon19,
-  WarningOutlined as WarningIcon19,
-  CloseCircleOutlined as CloseCircleIcon19,
-  CheckCircleOutlined as CheckCircleIcon20,
-  ExclamationCircleOutlined as ExclamationCircleIcon20,
-  InfoCircleOutlined as InfoCircleIcon20,
-  QuestionCircleOutlined as QuestionCircleIcon20,
-  WarningOutlined as WarningIcon20,
-  CloseCircleOutlined as CloseCircleIcon20,
-  CheckCircleOutlined as CheckCircleIcon21,
-  ExclamationCircleOutlined as ExclamationCircleIcon21,
-  InfoCircleOutlined as InfoCircleIcon21,
-  QuestionCircleOutlined as QuestionCircleIcon21,
-  WarningOutlined as WarningIcon21,
-  CloseCircleOutlined as CloseCircleIcon21,
-  CheckCircleOutlined as CheckCircleIcon22,
-  ExclamationCircleOutlined as ExclamationCircleIcon22,
-  InfoCircleOutlined as InfoCircleIcon22,
-  QuestionCircleOutlined as QuestionCircleIcon22,
-  WarningOutlined as WarningIcon22,
-  CloseCircleOutlined as CloseCircleIcon22,
-  CheckCircleOutlined as CheckCircleIcon23,
-  ExclamationCircleOutlined as ExclamationCircleIcon23,
-  InfoCircleOutlined as InfoCircleIcon23,
-  QuestionCircleOutlined as QuestionCircleIcon23,
-  WarningOutlined as WarningIcon23,
-  CloseCircleOutlined as CloseCircleIcon23,
-  CheckCircleOutlined as CheckCircleIcon24,
-  ExclamationCircleOutlined as ExclamationCircleIcon24,
-  InfoCircleOutlined as InfoCircleIcon24,
-  QuestionCircleOutlined as QuestionCircleIcon24,
-  WarningOutlined as WarningIcon24,
-  CloseCircleOutlined as CloseCircleIcon24,
-  CheckCircleOutlined as CheckCircleIcon25,
-  ExclamationCircleOutlined as ExclamationCircleIcon25,
-  InfoCircleOutlined as InfoCircleIcon25,
-  QuestionCircleOutlined as QuestionCircleIcon25,
-  WarningOutlined as WarningIcon25,
-  CloseCircleOutlined as CloseCircleIcon25,
-  CheckCircleOutlined as CheckCircleIcon26,
-  ExclamationCircleOutlined as ExclamationCircleIcon26,
-  InfoCircleOutlined as InfoCircleIcon26,
-  QuestionCircleOutlined as QuestionCircleIcon26,
-  WarningOutlined as WarningIcon26,
-  CloseCircleOutlined as CloseCircleIcon26,
-  CheckCircleOutlined as CheckCircleIcon27,
-  ExclamationCircleOutlined as ExclamationCircleIcon27,
-  InfoCircleOutlined as InfoCircleIcon27,
-  QuestionCircleOutlined as QuestionCircleIcon27,
-  WarningOutlined as WarningIcon27,
-  CloseCircleOutlined as CloseCircleIcon27,
-  CheckCircleOutlined as CheckCircleIcon28,
-  ExclamationCircleOutlined as ExclamationCircleIcon28,
-  InfoCircleOutlined as InfoCircleIcon28,
-  QuestionCircleOutlined as QuestionCircleIcon28,
-  WarningOutlined as WarningIcon28,
-  CloseCircleOutlined as CloseCircleIcon28,
-  CheckCircleOutlined as CheckCircleIcon29,
-  ExclamationCircleOutlined as ExclamationCircleIcon29,
-  InfoCircleOutlined as InfoCircleIcon29,
-  QuestionCircleOutlined as QuestionCircleIcon29,
-  WarningOutlined as WarningIcon29,
-  CloseCircleOutlined as CloseCircleIcon29,
-  CheckCircleOutlined as CheckCircleIcon30,
-  ExclamationCircleOutlined as ExclamationCircleIcon30,
-  InfoCircleOutlined as InfoCircleIcon30,
-  QuestionCircleOutlined as QuestionCircleIcon30,
-  WarningOutlined as WarningIcon30,
-  CloseCircleOutlined as CloseCircleIcon30,
-  CheckCircleOutlined as CheckCircleIcon31,
-  ExclamationCircleOutlined as ExclamationCircleIcon31,
-  InfoCircleOutlined as InfoCircleIcon31,
-  QuestionCircleOutlined as QuestionCircleIcon31,
-  WarningOutlined as WarningIcon31,
-  CloseCircleOutlined as CloseCircleIcon31,
-  CheckCircleOutlined as CheckCircleIcon32,
-  ExclamationCircleOutlined as ExclamationCircleIcon32,
-  InfoCircleOutlined as InfoCircleIcon32,
-  QuestionCircleOutlined as QuestionCircleIcon32,
-  WarningOutlined as WarningIcon32,
-  CloseCircleOutlined as CloseCircleIcon32,
-  CheckCircleOutlined as CheckCircleIcon33,
-  ExclamationCircleOutlined as ExclamationCircleIcon33,
-  InfoCircleOutlined as InfoCircleIcon33,
-  QuestionCircleOutlined as QuestionCircleIcon33,
-  WarningOutlined as WarningIcon33,
-  CloseCircleOutlined as CloseCircleIcon33,
-  CheckCircleOutlined as CheckCircleIcon34,
-  ExclamationCircleOutlined as ExclamationCircleIcon34,
-  InfoCircleOutlined as InfoCircleIcon34,
-  QuestionCircleOutlined as QuestionCircleIcon34,
-  WarningOutlined as WarningIcon34,
-  CloseCircleOutlined as CloseCircleIcon34,
-  CheckCircleOutlined as CheckCircleIcon35,
-  ExclamationCircleOutlined as ExclamationCircleIcon35,
-  InfoCircleOutlined as InfoCircleIcon35,
-  QuestionCircleOutlined as QuestionCircleIcon35,
-  WarningOutlined as WarningIcon35,
-  CloseCircleOutlined as CloseCircleIcon35,
-  CheckCircleOutlined as CheckCircleIcon36,
-  ExclamationCircleOutlined as ExclamationCircleIcon36,
-  InfoCircleOutlined as InfoCircleIcon36,
-  QuestionCircleOutlined as QuestionCircleIcon36,
-  WarningOutlined as WarningIcon36,
-  CloseCircleOutlined as CloseCircleIcon36,
-  CheckCircleOutlined as CheckCircleIcon37,
-  ExclamationCircleOutlined as ExclamationCircleIcon37,
-  InfoCircleOutlined as InfoCircleIcon37,
-  QuestionCircleOutlined as QuestionCircleIcon37,
-  WarningOutlined as WarningIcon37,
-  CloseCircleOutlined as CloseCircleIcon37,
-  CheckCircleOutlined as CheckCircleIcon38,
-  ExclamationCircleOutlined as ExclamationCircleIcon38,
-  InfoCircleOutlined as InfoCircleIcon38,
-  QuestionCircleOutlined as QuestionCircleIcon38,
-  WarningOutlined as WarningIcon38,
-  CloseCircleOutlined as CloseCircleIcon38,
-  CheckCircleOutlined as CheckCircleIcon39,
-  ExclamationCircleOutlined as ExclamationCircleIcon39,
-  InfoCircleOutlined as InfoCircleIcon39,
-  QuestionCircleOutlined as QuestionCircleIcon39,
-  WarningOutlined as WarningIcon39,
-  CloseCircleOutlined as CloseCircleIcon39,
-  CheckCircleOutlined as CheckCircleIcon40,
-  ExclamationCircleOutlined as ExclamationCircleIcon40,
-  InfoCircleOutlined as InfoCircleIcon40,
-  QuestionCircleOutlined as QuestionCircleIcon40,
-  WarningOutlined as WarningIcon40,
-  CloseCircleOutlined as CloseCircleIcon40,
-  CheckCircleOutlined as CheckCircleIcon41,
-  ExclamationCircleOutlined as ExclamationCircleIcon41,
-  InfoCircleOutlined as InfoCircleIcon41,
-  QuestionCircleOutlined as QuestionCircleIcon41,
-  WarningOutlined as WarningIcon41,
-  CloseCircleOutlined as CloseCircleIcon41,
-  CheckCircleOutlined as CheckCircleIcon42,
-  ExclamationCircleOutlined as ExclamationCircleIcon42,
-  InfoCircleOutlined as InfoCircleIcon42,
-  QuestionCircleOutlined as QuestionCircleIcon42,
-  WarningOutlined as WarningIcon42,
-  CloseCircleOutlined as CloseCircleIcon42,
-  CheckCircleOutlined as CheckCircleIcon43,
-  ExclamationCircleOutlined as ExclamationCircleIcon43,
-  InfoCircleOutlined as InfoCircleIcon43,
-  QuestionCircleOutlined as QuestionCircleIcon43,
-  WarningOutlined as WarningIcon43,
-  CloseCircleOutlined as CloseCircleIcon43,
-  CheckCircleOutlined as CheckCircleIcon44,
-  ExclamationCircleOutlined as ExclamationCircleIcon44,
-  InfoCircleOutlined as InfoCircleIcon44,
-  QuestionCircleOutlined as QuestionCircleIcon44,
-  WarningOutlined as WarningIcon44,
-  CloseCircleOutlined as CloseCircleIcon44,
-  CheckCircleOutlined as CheckCircleIcon45,
-  ExclamationCircleOutlined as ExclamationCircleIcon45,
-  InfoCircleOutlined as InfoCircleIcon45,
-  QuestionCircleOutlined as QuestionCircleIcon45,
-  WarningOutlined as WarningIcon45,
-  CloseCircleOutlined as CloseCircleIcon45,
-  CheckCircleOutlined as CheckCircleIcon46,
-  ExclamationCircleOutlined as ExclamationCircleIcon46,
-  InfoCircleOutlined as InfoCircleIcon46,
-  QuestionCircleOutlined as QuestionCircleIcon46,
-  WarningOutlined as WarningIcon46,
-  CloseCircleOutlined as CloseCircleIcon46,
-  CheckCircleOutlined as CheckCircleIcon47,
-  ExclamationCircleOutlined as ExclamationCircleIcon47,
-  InfoCircleOutlined as InfoCircleIcon47,
-  QuestionCircleOutlined as QuestionCircleIcon47,
-  WarningOutlined as WarningIcon47,
-  CloseCircleOutlined as CloseCircleIcon47,
-  CheckCircleOutlined as CheckCircleIcon48,
-  ExclamationCircleOutlined as ExclamationCircleIcon48,
-  InfoCircleOutlined as InfoCircleIcon48,
-  QuestionCircleOutlined as QuestionCircleIcon48,
-  WarningOutlined as WarningIcon48,
-  CloseCircleOutlined as CloseCircleIcon48,
-  CheckCircleOutlined as CheckCircleIcon49,
-  ExclamationCircleOutlined as ExclamationCircleIcon49,
-  InfoCircleOutlined as InfoCircleIcon49,
-  QuestionCircleOutlined as QuestionCircleIcon49,
-  WarningOutlined as WarningIcon49,
-  CloseCircleOutlined as CloseCircleIcon49,
-  CheckCircleOutlined as CheckCircleIcon50,
-  ExclamationCircleOutlined as ExclamationCircleIcon50,
-  InfoCircleOutlined as InfoCircleIcon50,
-  QuestionCircleOutlined as QuestionCircleIcon50,
-  WarningOutlined as WarningIcon50,
-  CloseCircleOutlined as CloseCircleIcon50,
-  CheckCircleOutlined as CheckCircleIcon51,
-  ExclamationCircleOutlined as ExclamationCircleIcon51,
-  InfoCircleOutlined as InfoCircleIcon51,
-  QuestionCircleOutlined as QuestionCircleIcon51,
-  WarningOutlined as WarningIcon51,
-  CloseCircleOutlined as CloseCircleIcon51,
-  CheckCircleOutlined as CheckCircleIcon52,
-  ExclamationCircleOutlined as ExclamationCircleIcon52,
-  InfoCircleOutlined as InfoCircleIcon52,
-  QuestionCircleOutlined as QuestionCircleIcon52,
-  WarningOutlined as WarningIcon52,
-  CloseCircleOutlined as CloseCircleIcon52,
-  CheckCircleOutlined as CheckCircleIcon53,
-  ExclamationCircleOutlined as ExclamationCircleIcon53,
-  InfoCircleOutlined as InfoCircleIcon53,
-  QuestionCircleOutlined as QuestionCircleIcon53,
-  WarningOutlined as WarningIcon53,
-  CloseCircleOutlined as CloseCircleIcon53,
-  CheckCircleOutlined as CheckCircleIcon54,
-  ExclamationCircleOutlined as ExclamationCircleIcon54,
-  InfoCircleOutlined as InfoCircleIcon54,
-  QuestionCircleOutlined as QuestionCircleIcon54,
-  WarningOutlined as WarningIcon54,
-  CloseCircleOutlined as CloseCircleIcon54,
-  CheckCircleOutlined as CheckCircleIcon55,
-  ExclamationCircleOutlined as ExclamationCircleIcon55,
-  InfoCircleOutlined as InfoCircleIcon55,
-  QuestionCircleOutlined as QuestionCircleIcon55,
-  WarningOutlined as WarningIcon55,
-  CloseCircleOutlined as CloseCircleIcon55,
-  CheckCircleOutlined as CheckCircleIcon56,
-  ExclamationCircleOutlined as ExclamationCircleIcon56,
-  InfoCircleOutlined as InfoCircleIcon56,
-  QuestionCircleOutlined as QuestionCircleIcon56,
-  WarningOutlined as WarningIcon56,
-  CloseCircleOutlined as CloseCircleIcon56,
-  CheckCircleOutlined as CheckCircleIcon57,
-  ExclamationCircleOutlined as ExclamationCircleIcon57,
-  InfoCircleOutlined as InfoCircleIcon57,
-  QuestionCircleOutlined as QuestionCircleIcon57,
-  WarningOutlined as WarningIcon57,
-  CloseCircleOutlined as CloseCircleIcon57,
-  CheckCircleOutlined as CheckCircleIcon58,
-  ExclamationCircleOutlined as ExclamationCircleIcon58,
-  InfoCircleOutlined as InfoCircleIcon58,
-  QuestionCircleOutlined as QuestionCircleIcon58,
-  WarningOutlined as WarningIcon58,
-  CloseCircleOutlined as CloseCircleIcon58,
-  CheckCircleOutlined as CheckCircleIcon59,
-  ExclamationCircleOutlined as ExclamationCircleIcon59,
-  InfoCircleOutlined as InfoCircleIcon59,
-  QuestionCircleOutlined as QuestionCircleIcon59,
-  WarningOutlined as WarningIcon59,
-  CloseCircleOutlined as CloseCircleIcon59,
-  CheckCircleOutlined as CheckCircleIcon60,
-  ExclamationCircleOutlined as ExclamationCircleIcon60,
-  InfoCircleOutlined as InfoCircleIcon60,
-  QuestionCircleOutlined as QuestionCircleIcon60,
-  WarningOutlined as WarningIcon60,
-  CloseCircleOutlined as CloseCircleIcon60,
-  CheckCircleOutlined as CheckCircleIcon61,
-  ExclamationCircleOutlined as ExclamationCircleIcon61,
-  InfoCircleOutlined as InfoCircleIcon61,
-  QuestionCircleOutlined as QuestionCircleIcon61,
-  WarningOutlined as WarningIcon61,
-  CloseCircleOutlined as CloseCircleIcon61,
-  CheckCircleOutlined as CheckCircleIcon62,
-  ExclamationCircleOutlined as ExclamationCircleIcon62,
-  InfoCircleOutlined as InfoCircleIcon62,
-  QuestionCircleOutlined as QuestionCircleIcon62,
-  WarningOutlined as WarningIcon62,
-  CloseCircleOutlined as CloseCircleIcon62,
-  CheckCircleOutlined as CheckCircleIcon63,
-  ExclamationCircleOutlined as ExclamationCircleIcon63,
-  InfoCircleOutlined as InfoCircleIcon63,
-  QuestionCircleOutlined as QuestionCircleIcon63,
-  WarningOutlined as WarningIcon63,
-  CloseCircleOutlined as CloseCircleIcon63,
-  CheckCircleOutlined as CheckCircleIcon64,
-  ExclamationCircleOutlined as ExclamationCircleIcon64,
-  InfoCircleOutlined as InfoCircleIcon64,
-  QuestionCircleOutlined as QuestionCircleIcon64,
-  WarningOutlined as WarningIcon64,
-  CloseCircleOutlined as CloseCircleIcon64,
-  CheckCircleOutlined as CheckCircleIcon65,
-  ExclamationCircleOutlined as ExclamationCircleIcon65,
-  InfoCircleOutlined as InfoCircleIcon65,
-  QuestionCircleOutlined as QuestionCircleIcon65,
-  WarningOutlined as WarningIcon65,
-  CloseCircleOutlined as CloseCircleIcon65,
-  CheckCircleOutlined as CheckCircleIcon66,
-  ExclamationCircleOutlined as ExclamationCircleIcon66,
-  InfoCircleOutlined as InfoCircleIcon66,
-  QuestionCircleOutlined as QuestionCircleIcon66,
-  WarningOutlined as WarningIcon66,
-  CloseCircleOutlined as CloseCircleIcon66,
-  CheckCircleOutlined as CheckCircleIcon67,
-  ExclamationCircleOutlined as ExclamationCircleIcon67,
-  InfoCircleOutlined as InfoCircleIcon67,
-  QuestionCircleOutlined as QuestionCircleIcon67,
-  WarningOutlined as WarningIcon67,
-  CloseCircleOutlined as CloseCircleIcon67,
-  CheckCircleOutlined as CheckCircleIcon68,
-  ExclamationCircleOutlined as ExclamationCircleIcon68,
-  InfoCircleOutlined as InfoCircleIcon68,
-  QuestionCircleOutlined as QuestionCircleIcon68,
-  WarningOutlined as WarningIcon68,
-  CloseCircleOutlined as CloseCircleIcon68,
-  CheckCircleOutlined as CheckCircleIcon69,
-  ExclamationCircleOutlined as ExclamationCircleIcon69,
-  InfoCircleOutlined as InfoCircleIcon69,
-  QuestionCircleOutlined as QuestionCircleIcon69,
-  WarningOutlined as WarningIcon69,
-  CloseCircleOutlined as CloseCircleIcon69,
-  CheckCircleOutlined as CheckCircleIcon70,
-  ExclamationCircleOutlined as ExclamationCircleIcon70,
-  InfoCircleOutlined as InfoCircleIcon70,
-  QuestionCircleOutlined as QuestionCircleIcon70,
-  WarningOutlined as WarningIcon70,
-  CloseCircleOutlined as CloseCircleIcon70,
-  CheckCircleOutlined as CheckCircleIcon71,
-  ExclamationCircleOutlined as ExclamationCircleIcon71,
-  InfoCircleOutlined as InfoCircleIcon71,
-  QuestionCircleOutlined as QuestionCircleIcon71,
-  WarningOutlined as WarningIcon71,
-  CloseCircleOutlined as CloseCircleIcon71,
-  CheckCircleOutlined as CheckCircleIcon72,
-  ExclamationCircleOutlined as ExclamationCircleIcon72,
-  InfoCircleOutlined as InfoCircleIcon72,
-  QuestionCircleOutlined as QuestionCircleIcon72,
-  WarningOutlined as WarningIcon72,
-  CloseCircleOutlined as CloseCircleIcon72,
-  CheckCircleOutlined as CheckCircleIcon73,
-  ExclamationCircleOutlined as ExclamationCircleIcon73,
-  InfoCircleOutlined as InfoCircleIcon73,
-  QuestionCircleOutlined as QuestionCircleIcon73,
-  WarningOutlined as WarningIcon73,
-  CloseCircleOutlined as CloseCircleIcon73,
-  CheckCircleOutlined as CheckCircleIcon74,
-  ExclamationCircleOutlined as ExclamationCircleIcon74,
-  InfoCircleOutlined as InfoCircleIcon74,
-  QuestionCircleOutlined as QuestionCircleIcon74,
-  WarningOutlined as WarningIcon74,
-  CloseCircleOutlined as CloseCircleIcon74,
-  CheckCircleOutlined as CheckCircleIcon75,
-  ExclamationCircleOutlined as ExclamationCircleIcon75,
-  InfoCircleOutlined as InfoCircleIcon75,
-  QuestionCircleOutlined as QuestionCircleIcon75,
-  WarningOutlined as WarningIcon75,
-  CloseCircleOutlined as CloseCircleIcon75,
-  CheckCircleOutlined as CheckCircleIcon76,
-  ExclamationCircleOutlined as ExclamationCircleIcon76,
-  InfoCircleOutlined as InfoCircleIcon76,
-  QuestionCircleOutlined as QuestionCircleIcon76,
-  WarningOutlined as WarningIcon76,
-  CloseCircleOutlined as CloseCircleIcon76,
-  CheckCircleOutlined as CheckCircleIcon77,
-  ExclamationCircleOutlined as ExclamationCircleIcon77,
-  InfoCircleOutlined as InfoCircleIcon77,
-  QuestionCircleOutlined as QuestionCircleIcon77,
-  WarningOutlined as WarningIcon77,
-  CloseCircleOutlined as CloseCircleIcon77,
-  CheckCircleOutlined as CheckCircleIcon78,
-  ExclamationCircleOutlined as ExclamationCircleIcon78,
-  InfoCircleOutlined as InfoCircleIcon78,
-  QuestionCircleOutlined as QuestionCircleIcon78,
-  WarningOutlined as WarningIcon78,
-  CloseCircleOutlined as CloseCircleIcon78,
-  CheckCircleOutlined as CheckCircleIcon79,
-  ExclamationCircleOutlined as ExclamationCircleIcon79,
-  InfoCircleOutlined as InfoCircleIcon79,
-  QuestionCircleOutlined as QuestionCircleIcon79,
-  WarningOutlined as WarningIcon79,
-  CloseCircleOutlined as CloseCircleIcon79,
-  CheckCircleOutlined as CheckCircleIcon80,
-  ExclamationCircleOutlined as ExclamationCircleIcon80,
-  InfoCircleOutlined as InfoCircleIcon80,
-  QuestionCircleOutlined as QuestionCircleIcon80,
-  WarningOutlined as WarningIcon80,
-  CloseCircleOutlined as CloseCircleIcon80,
-  CheckCircleOutlined as CheckCircleIcon81,
-  ExclamationCircleOutlined as ExclamationCircleIcon81,
-  InfoCircleOutlined as InfoCircleIcon81,
-  QuestionCircleOutlined as QuestionCircleIcon81,
-  WarningOutlined as WarningIcon81,
-  CloseCircleOutlined as CloseCircleIcon81,
-  CheckCircleOutlined as CheckCircleIcon82,
-  ExclamationCircleOutlined as ExclamationCircleIcon82,
-  InfoCircleOutlined as InfoCircleIcon82,
-  QuestionCircleOutlined as QuestionCircleIcon82,
-  WarningOutlined as WarningIcon82,
-  CloseCircleOutlined as CloseCircleIcon82,
-  CheckCircleOutlined as CheckCircleIcon83,
-  ExclamationCircleOutlined as ExclamationCircleIcon83,
-  InfoCircleOutlined as InfoCircleIcon83,
-  QuestionCircleOutlined as QuestionCircleIcon83,
-  WarningOutlined as WarningIcon83,
-  CloseCircleOutlined as CloseCircleIcon83,
-  CheckCircleOutlined as CheckCircleIcon84,
-  ExclamationCircleOutlined as ExclamationCircleIcon84,
-  InfoCircleOutlined as InfoCircleIcon84,
-  QuestionCircleOutlined as QuestionCircleIcon84,
-  WarningOutlined as WarningIcon84,
-  CloseCircleOutlined as CloseCircleIcon84,
-  CheckCircleOutlined as CheckCircleIcon85,
-  ExclamationCircleOutlined as ExclamationCircleIcon85,
-  InfoCircleOutlined as InfoCircleIcon85,
-  QuestionCircleOutlined as QuestionCircleIcon85,
-  WarningOutlined as WarningIcon85,
-  CloseCircleOutlined as CloseCircleIcon85,
-  CheckCircleOutlined as CheckCircleIcon86,
-  ExclamationCircleOutlined as ExclamationCircleIcon86,
-  InfoCircleOutlined as InfoCircleIcon86,
-  QuestionCircleOutlined as QuestionCircleIcon86,
-  WarningOutlined as WarningIcon86,
-  CloseCircleOutlined as CloseCircleIcon86,
-  CheckCircleOutlined as CheckCircleIcon87,
-  ExclamationCircleOutlined as ExclamationCircleIcon87,
-  InfoCircleOutlined as InfoCircleIcon87,
-  QuestionCircleOutlined as QuestionCircleIcon87,
-  WarningOutlined as WarningIcon87,
-  CloseCircleOutlined as CloseCircleIcon87,
-  CheckCircleOutlined as CheckCircleIcon88,
-  ExclamationCircleOutlined as ExclamationCircleIcon88,
-  InfoCircleOutlined as InfoCircleIcon88,
-  QuestionCircleOutlined as QuestionCircleIcon88,
-  WarningOutlined as WarningIcon88,
-  CloseCircleOutlined as CloseCircleIcon88,
-  CheckCircleOutlined as CheckCircleIcon89,
-  ExclamationCircleOutlined as ExclamationCircleIcon89,
-  InfoCircleOutlined as InfoCircleIcon89,
-  QuestionCircleOutlined as QuestionCircleIcon89,
-  WarningOutlined as WarningIcon89,
-  CloseCircleOutlined as CloseCircleIcon89,
-  CheckCircleOutlined as CheckCircleIcon90,
-  ExclamationCircleOutlined as ExclamationCircleIcon90,
-  InfoCircleOutlined as InfoCircleIcon90,
-  QuestionCircleOutlined as QuestionCircleIcon90,
-  WarningOutlined as WarningIcon90,
-  CloseCircleOutlined as CloseCircleIcon90,
-  CheckCircleOutlined as CheckCircleIcon91,
-  ExclamationCircleOutlined as ExclamationCircleIcon91,
-  InfoCircleOutlined as InfoCircleIcon91,
-  QuestionCircleOutlined as QuestionCircleIcon91,
-  WarningOutlined as WarningIcon91,
-  CloseCircleOutlined as CloseCircleIcon91,
-  CheckCircleOutlined as CheckCircleIcon92,
-  ExclamationCircleOutlined as ExclamationCircleIcon92,
-  InfoCircleOutlined as InfoCircleIcon92,
-  QuestionCircleOutlined as QuestionCircleIcon92,
-  WarningOutlined as WarningIcon92,
-  CloseCircleOutlined as CloseCircleIcon92,
-  CheckCircleOutlined as CheckCircleIcon93,
-  ExclamationCircleOutlined as ExclamationCircleIcon93,
-  InfoCircleOutlined as InfoCircleIcon93,
-  QuestionCircleOutlined as QuestionCircleIcon93,
-  WarningOutlined as WarningIcon93,
-  CloseCircleOutlined as CloseCircleIcon93,
-  CheckCircleOutlined as CheckCircleIcon94,
-  ExclamationCircleOutlined as ExclamationCircleIcon94,
-  InfoCircleOutlined as InfoCircleIcon94,
-  QuestionCircleOutlined as QuestionCircleIcon94,
-  WarningOutlined as WarningIcon94,
-  CloseCircleOutlined as CloseCircleIcon94,
-  CheckCircleOutlined as CheckCircleIcon95,
-  ExclamationCircleOutlined as ExclamationCircleIcon95,
-  InfoCircleOutlined as InfoCircleIcon95,
-  QuestionCircleOutlined as QuestionCircleIcon95,
-  WarningOutlined as WarningIcon95,
-  CloseCircleOutlined as CloseCircleIcon95,
-  CheckCircleOutlined as CheckCircleIcon96,
-  ExclamationCircleOutlined as ExclamationCircleIcon96,
-  InfoCircleOutlined as InfoCircleIcon96,
-  QuestionCircleOutlined as QuestionCircleIcon96,
-  WarningOutlined as WarningIcon96,
-  CloseCircleOutlined as CloseCircleIcon96,
-  CheckCircleOutlined as CheckCircleIcon97,
-  ExclamationCircleOutlined as ExclamationCircleIcon97,
-  InfoCircleOutlined as InfoCircleIcon97,
-  QuestionCircleOutlined as QuestionCircleIcon97,
-  WarningOutlined as WarningIcon97,
-  CloseCircleOutlined as CloseCircleIcon97,
-  CheckCircleOutlined as CheckCircleIcon98,
-  ExclamationCircleOutlined as ExclamationCircleIcon98,
-  InfoCircleOutlined as InfoCircleIcon98,
-  QuestionCircleOutlined as QuestionCircleIcon98,
-  WarningOutlined as WarningIcon98,
-  CloseCircleOutlined as CloseCircleIcon98,
-  CheckCircleOutlined as CheckCircleIcon99,
-  ExclamationCircleOutlined as ExclamationCircleIcon99,
-  InfoCircleOutlined as InfoCircleIcon99,
-  QuestionCircleOutlined as QuestionCircleIcon99,
-  WarningOutlined as WarningIcon99,
-  CloseCircleOutlined as CloseCircleIcon99,
-  CheckCircleOutlined as CheckCircleIcon100,
-  ExclamationCircleOutlined as ExclamationCircleIcon100,
-  InfoCircleOutlined as InfoCircleIcon100,
-  QuestionCircleOutlined as QuestionCircleIcon100,
-  WarningOutlined as WarningIcon100,
-  CloseCircleOutlined as CloseCircleIcon100,
-  CheckCircleOutlined as CheckCircleIcon101,
-  ExclamationCircleOutlined as ExclamationCircleIcon101,
-  InfoCircleOutlined as InfoCircleIcon101,
-  QuestionCircleOutlined as QuestionCircleIcon101,
-  WarningOutlined as WarningIcon101,
-  CloseCircleOutlined as CloseCircleIcon101,
-  CheckCircleOutlined as CheckCircleIcon102,
-  ExclamationCircleOutlined as ExclamationCircleIcon102,
-  InfoCircleOutlined as InfoCircleIcon102,
-  QuestionCircleOutlined as QuestionCircleIcon102,
-  WarningOutlined as WarningIcon102,
-  CloseCircleOutlined as CloseCircleIcon102,
-  CheckCircleOutlined as CheckCircleIcon103,
-  ExclamationCircleOutlined as ExclamationCircleIcon103,
-  InfoCircleOutlined as InfoCircleIcon103,
-  QuestionCircleOutlined as QuestionCircleIcon103,
-  WarningOutlined as WarningIcon103,
-  CloseCircleOutlined as CloseCircleIcon103,
-  CheckCircleOutlined as CheckCircleIcon104,
-  ExclamationCircleOutlined as ExclamationCircleIcon104,
-  InfoCircleOutlined as InfoCircleIcon104,
-  QuestionCircleOutlined as QuestionCircleIcon104,
-  WarningOutlined as WarningIcon104,
-  CloseCircleOutlined as CloseCircleIcon104,
-  CheckCircleOutlined as CheckCircleIcon105,
-  ExclamationCircleOutlined as ExclamationCircleIcon105,
-  InfoCircleOutlined as InfoCircleIcon105,
-  QuestionCircleOutlined as QuestionCircleIcon105,
-  WarningOutlined as WarningIcon105,
-  CloseCircleOutlined as CloseCircleIcon105,
-  CheckCircleOutlined as CheckCircleIcon106,
-  ExclamationCircleOutlined as ExclamationCircleIcon106,
-  InfoCircleOutlined as InfoCircleIcon106,
-  QuestionCircleOutlined as QuestionCircleIcon106,
-  WarningOutlined as WarningIcon106,
-  CloseCircleOutlined as CloseCircleIcon106,
-  CheckCircleOutlined as CheckCircleIcon107,
-  ExclamationCircleOutlined as ExclamationCircleIcon107,
-  InfoCircleOutlined as InfoCircleIcon107,
-  QuestionCircleOutlined as QuestionCircleIcon107,
-  WarningOutlined as WarningIcon107,
-  CloseCircleOutlined as CloseCircleIcon107,
-  CheckCircleOutlined as CheckCircleIcon108,
-  ExclamationCircleOutlined as ExclamationCircleIcon108,
-  InfoCircleOutlined as InfoCircleIcon108,
-  QuestionCircleOutlined as QuestionCircleIcon108,
-  WarningOutlined as WarningIcon108,
-  CloseCircleOutlined as CloseCircleIcon108,
-  CheckCircleOutlined as CheckCircleIcon109,
-  ExclamationCircleOutlined as ExclamationCircleIcon109,
-  InfoCircleOutlined as InfoCircleIcon109,
-  QuestionCircleOutlined as QuestionCircleIcon109,
-  WarningOutlined as WarningIcon109,
-  CloseCircleOutlined as CloseCircleIcon109,
-  CheckCircleOutlined as CheckCircleIcon110,
-  ExclamationCircleOutlined as ExclamationCircleIcon110,
-  InfoCircleOutlined as InfoCircleIcon110,
-  QuestionCircleOutlined as QuestionCircleIcon110,
-  WarningOutlined as WarningIcon110,
-  CloseCircleOutlined as CloseCircleIcon110,
-  CheckCircleOutlined as CheckCircleIcon111,
-  ExclamationCircleOutlined as ExclamationCircleIcon111,
-  InfoCircleOutlined as InfoCircleIcon111,
-  QuestionCircleOutlined as QuestionCircleIcon111,
-  WarningOutlined as WarningIcon111,
-  CloseCircleOutlined as CloseCircleIcon111,
-  CheckCircleOutlined as CheckCircleIcon112,
-  ExclamationCircleOutlined as ExclamationCircleIcon112,
-  InfoCircleOutlined as InfoCircleIcon112,
-  QuestionCircleOutlined as QuestionCircleIcon112,
-  WarningOutlined as WarningIcon112,
-  CloseCircleOutlined as CloseCircleIcon112,
-  CheckCircleOutlined as CheckCircleIcon113,
-  ExclamationCircleOutlined as ExclamationCircleIcon113,
-  InfoCircleOutlined as InfoCircleIcon113,
-  QuestionCircleOutlined as QuestionCircleIcon113,
-  WarningOutlined as WarningIcon113,
-  CloseCircleOutlined as CloseCircleIcon113,
-  CheckCircleOutlined as CheckCircleIcon114,
-  ExclamationCircleOutlined as ExclamationCircleIcon114,
-  InfoCircleOutlined as InfoCircleIcon114,
-  QuestionCircleOutlined as QuestionCircleIcon114,
-  WarningOutlined as WarningIcon114,
-  CloseCircleOutlined as CloseCircleIcon114,
-  CheckCircleOutlined as CheckCircleIcon115,
-  ExclamationCircleOutlined as ExclamationCircleIcon115,
-  InfoCircleOutlined as InfoCircleIcon115,
-  QuestionCircleOutlined as QuestionCircleIcon115,
-  WarningOutlined as WarningIcon115,
-  CloseCircleOutlined as CloseCircleIcon115,
-  CheckCircleOutlined as CheckCircleIcon116,
-  ExclamationCircleOutlined as ExclamationCircleIcon116,
-  InfoCircleOutlined as InfoCircleIcon116,
-  QuestionCircleOutlined as QuestionCircleIcon116,
-  WarningOutlined as WarningIcon116,
-  CloseCircleOutlined as CloseCircleIcon116,
-  CheckCircleOutlined as CheckCircleIcon117,
-  ExclamationCircleOutlined as ExclamationCircleIcon117,
-  InfoCircleOutlined as InfoCircleIcon117,
-  QuestionCircleOutlined as QuestionCircleIcon117,
-  WarningOutlined as WarningIcon117,
-  CloseCircleOutlined as CloseCircleIcon117,
-  CheckCircleOutlined as CheckCircleIcon118,
-  ExclamationCircleOutlined as ExclamationCircleIcon118,
-  InfoCircleOutlined as InfoCircleIcon118,
-  QuestionCircleOutlined as QuestionCircleIcon118,
-  WarningOutlined as WarningIcon118,
-  CloseCircleOutlined as CloseCircleIcon118,
-  CheckCircleOutlined as CheckCircleIcon119,
-  ExclamationCircleOutlined as ExclamationCircleIcon119,
-  InfoCircleOutlined as InfoCircleIcon119,
-  QuestionCircleOutlined as QuestionCircleIcon119,
-  WarningOutlined as WarningIcon119,
-  CloseCircleOutlined as CloseCircleIcon119,
-  CheckCircleOutlined as CheckCircleIcon120,
-  ExclamationCircleOutlined as ExclamationCircleIcon120,
-  InfoCircleOutlined as InfoCircleIcon120,
-  QuestionCircleOutlined as QuestionCircleIcon120,
-  WarningOutlined as WarningIcon120,
-  CloseCircleOutlined as CloseCircleIcon120,
-  CheckCircleOutlined as CheckCircleIcon121,
-  ExclamationCircleOutlined as ExclamationCircleIcon121,
-  InfoCircleOutlined as InfoCircleIcon121,
-  QuestionCircleOutlined as QuestionCircleIcon121,
-  WarningOutlined as WarningIcon121,
-  CloseCircleOutlined as CloseCircleIcon121,
-  CheckCircleOutlined as CheckCircleIcon122,
-  ExclamationCircleOutlined as ExclamationCircleIcon122,
-  InfoCircleOutlined as InfoCircleIcon122,
-  QuestionCircleOutlined as QuestionCircleIcon122,
-  WarningOutlined as WarningIcon122,
-  CloseCircleOutlined as CloseCircleIcon122,
-  CheckCircleOutlined as CheckCircleIcon123,
-  ExclamationCircleOutlined as ExclamationCircleIcon123,
-  InfoCircleOutlined as InfoCircleIcon123,
-  QuestionCircleOutlined as QuestionCircleIcon123,
-  WarningOutlined as WarningIcon123,
-  CloseCircleOutlined as CloseCircleIcon123,
-  CheckCircleOutlined as CheckCircleIcon124,
-  ExclamationCircleOutlined as ExclamationCircleIcon124,
-  InfoCircleOutlined as InfoCircleIcon124,
-  QuestionCircleOutlined as QuestionCircleIcon124,
-  WarningOutlined as WarningIcon124,
-  CloseCircleOutlined as CloseCircleIcon124,
-  CheckCircleOutlined as CheckCircleIcon125,
-  ExclamationCircleOutlined as ExclamationCircleIcon125,
-  InfoCircleOutlined as InfoCircleIcon125,
-  QuestionCircleOutlined as QuestionCircleIcon125,
-  WarningOutlined as WarningIcon125,
-  CloseCircleOutlined as CloseCircleIcon125,
-  CheckCircleOutlined as CheckCircleIcon126,
-  ExclamationCircleOutlined as ExclamationCircleIcon126,
-  InfoCircleOutlined as InfoCircleIcon126,
-  QuestionCircleOutlined as QuestionCircleIcon126,
-  WarningOutlined as WarningIcon126,
-  CloseCircleOutlined as CloseCircleIcon126,
-  CheckCircleOutlined as CheckCircleIcon127,
-  ExclamationCircleOutlined as ExclamationCircleIcon127,
-  InfoCircleOutlined as InfoCircleIcon127,
-  QuestionCircleOutlined as QuestionCircleIcon127,
-  WarningOutlined as WarningIcon127,
-  CloseCircleOutlined as CloseCircleIcon127,
-  CheckCircleOutlined as CheckCircleIcon128,
-  ExclamationCircleOutlined as ExclamationCircleIcon128,
-  InfoCircleOutlined as InfoCircleIcon128,
-  QuestionCircleOutlined as QuestionCircleIcon128,
-  WarningOutlined as WarningIcon128,
-  CloseCircleOutlined as CloseCircleIcon128,
-  CheckCircleOutlined as CheckCircleIcon129,
-  ExclamationCircleOutlined as ExclamationCircleIcon129,
-  InfoCircleOutlined as InfoCircleIcon129,
-  QuestionCircleOutlined as QuestionCircleIcon129,
-  WarningOutlined as WarningIcon129,
-  CloseCircleOutlined as CloseCircleIcon129,
-  CheckCircleOutlined as CheckCircleIcon130,
-  ExclamationCircleOutlined as ExclamationCircleIcon130,
-  InfoCircleOutlined as InfoCircleIcon130,
-  QuestionCircleOutlined as QuestionCircleIcon130,
-  WarningOutlined as WarningIcon130,
-  CloseCircleOutlined as CloseCircleIcon130,
-  CheckCircleOutlined as CheckCircleIcon131,
-  ExclamationCircleOutlined as ExclamationCircleIcon131,
-  InfoCircleOutlined as InfoCircleIcon131,
-  QuestionCircleOutlined as QuestionCircleIcon131,
-  WarningOutlined as WarningIcon131,
-  CloseCircleOutlined as CloseCircleIcon131,
-  CheckCircleOutlined as CheckCircleIcon132,
-  ExclamationCircleOutlined as ExclamationCircleIcon132,
-  InfoCircleOutlined as InfoCircleIcon132,
-  QuestionCircleOutlined as QuestionCircleIcon132,
-  WarningOutlined as WarningIcon132,
-  CloseCircleOutlined as CloseCircleIcon132,
-  CheckCircleOutlined as CheckCircleIcon133,
-  ExclamationCircleOutlined as ExclamationCircleIcon133,
-  InfoCircleOutlined as InfoCircleIcon133,
-  QuestionCircleOutlined as QuestionCircleIcon133,
-  WarningOutlined as WarningIcon133,
-  CloseCircleOutlined as CloseCircleIcon133,
-  CheckCircleOutlined as CheckCircleIcon134,
-  ExclamationCircleOutlined as ExclamationCircleIcon134,
-  InfoCircleOutlined as InfoCircleIcon134,
-  QuestionCircleOutlined as QuestionCircleIcon134,
-  WarningOutlined as WarningIcon134,
-  CloseCircleOutlined as CloseCircleIcon134,
-  CheckCircleOutlined as CheckCircleIcon135,
-  ExclamationCircleOutlined as ExclamationCircleIcon135,
-  InfoCircleOutlined as InfoCircleIcon135,
-  QuestionCircleOutlined as QuestionCircleIcon135,
-  WarningOutlined as WarningIcon135,
-  CloseCircleOutlined as CloseCircleIcon135,
-  CheckCircleOutlined as CheckCircleIcon136,
-  ExclamationCircleOutlined as ExclamationCircleIcon136,
-  InfoCircleOutlined as InfoCircleIcon136,
-  QuestionCircleOutlined as QuestionCircleIcon136,
-  WarningOutlined as WarningIcon136,
-  CloseCircleOutlined as CloseCircleIcon136,
-  CheckCircleOutlined as CheckCircleIcon137,
-  ExclamationCircleOutlined as ExclamationCircleIcon137,
-  InfoCircleOutlined as InfoCircleIcon137,
-  QuestionCircleOutlined as QuestionCircleIcon137,
-  WarningOutlined as WarningIcon137,
-  CloseCircleOutlined as CloseCircleIcon137,
-  CheckCircleOutlined as CheckCircleIcon138,
-  ExclamationCircleOutlined as ExclamationCircleIcon138,
-  InfoCircleOutlined as InfoCircleIcon138,
-  QuestionCircleOutlined as QuestionCircleIcon138,
-  WarningOutlined as WarningIcon138,
-  CloseCircleOutlined as CloseCircleIcon138,
-  CheckCircleOutlined as CheckCircleIcon139,
-  ExclamationCircleOutlined as ExclamationCircleIcon139,
-  InfoCircleOutlined as InfoCircleIcon139,
-  QuestionCircleOutlined as QuestionCircleIcon139,
-  WarningOutlined as WarningIcon139,
-  CloseCircleOutlined as CloseCircleIcon139,
-  CheckCircleOutlined as CheckCircleIcon140,
-  ExclamationCircleOutlined as ExclamationCircleIcon140,
-  InfoCircleOutlined as InfoCircleIcon140,
-  QuestionCircleOutlined as QuestionCircleIcon140,
-  WarningOutlined as WarningIcon140,
-  CloseCircleOutlined as CloseCircleIcon140,
-  CheckCircleOutlined as CheckCircleIcon141,
-  ExclamationCircleOutlined as ExclamationCircleIcon141,
-  InfoCircleOutlined as InfoCircleIcon141,
-  QuestionCircleOutlined as QuestionCircleIcon141,
-  WarningOutlined as WarningIcon141,
-  CloseCircleOutlined as CloseCircleIcon141,
-  CheckCircleOutlined as CheckCircleIcon142,
-  ExclamationCircleOutlined as ExclamationCircleIcon142,
-  InfoCircleOutlined as InfoCircleIcon142,
-  QuestionCircleOutlined as QuestionCircleIcon142,
-  WarningOutlined as WarningIcon142,
-  CloseCircleOutlined as CloseCircleIcon142,
-  CheckCircleOutlined as CheckCircleIcon143,
-  ExclamationCircleOutlined as ExclamationCircleIcon143,
-  InfoCircleOutlined as InfoCircleIcon143,
-  QuestionCircleOutlined as QuestionCircleIcon143,
-  WarningOutlined as WarningIcon143,
-  CloseCircleOutlined as CloseCircleIcon143,
-  CheckCircleOutlined as CheckCircleIcon144,
-  ExclamationCircleOutlined as ExclamationCircleIcon144,
-  InfoCircleOutlined as InfoCircleIcon144,
-  QuestionCircleOutlined as QuestionCircleIcon144,
-  WarningOutlined as WarningIcon144,
-  CloseCircleOutlined as CloseCircleIcon144,
-  CheckCircleOutlined as CheckCircleIcon145,
-  ExclamationCircleOutlined as ExclamationCircleIcon145,
-  InfoCircleOutlined as InfoCircleIcon145,
-  QuestionCircleOutlined as QuestionCircleIcon145,
+  UserOutlined,
+  TeamOutlined,
+  GlobalOutlined,
+  ClockCircleOutlined,
+  HeartOutlined,
+  TrophyOutlined,
+  StarOutlined,
+  FileTextOutlined,
+  FileImageOutlined,
+  FilePdfOutlined,
+  FileExcelOutlined,
+  FileWordOutlined,
+  FilePptOutlined,
+  FileZipOutlined,
+  FileUnknownOutlined,
+  FileMarkdownOutlined,
+  FileCodeOutlined,
+  FileProtectOutlined,
+  FileSearchOutlined,
+  FileSyncOutlined,
+  FileExclamationOutlined,
+  FileDoneOutlined,
+  FileAddOutlined,
+  FileRemoveOutlined,
+  FileJpgOutlined,
+  FilePngOutlined,
+  FileGifOutlined,
+  FileBmpOutlined,
+  FileTiffOutlined,
+  FileSvgOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  SortAscendingOutlined,
+  SortDescendingOutlined,
+  CalendarOutlined,
+  FieldTimeOutlined,
+  ScheduleOutlined,
+  NotificationOutlined,
+  SoundOutlined,
+  BellOutlined,
+  GatewayOutlined,
+  ControlOutlined,
+  BranchesOutlined,
+  AuditOutlined,
+  HistoryOutlined,
+  DashboardOutlined,
+  BankOutlined,
+  EnvironmentOutlined,
+  CameraOutlined,
+  PictureOutlined
 } from '@ant-design/icons';
+import axios from 'axios';
 
 const { Option } = Select;
+const { TextArea } = Input;
+const { RangePicker } = DatePicker;
+const { Panel } = Collapse;
 
-const DeviceManagement: React.FC = () => {
+const DeviceManagement = () => {
   const [devices, setDevices] = useState([]);
+  const [deviceGroups, setDeviceGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [form] = Form.useForm();
+  const [groupForm] = Form.useForm();
+  const [groupModalVisible, setGroupModalVisible] = useState(false);
+  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
+  const [selectedDeviceDetail, setSelectedDeviceDetail] = useState(null);
+  const [commandModalVisible, setCommandModalVisible] = useState(false);
+  const [commandForm] = Form.useForm();
+  const [batchModalVisible, setBatchModalVisible] = useState(false);
+  const [selectedDeviceIds, setSelectedDeviceIds] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterGroup, setFilterGroup] = useState('all');
+  const [sortField, setSortField] = useState('name');
+  const [sortOrder, setSortOrder] = useState('ascend');
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+
+  // 設備統計數據
+  const [stats, setStats] = useState({
+    total: 0,
+    online: 0,
+    offline: 0,
+    maintenance: 0,
+    groups: 0
+  });
 
   useEffect(() => {
     fetchDevices();
+    fetchDeviceGroups();
+    fetchStats();
   }, []);
 
+  // 獲取設備列表
   const fetchDevices = async () => {
     try {
-      const response = await fetch('/api/devices');
-      const data = await response.json();
-      setDevices(data);
+      setLoading(true);
+      const response = await axios.get('http://localhost:8000/devices/');
+      setDevices(response.data);
+      setPagination(prev => ({ ...prev, total: response.data.length }));
     } catch (error) {
-      console.error('Error fetching devices:', error);
+      message.error('獲取設備列表失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 獲取設備分組
+  const fetchDeviceGroups = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/groups/');
+      setDeviceGroups(response.data);
+    } catch (error) {
+      console.log('獲取設備分組失敗');
+    }
+  };
+
+  // 獲取統計數據
+  const fetchStats = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/devices/');
+      const devices = response.data;
+      const stats = {
+        total: devices.length,
+        online: devices.filter(d => d.status === 'online').length,
+        offline: devices.filter(d => d.status === 'offline').length,
+        maintenance: devices.filter(d => d.status === 'maintenance').length,
+        groups: deviceGroups.length
+      };
+      setStats(stats);
+    } catch (error) {
+      console.log('獲取統計數據失敗');
+    }
+  };
+
+  // 新增設備
+  const handleAddDevice = async (values) => {
+    try {
+      setLoading(true);
+      const response = await axios.post('http://localhost:8000/devices/', values);
+      message.success('設備新增成功');
+      setModalVisible(false);
+      form.resetFields();
+      fetchDevices();
+      fetchStats();
+    } catch (error) {
+      message.error('設備新增失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 編輯設備
+  const handleEditDevice = async (values) => {
+    try {
+      setLoading(true);
+      const response = await axios.patch(`http://localhost:8000/devices/${selectedDevice.id}`, values);
+      message.success('設備更新成功');
+      setModalVisible(false);
+      form.resetFields();
+      setSelectedDevice(null);
+      fetchDevices();
+      fetchStats();
+    } catch (error) {
+      message.error('設備更新失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 刪除設備
+  const handleDeleteDevice = async (deviceId) => {
+    try {
+      await axios.delete(`http://localhost:8000/devices/${deviceId}`);
+      message.success('設備刪除成功');
+      fetchDevices();
+      fetchStats();
+    } catch (error) {
+      message.error('設備刪除失敗');
+    }
+  };
+
+  // 批量刪除設備
+  const handleBatchDelete = async () => {
+    try {
+      setLoading(true);
+      for (const deviceId of selectedDeviceIds) {
+        await axios.delete(`http://localhost:8000/devices/${deviceId}`);
+      }
+      message.success(`成功刪除 ${selectedDeviceIds.length} 個設備`);
+      setBatchModalVisible(false);
+      setSelectedDeviceIds([]);
+      fetchDevices();
+      fetchStats();
+    } catch (error) {
+      message.error('批量刪除失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 發送設備命令
+  const handleSendCommand = async (values) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `http://localhost:8000/devices/${selectedDevice.id}/command`,
+        {
+          device_id: selectedDevice.id,
+          command_type: values.command_type,
+          parameters: values.parameters ? JSON.parse(values.parameters) : {}
+        }
+      );
+      message.success('命令發送成功');
+      setCommandModalVisible(false);
+      commandForm.resetFields();
+      setSelectedDevice(null);
+    } catch (error) {
+      message.error('命令發送失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 新增設備分組
+  const handleAddGroup = async (values) => {
+    try {
+      const response = await axios.post('http://localhost:8000/groups/', values);
+      message.success('設備分組新增成功');
+      setGroupModalVisible(false);
+      groupForm.resetFields();
+      fetchDeviceGroups();
+      fetchStats();
+    } catch (error) {
+      message.error('設備分組新增失敗');
+    }
+  };
+
+  // 設備狀態切換
+  const handleStatusToggle = async (deviceId, newStatus) => {
+    try {
+      await axios.patch(`http://localhost:8000/devices/${deviceId}`, {
+        status: newStatus
+      });
+      message.success('設備狀態更新成功');
+      fetchDevices();
+      fetchStats();
+    } catch (error) {
+      message.error('設備狀態更新失敗');
+    }
+  };
+
+  // 設備註冊
+  const handleRegisterDevice = async (values) => {
+    try {
+      setLoading(true);
+      const response = await axios.post('http://localhost:8000/devices/register', {
+        device_name: values.name,
+        device_type: values.device_type,
+        api_key: values.api_key,
+        location: values.location
+      });
+      message.success('設備註冊成功');
+      setModalVisible(false);
+      form.resetFields();
+      fetchDevices();
+      fetchStats();
+    } catch (error) {
+      message.error('設備註冊失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 匯出設備數據
+  const handleExportDevices = () => {
+    const data = devices.map(device => ({
+      設備名稱: device.name,
+      設備類型: device.device_type,
+      狀態: device.status,
+      位置: device.location,
+      分組: device.group,
+      韌體版本: device.firmware_version,
+      最後心跳: device.last_heartbeat
+    }));
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + Object.keys(data[0]).join(",") + "\n"
+      + data.map(row => Object.values(row).join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "devices.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    message.success('設備數據匯出成功');
+  };
+
+  // 匯入設備數據
+  const handleImportDevices = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csv = e.target.result;
+        const lines = csv.split('\n');
+        const headers = lines[0].split(',');
+        const devices = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i]) {
+            const values = lines[i].split(',');
+            const device = {};
+            headers.forEach((header, index) => {
+              device[header.trim()] = values[index]?.trim();
+            });
+            devices.push(device);
+          }
+        }
+
+        // 這裡可以批量新增設備
+        message.success(`成功匯入 ${devices.length} 個設備`);
+        fetchDevices();
+      } catch (error) {
+        message.error('匯入失敗：檔案格式錯誤');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // 設備搜索和過濾
+  const filteredDevices = devices.filter(device => {
+    const matchesSearch = device.name.toLowerCase().includes(searchText.toLowerCase()) ||
+                         device.location.toLowerCase().includes(searchText.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || device.status === filterStatus;
+    const matchesGroup = filterGroup === 'all' || device.group === filterGroup;
+    return matchesSearch && matchesStatus && matchesGroup;
+  });
+
+  // 排序設備
+  const sortedDevices = [...filteredDevices].sort((a, b) => {
+    const aValue = a[sortField];
+    const bValue = b[sortField];
+    if (sortOrder === 'ascend') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
+  // 表格列定義
+  const columns = [
+    {
+      title: '設備名稱',
+      dataIndex: 'name',
+      key: 'name',
+      sorter: true,
+      render: (text, record) => (
+        <Space>
+          <Avatar icon={<DesktopOutlined />} />
+          <span>{text}</span>
+        </Space>
+      )
+    },
+    {
+      title: '設備類型',
+      dataIndex: 'device_type',
+      key: 'device_type',
+      render: (text) => (
+        <Tag color={text === 'sensor' ? 'blue' : text === 'actuator' ? 'green' : 'orange'}>
+          {text}
+        </Tag>
+      )
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Badge 
+          status={status === 'online' ? 'success' : status === 'offline' ? 'error' : 'warning'} 
+          text={status} 
+        />
+      )
+    },
+    {
+      title: '位置',
+      dataIndex: 'location',
+      key: 'location',
+    },
+    {
+      title: '韌體版本',
+      dataIndex: 'firmware_version',
+      key: 'firmware_version',
+    },
+    {
+      title: '最後心跳',
+      dataIndex: 'last_heartbeat',
+      key: 'last_heartbeat',
+      render: (date) => date ? new Date(date).toLocaleString() : '-'
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Space>
+          <Button 
+            type="link" 
+            icon={<EyeOutlined />}
+            onClick={() => {
+              setSelectedDeviceDetail(record);
+              setDetailDrawerVisible(true);
+            }}
+          >
+            詳情
+          </Button>
+          <Button 
+            type="link" 
+            icon={<EditOutlined />}
+            onClick={() => {
+              setSelectedDevice(record);
+              form.setFieldsValue(record);
+              setModalVisible(true);
+            }}
+          >
+            編輯
+          </Button>
+          <Button 
+            type="link" 
+            icon={<ThunderboltOutlined />}
+            onClick={() => {
+              setSelectedDevice(record);
+              setCommandModalVisible(true);
+            }}
+          >
+            控制
+          </Button>
+          <Popconfirm
+            title="確定要刪除此設備嗎？"
+            onConfirm={() => handleDeleteDevice(record.id)}
+          >
+            <Button type="link" danger icon={<DeleteOutlined />}>
+              刪除
+            </Button>
+          </Popconfirm>
+        </Space>
+      )
+    }
+  ];
+
+  // 獲取狀態顏色
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'online': return 'green';
+      case 'offline': return 'red';
+      case 'maintenance': return 'orange';
+      default: return 'default';
     }
   };
 
   return (
-    <div>
-      {/* Render your device management components here */}
+    <div style={{ padding: '24px' }}>
+      {/* 統計卡片 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="總設備數"
+              value={stats.total}
+              prefix={<DesktopOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="在線設備"
+              value={stats.online}
+              valueStyle={{ color: '#3f8600' }}
+              prefix={<CheckCircleOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="離線設備"
+              value={stats.offline}
+              valueStyle={{ color: '#cf1322' }}
+              prefix={<CloseCircleOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="維護中"
+              value={stats.maintenance}
+              valueStyle={{ color: '#fa8c16' }}
+              prefix={<ToolOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 操作按鈕 */}
+      <Card style={{ marginBottom: 24 }}>
+        <Row justify="space-between" align="middle">
+          <Col>
+            <Space>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setSelectedDevice(null);
+                  form.resetFields();
+                  setModalVisible(true);
+                }}
+              >
+                新增設備
+              </Button>
+              <Button 
+                icon={<TeamOutlined />}
+                onClick={() => setGroupModalVisible(true)}
+              >
+                新增分組
+              </Button>
+              <Button 
+                icon={<DownloadOutlined />}
+                onClick={handleExportDevices}
+              >
+                匯出設備
+              </Button>
+              <Button 
+                icon={<UploadOutlined />}
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.csv';
+                  input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      handleImportDevices(file);
+                    }
+                  };
+                  input.click();
+                }}
+              >
+                匯入設備
+              </Button>
+              {selectedDeviceIds.length > 0 && (
+                <Button 
+                  danger 
+                  icon={<DeleteOutlined />}
+                  onClick={() => setBatchModalVisible(true)}
+                >
+                  批量刪除 ({selectedDeviceIds.length})
+                </Button>
+              )}
+            </Space>
+          </Col>
+          <Col>
+            <Space>
+              <Input.Search
+                placeholder="搜索設備"
+                style={{ width: 200 }}
+                onSearch={setSearchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+              <Select
+                placeholder="狀態過濾"
+                style={{ width: 120 }}
+                value={filterStatus}
+                onChange={setFilterStatus}
+              >
+                <Option value="all">全部狀態</Option>
+                <Option value="online">在線</Option>
+                <Option value="offline">離線</Option>
+                <Option value="maintenance">維護中</Option>
+              </Select>
+              <Select
+                placeholder="分組過濾"
+                style={{ width: 120 }}
+                value={filterGroup}
+                onChange={setFilterGroup}
+              >
+                <Option value="all">全部分組</Option>
+                {deviceGroups.map(group => (
+                  <Option key={group.id} value={group.id}>{group.name}</Option>
+                ))}
+              </Select>
+              <Button 
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  fetchDevices();
+                  fetchDeviceGroups();
+                  fetchStats();
+                }}
+              >
+                重新載入
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* 設備表格 */}
+      <Card title="設備列表">
+        <Table
+          columns={columns}
+          dataSource={sortedDevices}
+          loading={loading}
+          rowKey="id"
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
+          }}
+          onChange={(pagination, filters, sorter) => {
+            setPagination(pagination);
+            setSortField(sorter.field);
+            setSortOrder(sorter.order);
+          }}
+          rowSelection={{
+            selectedRowKeys: selectedDeviceIds,
+            onChange: (selectedRowKeys, selectedRows) => {
+              setSelectedDeviceIds(selectedRowKeys);
+            }
+          }}
+        />
+      </Card>
+
+      {/* 新增/編輯設備模態框 */}
+      <Modal
+        title={selectedDevice ? '編輯設備' : '新增設備'}
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={selectedDevice ? handleEditDevice : handleAddDevice}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="name"
+                label="設備名稱"
+                rules={[{ required: true, message: '請輸入設備名稱' }]}
+              >
+                <Input placeholder="請輸入設備名稱" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="device_type"
+                label="設備類型"
+                rules={[{ required: true, message: '請選擇設備類型' }]}
+              >
+                <Select placeholder="請選擇設備類型">
+                  <Option value="sensor">感測器</Option>
+                  <Option value="actuator">執行器</Option>
+                  <Option value="controller">控制器</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="location"
+                label="設備位置"
+                rules={[{ required: true, message: '請輸入設備位置' }]}
+              >
+                <Input placeholder="請輸入設備位置" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="group"
+                label="設備分組"
+              >
+                <Select placeholder="請選擇設備分組" allowClear>
+                  {deviceGroups.map(group => (
+                    <Option key={group.id} value={group.id}>{group.name}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="firmware_version"
+                label="韌體版本"
+              >
+                <Input placeholder="請輸入韌體版本" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="status"
+                label="設備狀態"
+              >
+                <Select placeholder="請選擇設備狀態">
+                  <Option value="online">在線</Option>
+                  <Option value="offline">離線</Option>
+                  <Option value="maintenance">維護中</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item
+            name="tags"
+            label="設備標籤"
+          >
+            <Input placeholder="請輸入設備標籤，用逗號分隔" />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                {selectedDevice ? '更新' : '新增'}
+              </Button>
+              <Button onClick={() => setModalVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 設備分組模態框 */}
+      <Modal
+        title="新增設備分組"
+        open={groupModalVisible}
+        onCancel={() => setGroupModalVisible(false)}
+        footer={null}
+        width={400}
+      >
+        <Form
+          form={groupForm}
+          layout="vertical"
+          onFinish={handleAddGroup}
+        >
+          <Form.Item
+            name="name"
+            label="分組名稱"
+            rules={[{ required: true, message: '請輸入分組名稱' }]}
+          >
+            <Input placeholder="請輸入分組名稱" />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                新增
+              </Button>
+              <Button onClick={() => setGroupModalVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 設備控制模態框 */}
+      <Modal
+        title="設備控制"
+        open={commandModalVisible}
+        onCancel={() => setCommandModalVisible(false)}
+        footer={null}
+        width={500}
+      >
+        <Form
+          form={commandForm}
+          layout="vertical"
+          onFinish={handleSendCommand}
+        >
+          <Form.Item
+            name="command_type"
+            label="命令類型"
+            rules={[{ required: true, message: '請選擇命令類型' }]}
+          >
+            <Select placeholder="請選擇命令類型">
+              <Option value="restart">重啟設備</Option>
+              <Option value="update_config">更新配置</Option>
+              <Option value="control">控制操作</Option>
+              <Option value="status_query">狀態查詢</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="parameters"
+            label="命令參數"
+          >
+            <TextArea 
+              rows={4} 
+              placeholder="請輸入 JSON 格式的命令參數，例如：{'key': 'value'}"
+            />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                發送命令
+              </Button>
+              <Button onClick={() => setCommandModalVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 批量刪除確認模態框 */}
+      <Modal
+        title="批量刪除確認"
+        open={batchModalVisible}
+        onCancel={() => setBatchModalVisible(false)}
+        onOk={handleBatchDelete}
+        okText="確認刪除"
+        cancelText="取消"
+        okButtonProps={{ danger: true }}
+      >
+        <p>確定要刪除選中的 {selectedDeviceIds.length} 個設備嗎？此操作無法撤銷。</p>
+      </Modal>
+
+      {/* 設備詳情抽屜 */}
+      <Drawer
+        title="設備詳情"
+        placement="right"
+        width={600}
+        open={detailDrawerVisible}
+        onClose={() => setDetailDrawerVisible(false)}
+      >
+        {selectedDeviceDetail && (
+          <div>
+            <Descriptions column={1} bordered>
+              <Descriptions.Item label="設備名稱">{selectedDeviceDetail.name}</Descriptions.Item>
+              <Descriptions.Item label="設備類型">{selectedDeviceDetail.device_type}</Descriptions.Item>
+              <Descriptions.Item label="設備狀態">
+                <Badge 
+                  status={getStatusColor(selectedDeviceDetail.status)} 
+                  text={selectedDeviceDetail.status} 
+                />
+              </Descriptions.Item>
+              <Descriptions.Item label="設備位置">{selectedDeviceDetail.location}</Descriptions.Item>
+              <Descriptions.Item label="韌體版本">{selectedDeviceDetail.firmware_version}</Descriptions.Item>
+              <Descriptions.Item label="最後心跳">
+                {selectedDeviceDetail.last_heartbeat ? new Date(selectedDeviceDetail.last_heartbeat).toLocaleString() : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="設備標籤">{selectedDeviceDetail.tags}</Descriptions.Item>
+            </Descriptions>
+            
+            <Divider />
+            
+            <Card title="設備控制" size="small">
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Button 
+                  type="primary" 
+                  icon={<PlayCircleOutlined />}
+                  onClick={() => handleStatusToggle(selectedDeviceDetail.id, 'online')}
+                  disabled={selectedDeviceDetail.status === 'online'}
+                >
+                  啟用設備
+                </Button>
+                <Button 
+                  icon={<PauseCircleOutlined />}
+                  onClick={() => handleStatusToggle(selectedDeviceDetail.id, 'maintenance')}
+                  disabled={selectedDeviceDetail.status === 'maintenance'}
+                >
+                  維護模式
+                </Button>
+                <Button 
+                  danger 
+                  icon={<StopOutlined />}
+                  onClick={() => handleStatusToggle(selectedDeviceDetail.id, 'offline')}
+                  disabled={selectedDeviceDetail.status === 'offline'}
+                >
+                  停用設備
+                </Button>
+              </Space>
+            </Card>
+          </div>
+        )}
+      </Drawer>
     </div>
   );
 };
