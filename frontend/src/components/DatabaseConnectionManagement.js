@@ -571,4 +571,4 @@ const DatabaseConnectionManagement = () => {
   );
 };
 
-export default DatabaseConnectionManagement; 
+export default DatabaseConnectionManagement;
