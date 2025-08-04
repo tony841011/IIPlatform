@@ -1260,7 +1260,7 @@ def get_user_current_status(user_id: int, db: Session = Depends(database.get_db)
     if not status:
         raise HTTPException(status_code=404, detail="User not found")
     return status
-
+ㄔㄛˉㄔㄛˉ
 @app.post("/users/{user_id}/revert-role")
 def revert_user_role(user_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
     """恢復用戶原始角色"""

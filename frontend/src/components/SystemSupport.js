@@ -89,29 +89,43 @@ const SystemSupport = () => {
   const [editMode, setEditMode] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [contactModalVisible, setContactModalVisible] = useState(false);
+  const [addContactModalVisible, setAddContactModalVisible] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [contactForm] = Form.useForm();
   const [form] = Form.useForm();
+  const [addContactForm] = Form.useForm();
 
   // 聯絡資訊數據
   const [contactInfo, setContactInfo] = useState({
     technical_support: {
+      id: 1,
+      type: 'technical_support',
+      name: '技術支援',
       phone: '+886-2-1234-5678',
       email: 'tech-support@company.com',
       hours: '週一至週五 9:00-18:00',
-      response_time: '4小時內'
+      response_time: '4小時內',
+      description: '技術問題諮詢與支援'
     },
     emergency_support: {
+      id: 2,
+      type: 'emergency_support',
+      name: '緊急支援',
       phone: '+886-2-1234-9999',
       email: 'emergency@company.com',
       hours: '24/7',
-      response_time: '30分鐘內'
+      response_time: '30分鐘內',
+      description: '緊急系統問題處理'
     },
     sales_inquiry: {
+      id: 3,
+      type: 'sales_inquiry',
+      name: '銷售諮詢',
       phone: '+886-2-1234-8888',
       email: 'sales@company.com',
       hours: '週一至週五 9:00-18:00',
-      response_time: '2小時內'
+      response_time: '2小時內',
+      description: '產品銷售與報價諮詢'
     }
   });
 
@@ -125,7 +139,9 @@ const SystemSupport = () => {
       email: 'zhang.engineer@company.com',
       expertise: ['設備管理', '數據分析', '系統整合'],
       availability: '週一至週五 9:00-18:00',
-      avatar: 'https://joeschmoe.io/api/v1/1'
+      avatar: 'https://joeschmoe.io/api/v1/1',
+      department: '技術支援部',
+      is_active: true
     },
     {
       id: 2,
@@ -135,7 +151,9 @@ const SystemSupport = () => {
       email: 'li.manager@company.com',
       expertise: ['專案管理', '客戶關係', '需求分析'],
       availability: '週一至週五 9:00-18:00',
-      avatar: 'https://joeschmoe.io/api/v1/2'
+      avatar: 'https://joeschmoe.io/api/v1/2',
+      department: '客戶成功部',
+      is_active: true
     },
     {
       id: 3,
@@ -145,7 +163,9 @@ const SystemSupport = () => {
       email: 'wang.consultant@company.com',
       expertise: ['AI 分析', '系統架構', '效能優化'],
       availability: '週一至週五 9:00-18:00',
-      avatar: 'https://joeschmoe.io/api/v1/3'
+      avatar: 'https://joeschmoe.io/api/v1/3',
+      department: '技術顧問部',
+      is_active: true
     }
   ]);
 
@@ -258,22 +278,150 @@ const SystemSupport = () => {
     }
   ]);
 
+  // 處理編輯聯絡資訊
   const handleEditContact = (contact) => {
     setSelectedContact(contact);
     form.setFieldsValue(contact);
     setEditModalVisible(true);
   };
 
+  // 處理儲存聯絡資訊
   const handleSaveContact = async (values) => {
     try {
-      // 這裡應該調用 API 儲存聯絡資訊
+      setLoading(true);
+      // 模擬 API 調用
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 更新聯絡資訊
+      const updatedContactInfo = {
+        ...contactInfo,
+        [values.type]: {
+          ...contactInfo[values.type],
+          ...values
+        }
+      };
+      setContactInfo(updatedContactInfo);
+      
       message.success('聯絡資訊更新成功');
       setEditModalVisible(false);
     } catch (error) {
       message.error('儲存失敗');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // 處理新增聯絡資訊
+  const handleAddContact = async (values) => {
+    try {
+      setLoading(true);
+      // 模擬 API 調用
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 新增聯絡資訊
+      const newContact = {
+        id: Object.keys(contactInfo).length + 1,
+        ...values
+      };
+      
+      const updatedContactInfo = {
+        ...contactInfo,
+        [values.type]: newContact
+      };
+      setContactInfo(updatedContactInfo);
+      
+      message.success('聯絡資訊新增成功');
+      setAddContactModalVisible(false);
+      addContactForm.resetFields();
+    } catch (error) {
+      message.error('新增失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理刪除聯絡資訊
+  const handleDeleteContact = async (contactType) => {
+    try {
+      setLoading(true);
+      // 模擬 API 調用
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 刪除聯絡資訊
+      const updatedContactInfo = { ...contactInfo };
+      delete updatedContactInfo[contactType];
+      setContactInfo(updatedContactInfo);
+      
+      message.success('聯絡資訊刪除成功');
+    } catch (error) {
+      message.error('刪除失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理新增支援團隊成員
+  const handleAddTeamMember = async (values) => {
+    try {
+      setLoading(true);
+      // 模擬 API 調用
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const newMember = {
+        id: supportTeam.length + 1,
+        ...values,
+        avatar: `https://joeschmoe.io/api/v1/${supportTeam.length + 1}`,
+        is_active: true
+      };
+      
+      setSupportTeam([...supportTeam, newMember]);
+      message.success('團隊成員新增成功');
+    } catch (error) {
+      message.error('新增失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理編輯支援團隊成員
+  const handleEditTeamMember = async (memberId, values) => {
+    try {
+      setLoading(true);
+      // 模擬 API 調用
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const updatedTeam = supportTeam.map(member =>
+        member.id === memberId ? { ...member, ...values } : member
+      );
+      setSupportTeam(updatedTeam);
+      
+      message.success('團隊成員更新成功');
+    } catch (error) {
+      message.error('更新失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理刪除支援團隊成員
+  const handleDeleteTeamMember = async (memberId) => {
+    try {
+      setLoading(true);
+      // 模擬 API 調用
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const updatedTeam = supportTeam.filter(member => member.id !== memberId);
+      setSupportTeam(updatedTeam);
+      
+      message.success('團隊成員刪除成功');
+    } catch (error) {
+      message.error('刪除失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理提交聯絡訊息
   const handleSubmitContact = async (values) => {
     setLoading(true);
     try {
@@ -431,70 +579,80 @@ const SystemSupport = () => {
               </Space>
             }
             extra={
-              <Button 
-                type="primary" 
-                icon={<SendOutlined />}
-                onClick={() => setContactModalVisible(true)}
-              >
-                發送聯絡訊息
-              </Button>
+              <Space>
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />}
+                  onClick={() => setAddContactModalVisible(true)}
+                >
+                  新增聯絡資訊
+                </Button>
+                <Button 
+                  type="primary" 
+                  icon={<SendOutlined />}
+                  onClick={() => setContactModalVisible(true)}
+                >
+                  發送聯絡訊息
+                </Button>
+              </Space>
             }
           >
             <Row gutter={[16, 16]}>
-              <Col span={8}>
-                <Card size="small" title="技術支援" style={{ borderColor: '#1890ff' }}>
-                  <Descriptions column={1} size="small">
-                    <Descriptions.Item label="電話">
-                      <PhoneOutlined /> {contactInfo.technical_support.phone}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="電子郵件">
-                      <MailOutlined /> {contactInfo.technical_support.email}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="服務時間">
-                      <ClockCircleOutlined /> {contactInfo.technical_support.hours}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="回應時間">
-                      {contactInfo.technical_support.response_time}
-                    </Descriptions.Item>
-                  </Descriptions>
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card size="small" title="緊急支援" style={{ borderColor: '#f5222d' }}>
-                  <Descriptions column={1} size="small">
-                    <Descriptions.Item label="電話">
-                      <PhoneOutlined /> {contactInfo.emergency_support.phone}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="電子郵件">
-                      <MailOutlined /> {contactInfo.emergency_support.email}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="服務時間">
-                      <ClockCircleOutlined /> {contactInfo.emergency_support.hours}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="回應時間">
-                      {contactInfo.emergency_support.response_time}
-                    </Descriptions.Item>
-                  </Descriptions>
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card size="small" title="銷售諮詢" style={{ borderColor: '#52c41a' }}>
-                  <Descriptions column={1} size="small">
-                    <Descriptions.Item label="電話">
-                      <PhoneOutlined /> {contactInfo.sales_inquiry.phone}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="電子郵件">
-                      <MailOutlined /> {contactInfo.sales_inquiry.email}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="服務時間">
-                      <ClockCircleOutlined /> {contactInfo.sales_inquiry.hours}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="回應時間">
-                      {contactInfo.sales_inquiry.response_time}
-                    </Descriptions.Item>
-                  </Descriptions>
-                </Card>
-              </Col>
+              {Object.entries(contactInfo).map(([key, contact]) => (
+                <Col span={8} key={key}>
+                  <Card 
+                    size="small" 
+                    title={contact.name}
+                    style={{ 
+                      borderColor: key === 'emergency_support' ? '#f5222d' : 
+                                  key === 'technical_support' ? '#1890ff' : '#52c41a' 
+                    }}
+                    extra={
+                      <Space>
+                        <Button 
+                          type="link" 
+                          size="small" 
+                          icon={<EditOutlined />}
+                          onClick={() => handleEditContact(contact)}
+                        >
+                          編輯
+                        </Button>
+                        <Popconfirm
+                          title="確定要刪除此聯絡資訊嗎？"
+                          onConfirm={() => handleDeleteContact(key)}
+                        >
+                          <Button 
+                            type="link" 
+                            size="small" 
+                            danger 
+                            icon={<DeleteOutlined />}
+                          >
+                            刪除
+                          </Button>
+                        </Popconfirm>
+                      </Space>
+                    }
+                  >
+                    <Descriptions column={1} size="small">
+                      <Descriptions.Item label="電話">
+                        <PhoneOutlined /> {contact.phone}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="電子郵件">
+                        <MailOutlined /> {contact.email}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="服務時間">
+                        <ClockCircleOutlined /> {contact.hours}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="回應時間">
+                        {contact.response_time}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="描述">
+                        {contact.description}
+                      </Descriptions.Item>
+                    </Descriptions>
+                  </Card>
+                </Col>
+              ))}
             </Row>
           </Card>
         </Col>
@@ -514,16 +672,46 @@ const SystemSupport = () => {
 
         {/* 支援團隊 */}
         <Col span={24}>
-          <Card title="支援團隊">
+          <Card 
+            title="支援團隊"
+            extra={
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  // 這裡可以打開新增團隊成員的模態框
+                  message.info('新增團隊成員功能');
+                }}
+              >
+                新增成員
+              </Button>
+            }
+          >
             <List
               itemLayout="horizontal"
               dataSource={supportTeam}
               renderItem={(item) => (
                 <List.Item
-                  actions={editMode ? [
-                    <Button type="link" icon={<EditOutlined />}>編輯</Button>,
-                    <Button type="link" danger icon={<DeleteOutlined />}>刪除</Button>
-                  ] : []}
+                  actions={[
+                    <Button 
+                      type="link" 
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        // 這裡可以打開編輯團隊成員的模態框
+                        message.info('編輯團隊成員功能');
+                      }}
+                    >
+                      編輯
+                    </Button>,
+                    <Popconfirm
+                      title="確定要刪除此團隊成員嗎？"
+                      onConfirm={() => handleDeleteTeamMember(item.id)}
+                    >
+                      <Button type="link" danger icon={<DeleteOutlined />}>
+                        刪除
+                      </Button>
+                    </Popconfirm>
+                  ]}
                 >
                   <List.Item.Meta
                     avatar={<Avatar src={item.avatar} />}
@@ -575,16 +763,14 @@ const SystemSupport = () => {
                   header={solution.title} 
                   key={solution.id}
                   extra={
-                    editMode && (
-                      <Space>
-                        <Button type="link" size="small" icon={<EditOutlined />}>
-                          編輯
-                        </Button>
-                        <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-                          刪除
-                        </Button>
-                      </Space>
-                    )
+                    <Space>
+                      <Button type="link" size="small" icon={<EditOutlined />}>
+                        編輯
+                      </Button>
+                      <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                        刪除
+                      </Button>
+                    </Space>
                   }
                 >
                   <Paragraph><Text strong>問題描述：</Text> {solution.description}</Paragraph>
@@ -732,7 +918,7 @@ const SystemSupport = () => {
         </Form>
       </Modal>
 
-      {/* 編輯模態框 */}
+      {/* 編輯聯絡資訊模態框 */}
       <Modal
         title="編輯聯絡資訊"
         open={editModalVisible}
@@ -755,6 +941,13 @@ const SystemSupport = () => {
               <Option value="emergency_support">緊急支援</Option>
               <Option value="sales_inquiry">銷售諮詢</Option>
             </Select>
+          </Form.Item>
+          <Form.Item
+            label="名稱"
+            name="name"
+            rules={[{ required: true, message: '請輸入名稱' }]}
+          >
+            <Input placeholder="請輸入聯絡資訊名稱" />
           </Form.Item>
           <Form.Item
             label="電話"
@@ -784,12 +977,98 @@ const SystemSupport = () => {
           >
             <Input placeholder="例如：4小時內" />
           </Form.Item>
+          <Form.Item
+            label="描述"
+            name="description"
+          >
+            <TextArea rows={3} placeholder="請輸入聯絡資訊描述" />
+          </Form.Item>
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={loading}>
                 儲存
               </Button>
               <Button onClick={() => setEditModalVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 新增聯絡資訊模態框 */}
+      <Modal
+        title="新增聯絡資訊"
+        open={addContactModalVisible}
+        onCancel={() => setAddContactModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={addContactForm}
+          onFinish={handleAddContact}
+          layout="vertical"
+        >
+          <Form.Item
+            label="聯絡類型"
+            name="type"
+            rules={[{ required: true, message: '請選擇聯絡類型' }]}
+          >
+            <Select placeholder="請選擇聯絡類型">
+              <Option value="technical_support">技術支援</Option>
+              <Option value="emergency_support">緊急支援</Option>
+              <Option value="sales_inquiry">銷售諮詢</Option>
+              <Option value="general_inquiry">一般諮詢</Option>
+              <Option value="billing_support">帳單支援</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            label="名稱"
+            name="name"
+            rules={[{ required: true, message: '請輸入名稱' }]}
+          >
+            <Input placeholder="請輸入聯絡資訊名稱" />
+          </Form.Item>
+          <Form.Item
+            label="電話"
+            name="phone"
+            rules={[{ required: true, message: '請輸入電話號碼' }]}
+          >
+            <Input placeholder="請輸入電話號碼" />
+          </Form.Item>
+          <Form.Item
+            label="電子郵件"
+            name="email"
+            rules={[{ required: true, message: '請輸入電子郵件' }]}
+          >
+            <Input placeholder="請輸入電子郵件" />
+          </Form.Item>
+          <Form.Item
+            label="服務時間"
+            name="hours"
+            rules={[{ required: true, message: '請輸入服務時間' }]}
+          >
+            <Input placeholder="例如：週一至週五 9:00-18:00" />
+          </Form.Item>
+          <Form.Item
+            label="回應時間"
+            name="response_time"
+            rules={[{ required: true, message: '請輸入回應時間' }]}
+          >
+            <Input placeholder="例如：4小時內" />
+          </Form.Item>
+          <Form.Item
+            label="描述"
+            name="description"
+          >
+            <TextArea rows={3} placeholder="請輸入聯絡資訊描述" />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                新增
+              </Button>
+              <Button onClick={() => setAddContactModalVisible(false)}>
                 取消
               </Button>
             </Space>
