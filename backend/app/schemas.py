@@ -2,6 +2,7 @@ from pydantic import BaseModel
 import datetime
 from typing import Optional, List, Dict, Any
 
+# 設備相關
 class DeviceBase(BaseModel):
     name: str
     location: str
@@ -23,13 +24,14 @@ class Device(DeviceBase):
     registration_date: Optional[datetime.datetime] = None
     api_key: Optional[str] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class DeviceData(BaseModel):
     device_id: int
     value: float
     timestamp: datetime.datetime = None
 
+# 告警相關
 class AlertBase(BaseModel):
     device_id: int
     value: float
@@ -42,8 +44,9 @@ class AlertCreate(AlertBase):
 class AlertOut(AlertBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
+# 用戶相關
 class UserBase(BaseModel):
     username: str
 
@@ -58,8 +61,9 @@ class UserOut(UserBase):
     created_at: datetime.datetime
     last_login: Optional[datetime.datetime] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
+# Token 相關
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -67,6 +71,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: str | None = None
 
+# 設備群組相關
 class DeviceGroupBase(BaseModel):
     name: str
 
@@ -76,8 +81,9 @@ class DeviceGroupCreate(DeviceGroupBase):
 class DeviceGroupOut(DeviceGroupBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
+# 設備更新
 class DeviceUpdate(BaseModel):
     name: str | None = None
     location: str | None = None
@@ -86,7 +92,7 @@ class DeviceUpdate(BaseModel):
     device_type: str | None = None
     status: str | None = None
 
-# 角色權限相關
+# 角色相關
 class RoleBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -98,9 +104,9 @@ class RoleCreate(RoleBase):
 class RoleOut(RoleBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# OTA 更新相關
+# 韌體相關
 class FirmwareBase(BaseModel):
     version: str
     description: Optional[str] = None
@@ -115,8 +121,9 @@ class FirmwareOut(FirmwareBase):
     is_active: bool
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
+# OTA 更新相關
 class OTAUpdateBase(BaseModel):
     device_id: int
     firmware_id: int
@@ -131,9 +138,9 @@ class OTAUpdateOut(OTAUpdateBase):
     completed_at: Optional[datetime.datetime] = None
     error_message: Optional[str] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# 規則引擎相關
+# 規則相關
 class RuleBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -149,7 +156,7 @@ class RuleOut(RuleBase):
     created_by: int
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 工作流程相關
 class WorkflowBase(BaseModel):
@@ -168,8 +175,9 @@ class WorkflowOut(WorkflowBase):
     created_by: int
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
+# 工作流程執行相關
 class WorkflowExecutionBase(BaseModel):
     workflow_id: int
 
@@ -183,9 +191,9 @@ class WorkflowExecutionOut(WorkflowExecutionBase):
     completed_at: Optional[datetime.datetime] = None
     result: Optional[Dict[str, Any]] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# 審計日誌
+# 審計日誌相關
 class AuditLogBase(BaseModel):
     action: str
     resource_type: str
@@ -202,9 +210,9 @@ class AuditLogOut(AuditLogBase):
     user_id: Optional[int] = None
     timestamp: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# 設備控制命令
+# 設備命令相關
 class DeviceCommandBase(BaseModel):
     device_id: int
     command_type: str
@@ -222,7 +230,7 @@ class DeviceCommandOut(DeviceCommandBase):
     result: Optional[Dict[str, Any]] = None
     sent_by: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 設備註冊
 class DeviceRegistration(BaseModel):
@@ -261,7 +269,7 @@ class CommunicationProtocolOut(CommunicationProtocolBase):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # MQTT 配置
 class MQTTConfigBase(BaseModel):
@@ -281,7 +289,7 @@ class MQTTConfigCreate(MQTTConfigBase):
 class MQTTConfigOut(MQTTConfigBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Modbus TCP 配置
 class ModbusTCPConfigBase(BaseModel):
@@ -298,7 +306,7 @@ class ModbusTCPConfigCreate(ModbusTCPConfigBase):
 class ModbusTCPConfigOut(ModbusTCPConfigBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # OPC UA 配置
 class OPCUAConfigBase(BaseModel):
@@ -317,18 +325,18 @@ class OPCUAConfigCreate(OPCUAConfigBase):
 class OPCUAConfigOut(OPCUAConfigBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# 通訊協定測試
+# 協定測試
 class ProtocolTest(BaseModel):
     device_id: int
     protocol_type: str
-    test_data: Dict[str, Any] 
+    test_data: Dict[str, Any]
 
 # 資料庫連線相關
 class DatabaseConnectionBase(BaseModel):
     name: str
-    db_type: str  # sqlite, mysql, postgresql, oracle, mssql
+    db_type: str  # sqlite, mysql, postgresql, oracle, mssql, mongodb
     host: Optional[str] = None
     port: Optional[int] = None
     database: str
@@ -337,6 +345,41 @@ class DatabaseConnectionBase(BaseModel):
     connection_string: str
     is_active: bool = True
     is_default: bool = False
+    # MongoDB 特定欄位
+    auth_source: Optional[str] = None  # MongoDB 認證資料庫
+    auth_mechanism: Optional[str] = None  # MongoDB 認證機制
+    replica_set: Optional[str] = None  # MongoDB 複製集名稱
+    ssl_enabled: bool = False  # MongoDB SSL 連線
+    ssl_cert_reqs: Optional[str] = None  # MongoDB SSL 憑證要求
+    max_pool_size: Optional[int] = None  # MongoDB 連線池大小
+    min_pool_size: Optional[int] = None  # MongoDB 最小連線池大小
+    max_idle_time_ms: Optional[int] = None  # MongoDB 最大閒置時間
+    server_selection_timeout_ms: Optional[int] = None  # MongoDB 伺服器選擇超時
+    socket_timeout_ms: Optional[int] = None  # MongoDB Socket 超時
+    connect_timeout_ms: Optional[int] = None  # MongoDB 連線超時
+    retry_writes: bool = True  # MongoDB 重試寫入
+    retry_reads: bool = True  # MongoDB 重試讀取
+    read_preference: Optional[str] = None  # MongoDB 讀取偏好
+    write_concern: Optional[str] = None  # MongoDB 寫入關注
+    read_concern: Optional[str] = None  # MongoDB 讀取關注
+    journal: bool = True  # MongoDB 日誌寫入
+    wtimeout: Optional[int] = None  # MongoDB 寫入超時
+    w: Optional[str] = None  # MongoDB 寫入確認
+    j: bool = True  # MongoDB 日誌確認
+    fsync: bool = False  # MongoDB 檔案同步
+    direct_connection: bool = False  # MongoDB 直接連線
+    app_name: Optional[str] = None  # MongoDB 應用程式名稱
+    compressors: Optional[str] = None  # MongoDB 壓縮器
+    zlib_compression_level: Optional[int] = None  # MongoDB Zlib 壓縮等級
+    uuid_representation: Optional[str] = None  # MongoDB UUID 表示
+    unicode_decode_error_handler: Optional[str] = None  # MongoDB Unicode 解碼錯誤處理
+    tz_aware: bool = False  # MongoDB 時區感知
+    connect: bool = True  # MongoDB 連線時機
+    max_connecting: Optional[int] = None  # MongoDB 最大連線數
+    load_balanced: bool = False  # MongoDB 負載平衡
+    server_api: Optional[str] = None  # MongoDB 伺服器 API 版本
+    heartbeat_frequency_ms: Optional[int] = None  # MongoDB 心跳頻率
+    local_threshold_ms: Optional[int] = None  # MongoDB 本地閾值
 
 class DatabaseConnectionCreate(DatabaseConnectionBase):
     pass
@@ -349,9 +392,9 @@ class DatabaseConnectionOut(DatabaseConnectionBase):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# 資料表配置相關
+# 表格結構相關
 class TableSchemaBase(BaseModel):
     table_name: str
     display_name: str
@@ -371,9 +414,9 @@ class TableSchemaOut(TableSchemaBase):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# 資料表欄位配置相關
+# 表格欄位相關
 class TableColumnBase(BaseModel):
     table_id: int
     column_name: str
@@ -397,7 +440,7 @@ class TableColumnOut(TableColumnBase):
     id: int
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 資料庫連線測試相關
 class DatabaseConnectionTestBase(BaseModel):
@@ -414,20 +457,17 @@ class DatabaseConnectionTestOut(DatabaseConnectionTestBase):
     tested_at: datetime.datetime
     tested_by: Optional[int] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# 資料庫連線測試請求
 class DatabaseConnectionTestRequest(BaseModel):
-    connection_id: int 
-
-# 在檔案末尾新增以下 AI 模型相關的 schemas
+    connection_id: int
 
 # AI 模型相關
 class AIModelBase(BaseModel):
     name: str
     model_type: str  # isolation_forest, autoencoder, lstm, etc.
     device_id: int
-    model_config: Dict[str, Any]
+    configuration: Dict[str, Any]  # 改名為 configuration 避免與 Pydantic 保留字衝突
     is_active: bool = True
     is_production: bool = False
 
@@ -449,7 +489,7 @@ class AIModelOut(AIModelBase):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 資料預處理相關
 class DataPreprocessingBase(BaseModel):
@@ -468,7 +508,7 @@ class DataPreprocessingOut(DataPreprocessingBase):
     id: int
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 模型訓練相關
 class ModelTrainingBase(BaseModel):
@@ -495,7 +535,7 @@ class ModelTrainingOut(ModelTrainingBase):
     created_by: int
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 異常偵測相關
 class AnomalyDetectionBase(BaseModel):
@@ -515,14 +555,14 @@ class AnomalyDetectionOut(AnomalyDetectionBase):
     id: int
     detection_time: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 異常告警相關
 class AnomalyAlertBase(BaseModel):
     detection_id: int
     alert_level: str
     alert_message: str
-    recommended_actions: Dict[str, Any]
+    is_acknowledged: bool = False
 
 class AnomalyAlertCreate(AnomalyAlertBase):
     pass
@@ -537,7 +577,7 @@ class AnomalyAlertOut(AnomalyAlertBase):
     acknowledged_at: Optional[datetime.datetime] = None
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 模型可解釋性相關
 class ModelExplainabilityBase(BaseModel):
@@ -555,9 +595,9 @@ class ModelExplainabilityOut(ModelExplainabilityBase):
     id: int
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# 模型營運相關
+# 模型操作相關
 class ModelOperationsBase(BaseModel):
     model_id: int
     operation_type: str
@@ -579,7 +619,7 @@ class ModelOperationsOut(ModelOperationsBase):
     created_at: datetime.datetime
     completed_at: Optional[datetime.datetime] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 模型版本相關
 class ModelVersionBase(BaseModel):
@@ -603,7 +643,7 @@ class ModelVersionOut(ModelVersionBase):
     created_by: int
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # AI 分析請求
 class AIAnalysisRequest(BaseModel):
@@ -622,9 +662,7 @@ class ModelTrainingRequest(BaseModel):
 class ModelDeploymentRequest(BaseModel):
     model_id: int
     version_id: int
-    deployment_config: Dict[str, Any] 
-
-# 在檔案末尾新增以下 GPU 監測相關的 schemas
+    deployment_config: Dict[str, Any]
 
 # GPU 設備相關
 class GPUDeviceBase(BaseModel):
@@ -647,9 +685,9 @@ class GPUDeviceOut(GPUDeviceBase):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# GPU 監測相關
+# GPU 監控相關
 class GPUMonitoringBase(BaseModel):
     gpu_device_id: int
     gpu_utilization: float
@@ -669,7 +707,7 @@ class GPUMonitoringOut(GPUMonitoringBase):
     id: int
     timestamp: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # GPU 資源分配相關
 class GPUResourceAllocationBase(BaseModel):
@@ -691,9 +729,9 @@ class GPUResourceAllocationOut(GPUResourceAllocationBase):
     ended_at: Optional[datetime.datetime] = None
     created_by: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# GPU 警報相關
+# GPU 告警相關
 class GPUAlertBase(BaseModel):
     gpu_device_id: int
     alert_type: str
@@ -715,9 +753,9 @@ class GPUAlertOut(GPUAlertBase):
     acknowledged_at: Optional[datetime.datetime] = None
     created_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# GPU 效能設定相關
+# GPU 效能配置相關
 class GPUPerformanceConfigBase(BaseModel):
     gpu_device_id: int
     max_temperature: float
@@ -738,9 +776,9 @@ class GPUPerformanceConfigOut(GPUPerformanceConfigBase):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# GPU 資源使用統計
+# GPU 資源使用
 class GPUResourceUsage(BaseModel):
     gpu_device_id: int
     total_memory: int
@@ -751,11 +789,9 @@ class GPUResourceUsage(BaseModel):
     temperature: float
     power_consumption: float
     available_for_ai: bool
-    recommended_models: List[str] 
+    recommended_models: List[str]
 
-# 在檔案末尾新增使用者行為分析和開發者平台相關的 schemas
-
-# 使用者行為分析相關 schemas
+# 使用者行為分析相關
 class UserBehaviorBase(BaseModel):
     user_id: int
     session_id: str
@@ -773,28 +809,26 @@ class UserBehaviorCreate(UserBehaviorBase):
 
 class UserBehaviorOut(UserBehaviorBase):
     id: int
-    timestamp: datetime
-
+    timestamp: datetime.datetime
     class Config:
         from_attributes = True
 
 class UserSessionBase(BaseModel):
     user_id: int
     session_id: str
-    login_time: datetime
-    logout_time: Optional[datetime] = None
+    login_time: datetime.datetime
+    logout_time: Optional[datetime.datetime] = None
     duration: Optional[int] = None
     ip_address: str
     user_agent: str
     is_active: bool = True
-    last_activity: datetime
+    last_activity: datetime.datetime
 
 class UserSessionCreate(UserSessionBase):
     pass
 
 class UserSessionOut(UserSessionBase):
     id: int
-
     class Config:
         from_attributes = True
 
@@ -804,27 +838,26 @@ class FeatureUsageBase(BaseModel):
     user_id: int
     usage_count: int = 1
     total_duration: int = 0
-    first_used: datetime
-    last_used: datetime
+    first_used: datetime.datetime
+    last_used: datetime.datetime
 
 class FeatureUsageCreate(FeatureUsageBase):
     pass
 
 class FeatureUsageOut(FeatureUsageBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
-
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
     class Config:
         from_attributes = True
 
-# 開發者平台相關 schemas
+# 開發者入口相關
 class APITokenBase(BaseModel):
     name: str
     user_id: int
     permissions: List[str]
     is_active: bool = True
-    expires_at: Optional[datetime] = None
+    expires_at: Optional[datetime.datetime] = None
 
 class APITokenCreate(APITokenBase):
     pass
@@ -832,10 +865,9 @@ class APITokenCreate(APITokenBase):
 class APITokenOut(APITokenBase):
     id: int
     token_hash: str
-    last_used: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
-
+    last_used: Optional[datetime.datetime] = None
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
     class Config:
         from_attributes = True
 
@@ -855,9 +887,8 @@ class WebhookCreate(WebhookBase):
 
 class WebhookOut(WebhookBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
-
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
     class Config:
         from_attributes = True
 
@@ -877,8 +908,7 @@ class WebhookDeliveryCreate(WebhookDeliveryBase):
 
 class WebhookDeliveryOut(WebhookDeliveryBase):
     id: int
-    sent_at: datetime
-
+    sent_at: datetime.datetime
     class Config:
         from_attributes = True
 
@@ -898,8 +928,7 @@ class APIUsageCreate(APIUsageBase):
 
 class APIUsageOut(APIUsageBase):
     id: int
-    timestamp: datetime
-
+    timestamp: datetime.datetime
     class Config:
         from_attributes = True
 
@@ -915,8 +944,7 @@ class SDKDownloadCreate(SDKDownloadBase):
 
 class SDKDownloadOut(SDKDownloadBase):
     id: int
-    downloaded_at: datetime
-
+    downloaded_at: datetime.datetime
     class Config:
         from_attributes = True
 
@@ -934,13 +962,12 @@ class APIDocumentationCreate(APIDocumentationBase):
 
 class APIDocumentationOut(APIDocumentationBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
-
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
     class Config:
         from_attributes = True
 
-# 分析統計相關 schemas
+# 統計資料
 class UsageAnalytics(BaseModel):
     total_users: int
     active_users_today: int
@@ -958,3 +985,46 @@ class DeveloperPortalStats(BaseModel):
     active_webhooks: int
     api_calls_today: int
     api_calls_week: int 
+
+# ONVIF 相關 Schema
+class ONVIFDiscoveryRequest(BaseModel):
+    network_interface: Optional[str] = None
+    timeout: int = 5
+    max_devices: int = 10
+
+class ONVIFConfigRequest(BaseModel):
+    device_id: int
+    ip_address: str
+    port: int = 80
+    username: Optional[str] = None
+    password: Optional[str] = None
+    profile: str = "Profile_1"
+
+class ONVIFConnectionTest(BaseModel):
+    device_id: int
+    test_type: str = "basic"  # basic, advanced, streaming
+
+class ONVIFStreamRequest(BaseModel):
+    device_id: int
+    stream_type: str = "RTP"  # RTP, RTSP, HTTP
+    profile: str = "Profile_1"
+    quality: str = "high"  # low, medium, high
+
+class ONVIFPTZControl(BaseModel):
+    device_id: int
+    action: str  # pan, tilt, zoom, home, preset
+    direction: Optional[str] = None  # left, right, up, down, in, out
+    speed: float = 1.0
+    preset_number: Optional[int] = None
+
+class ONVIFEventConfig(BaseModel):
+    device_id: int
+    event_types: List[str]  # motion, tampering, audio, etc.
+    notification_url: Optional[str] = None
+    is_active: bool = True
+
+class ONVIFSnapshotRequest(BaseModel):
+    device_id: int
+    profile: str = "Profile_1"
+    quality: str = "high"
+    format: str = "JPEG"  # JPEG, PNG 

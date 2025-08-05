@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 import hashlib
 import secrets
 
-import models
-import schemas
-import database
+from . import models
+from . import schemas
+from . import database
 
 app = FastAPI(title="工業物聯網平台 API", version="1.0.0")
 
@@ -29,7 +29,7 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return database.get_password_hash(password)
 
-def create_access_token(data: dict, expires_delta: datetime.timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return database.create_access_token(data, expires_delta)
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
@@ -98,16 +98,27 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     return database.create_user(db, user)
 
 @app.post("/token", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
     """用戶登入"""
-    return database.authenticate_user(db, form_data.username, form_data.password)
+    user = database.authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/me", response_model=schemas.UserOut)
 def read_users_me(current_user: models.User = Depends(get_current_user)):
     """獲取當前用戶資訊"""
     return current_user
 
-# 設備群組 API
+# 設備群組管理
 @app.post("/groups/", response_model=schemas.DeviceGroupOut)
 def create_group(group: schemas.DeviceGroupCreate, db: Session = Depends(database.get_db)):
     """創建設備群組"""
@@ -118,23 +129,25 @@ def list_groups(db: Session = Depends(database.get_db)):
     """獲取設備群組列表"""
     return database.get_device_groups(db)
 
-# 設備更新 API
+# 設備更新
 @app.patch("/devices/{device_id}", response_model=schemas.Device)
 def update_device(device_id: int, update: schemas.DeviceUpdate, db: Session = Depends(database.get_db)):
-    """更新設備"""
+    """更新設備資訊"""
     return database.update_device(db, device_id, update)
 
+# 設備註冊
 @app.post("/devices/register", response_model=schemas.Device)
 def register_device(registration: schemas.DeviceRegistration, db: Session = Depends(database.get_db)):
-    """註冊新設備"""
+    """設備註冊"""
     return database.register_device(db, registration)
 
+# 設備心跳
 @app.post("/devices/heartbeat")
 def update_heartbeat(heartbeat: schemas.DeviceHeartbeat, db: Session = Depends(database.get_db)):
     """更新設備心跳"""
     return database.update_device_heartbeat(db, heartbeat)
 
-# 設備命令 API
+# 設備命令
 @app.post("/devices/{device_id}/command", response_model=schemas.DeviceCommandOut)
 def send_device_command(device_id: int, command: schemas.DeviceCommandCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
     """發送設備命令"""
@@ -145,7 +158,7 @@ def get_device_commands(device_id: int, db: Session = Depends(database.get_db)):
     """獲取設備命令歷史"""
     return database.get_device_commands(db, device_id)
 
-# 韌體管理 API
+# 韌體管理
 @app.post("/firmware/", response_model=schemas.FirmwareOut)
 def create_firmware(firmware: schemas.FirmwareCreate, db: Session = Depends(database.get_db)):
     """創建韌體"""
@@ -156,7 +169,7 @@ def list_firmwares(device_type: str = None, db: Session = Depends(database.get_d
     """獲取韌體列表"""
     return database.get_firmwares(db, device_type)
 
-# OTA 更新 API
+# OTA 更新
 @app.post("/ota/update", response_model=schemas.OTAUpdateOut)
 def create_ota_update(ota_update: schemas.OTAUpdateCreate, db: Session = Depends(database.get_db)):
     """創建 OTA 更新"""
@@ -167,7 +180,7 @@ def list_ota_updates(device_id: int = None, db: Session = Depends(database.get_d
     """獲取 OTA 更新列表"""
     return database.get_ota_updates(db, device_id)
 
-# 規則引擎 API
+# 規則管理
 @app.post("/rules/", response_model=schemas.RuleOut)
 def create_rule(rule: schemas.RuleCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
     """創建規則"""
@@ -183,7 +196,7 @@ def evaluate_rule(rule_id: int, device_data: dict, db: Session = Depends(databas
     """評估規則"""
     return database.evaluate_rule(db, rule_id, device_data)
 
-# 工作流程 API
+# 工作流程管理
 @app.post("/workflows/", response_model=schemas.WorkflowOut)
 def create_workflow(workflow: schemas.WorkflowCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
     """創建工作流程"""
@@ -199,13 +212,13 @@ def execute_workflow(workflow_id: int, db: Session = Depends(database.get_db)):
     """執行工作流程"""
     return database.execute_workflow(db, workflow_id)
 
-# 審計日誌 API
+# 審計日誌
 @app.get("/audit-logs/", response_model=list[schemas.AuditLogOut])
 def get_audit_logs(user_id: int = None, resource_type: str = None, limit: int = 100, db: Session = Depends(database.get_db)):
     """獲取審計日誌"""
     return database.get_audit_logs(db, user_id, resource_type, limit)
 
-# 角色管理 API
+# 角色管理
 @app.post("/roles/", response_model=schemas.RoleOut)
 def create_role(role: schemas.RoleCreate, db: Session = Depends(database.get_db)):
     """創建角色"""
@@ -216,23 +229,24 @@ def list_roles(db: Session = Depends(database.get_db)):
     """獲取角色列表"""
     return database.get_roles(db)
 
+# 權限檢查
 @app.post("/permissions/check")
 def check_permission(permission: schemas.PermissionCheck, db: Session = Depends(database.get_db)):
     """檢查權限"""
     return database.check_permission(db, permission)
 
-# 通訊協議 API
+# 通訊協定管理
 @app.post("/protocols/", response_model=schemas.CommunicationProtocolOut)
 def create_protocol(protocol: schemas.CommunicationProtocolCreate, db: Session = Depends(database.get_db)):
-    """創建通訊協議"""
+    """創建通訊協定"""
     return database.create_communication_protocol(db, protocol)
 
 @app.get("/protocols/", response_model=list[schemas.CommunicationProtocolOut])
 def list_protocols(device_id: int = None, db: Session = Depends(database.get_db)):
-    """獲取通訊協議列表"""
+    """獲取通訊協定列表"""
     return database.get_communication_protocols(db, device_id)
 
-# MQTT 配置 API
+# MQTT 配置
 @app.post("/protocols/mqtt/", response_model=schemas.MQTTConfigOut)
 def create_mqtt_config(config: schemas.MQTTConfigCreate, db: Session = Depends(database.get_db)):
     """創建 MQTT 配置"""
@@ -243,7 +257,7 @@ def list_mqtt_configs(device_id: int = None, db: Session = Depends(database.get_
     """獲取 MQTT 配置列表"""
     return database.get_mqtt_configs(db, device_id)
 
-# Modbus TCP 配置 API
+# Modbus TCP 配置
 @app.post("/protocols/modbus-tcp/", response_model=schemas.ModbusTCPConfigOut)
 def create_modbus_tcp_config(config: schemas.ModbusTCPConfigCreate, db: Session = Depends(database.get_db)):
     """創建 Modbus TCP 配置"""
@@ -251,10 +265,9 @@ def create_modbus_tcp_config(config: schemas.ModbusTCPConfigCreate, db: Session 
 
 @app.get("/protocols/modbus-tcp/", response_model=list[schemas.ModbusTCPConfigOut])
 def list_modbus_tcp_configs(device_id: int = None, db: Session = Depends(database.get_db)):
-    """獲取 Modbus TCP 配置列表"""
     return database.get_modbus_tcp_configs(db, device_id)
 
-# OPC UA 配置 API
+# OPC UA 配置
 @app.post("/protocols/opc-ua/", response_model=schemas.OPCUAConfigOut)
 def create_opc_ua_config(config: schemas.OPCUAConfigCreate, db: Session = Depends(database.get_db)):
     """創建 OPC UA 配置"""
@@ -265,17 +278,20 @@ def list_opc_ua_configs(device_id: int = None, db: Session = Depends(database.ge
     """獲取 OPC UA 配置列表"""
     return database.get_opc_ua_configs(db, device_id)
 
-# 協議測試 API
+# 協定測試
 @app.post("/protocols/test")
 def test_protocol(test: schemas.ProtocolTest, db: Session = Depends(database.get_db)):
-    """測試通訊協議"""
+    """測試通訊協定"""
     return database.test_protocol(db, test)
 
 # 資料庫連線管理 API
 @app.post("/database-connections/", response_model=schemas.DatabaseConnectionOut)
 def create_database_connection(connection: schemas.DatabaseConnectionCreate, db: Session = Depends(database.get_db)):
     """創建資料庫連線"""
-    return database.create_database_connection(db, connection)
+    try:
+        return database.create_database_connection(db, connection)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/database-connections/", response_model=List[schemas.DatabaseConnectionOut])
 def list_database_connections(db: Session = Depends(database.get_db)):
@@ -286,14 +302,31 @@ def list_database_connections(db: Session = Depends(database.get_db)):
 def get_database_connection(connection_id: int, db: Session = Depends(database.get_db)):
     """獲取特定資料庫連線"""
     connection = database.get_database_connection(db, connection_id)
-    if connection is None:
+    if not connection:
         raise HTTPException(status_code=404, detail="Database connection not found")
     return connection
 
-@app.patch("/database-connections/{connection_id}", response_model=schemas.DatabaseConnectionOut)
+@app.put("/database-connections/{connection_id}", response_model=schemas.DatabaseConnectionOut)
 def update_database_connection(connection_id: int, connection: schemas.DatabaseConnectionUpdate, db: Session = Depends(database.get_db)):
     """更新資料庫連線"""
-    return database.update_database_connection(db, connection_id, connection)
+    try:
+        result = database.update_database_connection(db, connection_id, connection)
+        if not result:
+            raise HTTPException(status_code=404, detail="資料庫連線不存在")
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.patch("/database-connections/{connection_id}", response_model=schemas.DatabaseConnectionOut)
+def patch_database_connection(connection_id: int, connection: schemas.DatabaseConnectionUpdate, db: Session = Depends(database.get_db)):
+    """部分更新資料庫連線"""
+    try:
+        result = database.update_database_connection(db, connection_id, connection)
+        if not result:
+            raise HTTPException(status_code=404, detail="資料庫連線不存在")
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/database-connections/{connection_id}")
 def delete_database_connection(connection_id: int, db: Session = Depends(database.get_db)):
@@ -301,11 +334,23 @@ def delete_database_connection(connection_id: int, db: Session = Depends(databas
     return database.delete_database_connection(db, connection_id)
 
 @app.post("/database-connections/{connection_id}/test")
-def test_database_connection(connection_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(database.get_db)):
+def test_database_connection_endpoint(connection_id: int, db: Session = Depends(get_db)):
     """測試資料庫連線"""
-    return database.test_database_connection(db, connection_id)
+    try:
+        result = database.test_database_connection(db, connection_id)
+        return {
+            "success": True,
+            "message": "Database connection test successful",
+            "details": result
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Database connection test failed: {str(e)}",
+            "details": None
+        }
 
-# 表格結構管理 API
+# 表格結構管理
 @app.post("/table-schemas/", response_model=schemas.TableSchemaOut)
 def create_table_schema(schema: schemas.TableSchemaCreate, db: Session = Depends(database.get_db)):
     """創建表格結構"""
@@ -320,7 +365,7 @@ def list_table_schemas(db: Session = Depends(database.get_db)):
 def get_table_schema(schema_id: int, db: Session = Depends(database.get_db)):
     """獲取特定表格結構"""
     schema = database.get_table_schema(db, schema_id)
-    if schema is None:
+    if not schema:
         raise HTTPException(status_code=404, detail="Table schema not found")
     return schema
 
@@ -334,7 +379,7 @@ def delete_table_schema(schema_id: int, db: Session = Depends(database.get_db)):
     """刪除表格結構"""
     return database.delete_table_schema(db, schema_id)
 
-# 表格欄位管理 API
+# 表格欄位管理
 @app.post("/table-columns/", response_model=schemas.TableColumnOut)
 def create_table_column(column: schemas.TableColumnCreate, db: Session = Depends(database.get_db)):
     """創建表格欄位"""
@@ -400,12 +445,12 @@ def take_onvif_snapshot(snapshot: schemas.ONVIFSnapshotRequest, current_user: mo
 # 使用者行為分析 API
 @app.post("/analytics/user-behavior/", response_model=schemas.UserBehaviorOut)
 def create_user_behavior(behavior: schemas.UserBehaviorCreate, db: Session = Depends(database.get_db)):
-    """記錄使用者行為"""
+    """創建使用者行為記錄"""
     return database.create_user_behavior(db, behavior)
 
 @app.get("/analytics/usage/", response_model=schemas.UsageAnalytics)
 def get_usage_analytics(db: Session = Depends(database.get_db)):
-    """獲取使用分析統計"""
+    """獲取使用分析"""
     return database.get_usage_analytics(db)
 
 @app.get("/analytics/feature-usage/")
@@ -427,7 +472,7 @@ def get_user_sessions(
     """獲取使用者會話統計"""
     return database.get_user_sessions(db, user_id, start_date, end_date)
 
-# 開發者平台 API
+# 開發者入口 API
 @app.post("/developer/tokens/", response_model=schemas.APITokenOut)
 def create_api_token(token: schemas.APITokenCreate, db: Session = Depends(database.get_db)):
     """創建 API Token"""
@@ -495,10 +540,10 @@ def create_api_documentation(doc: schemas.APIDocumentationCreate, db: Session = 
 
 @app.get("/developer/portal-stats/", response_model=schemas.DeveloperPortalStats)
 def get_developer_portal_stats(db: Session = Depends(database.get_db)):
-    """獲取開發者平台統計"""
+    """獲取開發者入口統計"""
     return database.get_developer_portal_stats(db)
 
-# Swagger UI 端點
+# 文檔端點
 @app.get("/docs")
 def get_swagger_ui():
     """Swagger UI 文檔"""

@@ -21,7 +21,8 @@ import {
   Tooltip,
   Popconfirm,
   Badge,
-  Progress
+  Progress,
+  Collapse
 } from 'antd';
 import {
   DatabaseOutlined,
@@ -33,13 +34,16 @@ import {
   CloseCircleOutlined,
   ReloadOutlined,
   InfoCircleOutlined,
-  SettingOutlined
+  SettingOutlined,
+  KeyOutlined,
+  SecurityScanOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Option } = Select;
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
+const { Panel } = Collapse;
 
 const DatabaseConnectionManagement = () => {
   const [connections, setConnections] = useState([]);
@@ -82,12 +86,64 @@ const DatabaseConnectionManagement = () => {
         connectionString = `oracle://${values.username}:${values.password}@${values.host}:${values.port}/${values.database}`;
       } else if (values.db_type === 'mssql') {
         connectionString = `mssql+pyodbc://${values.username}:${values.password}@${values.host}:${values.port}/${values.database}`;
+      } else if (values.db_type === 'mongodb') {
+        // MongoDB 連線字串格式
+        let mongoUrl = 'mongodb://';
+        if (values.username && values.password) {
+          mongoUrl += `${values.username}:${values.password}@`;
+        }
+        mongoUrl += `${values.host}:${values.port}/${values.database}`;
+        
+        // 添加 MongoDB 特定參數
+        const mongoParams = [];
+        if (values.auth_source) mongoParams.push(`authSource=${values.auth_source}`);
+        if (values.auth_mechanism) mongoParams.push(`authMechanism=${values.auth_mechanism}`);
+        if (values.replica_set) mongoParams.push(`replicaSet=${values.replica_set}`);
+        if (values.ssl_enabled) mongoParams.push('ssl=true');
+        if (values.max_pool_size) mongoParams.push(`maxPoolSize=${values.max_pool_size}`);
+        if (values.min_pool_size) mongoParams.push(`minPoolSize=${values.min_pool_size}`);
+        if (values.max_idle_time_ms) mongoParams.push(`maxIdleTimeMS=${values.max_idle_time_ms}`);
+        if (values.server_selection_timeout_ms) mongoParams.push(`serverSelectionTimeoutMS=${values.server_selection_timeout_ms}`);
+        if (values.socket_timeout_ms) mongoParams.push(`socketTimeoutMS=${values.socket_timeout_ms}`);
+        if (values.connect_timeout_ms) mongoParams.push(`connectTimeoutMS=${values.connect_timeout_ms}`);
+        if (values.retry_writes) mongoParams.push('retryWrites=true');
+        if (values.retry_reads) mongoParams.push('retryReads=true');
+        if (values.read_preference) mongoParams.push(`readPreference=${values.read_preference}`);
+        if (values.write_concern) mongoParams.push(`w=${values.write_concern}`);
+        if (values.read_concern) mongoParams.push(`readConcernLevel=${values.read_concern}`);
+        if (values.journal) mongoParams.push('journal=true');
+        if (values.wtimeout) mongoParams.push(`wtimeout=${values.wtimeout}`);
+        if (values.direct_connection) mongoParams.push('directConnection=true');
+        if (values.app_name) mongoParams.push(`appName=${values.app_name}`);
+        if (values.compressors) mongoParams.push(`compressors=${values.compressors}`);
+        if (values.zlib_compression_level) mongoParams.push(`zlibCompressionLevel=${values.zlib_compression_level}`);
+        if (values.uuid_representation) mongoParams.push(`uuidRepresentation=${values.uuid_representation}`);
+        if (values.unicode_decode_error_handler) mongoParams.push(`unicode_decode_error_handler=${values.unicode_decode_error_handler}`);
+        if (values.tz_aware) mongoParams.push('tz_aware=true');
+        if (values.connect) mongoParams.push('connect=true');
+        if (values.max_connecting) mongoParams.push(`maxConnecting=${values.max_connecting}`);
+        if (values.load_balanced) mongoParams.push('loadBalanced=true');
+        if (values.server_api) mongoParams.push(`serverApi=${values.server_api}`);
+        if (values.heartbeat_frequency_ms) mongoParams.push(`heartbeatFrequencyMS=${values.heartbeat_frequency_ms}`);
+        if (values.local_threshold_ms) mongoParams.push(`localThresholdMS=${values.local_threshold_ms}`);
+        
+        if (mongoParams.length > 0) {
+          mongoUrl += `?${mongoParams.join('&')}`;
+        }
+        
+        connectionString = mongoUrl;
       }
       
       const connectionData = {
         ...values,
         connection_string: connectionString
       };
+      
+      console.log('Sending request to:', selectedConnection ? 
+        `http://localhost:8000/database-connections/${selectedConnection.id}` : 
+        'http://localhost:8000/database-connections/');
+      console.log('Request method:', selectedConnection ? 'PATCH' : 'POST');
+      console.log('Request data:', connectionData);
       
       if (selectedConnection) {
         await axios.patch(`http://localhost:8000/database-connections/${selectedConnection.id}`, connectionData);
@@ -99,9 +155,34 @@ const DatabaseConnectionManagement = () => {
       
       setModalVisible(false);
       form.resetFields();
+      setSelectedConnection(null);
       fetchConnections();
     } catch (error) {
-      message.error('操作失敗: ' + (error.response?.data?.detail || error.message));
+      // 改善錯誤處理，顯示更詳細的錯誤訊息
+      let errorMessage = '操作失敗';
+      if (error.response) {
+        // 伺服器回應了錯誤狀態碼
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        
+        if (error.response.data && error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        } else if (error.response.status === 405) {
+          errorMessage = '請求方法不被允許，請檢查 API 端點';
+        } else if (error.response.status === 422) {
+          errorMessage = '請檢查輸入資料格式是否正確';
+        } else if (error.response.status === 500) {
+          errorMessage = '伺服器內部錯誤，請稍後再試';
+        }
+      } else if (error.request) {
+        // 請求已發出但沒有收到回應
+        errorMessage = '無法連接到伺服器，請檢查網路連線';
+      } else {
+        // 其他錯誤
+        errorMessage = error.message || '未知錯誤';
+      }
+      
+      message.error(errorMessage);
       console.error('Error creating/updating connection:', error);
     } finally {
       setLoading(false);
@@ -114,7 +195,8 @@ const DatabaseConnectionManagement = () => {
       message.success('資料庫連線刪除成功');
       fetchConnections();
     } catch (error) {
-      message.error('刪除失敗: ' + (error.response?.data?.detail || error.message));
+      message.error('刪除失敗');
+      console.error('Error deleting connection:', error);
     }
   };
 
@@ -122,56 +204,71 @@ const DatabaseConnectionManagement = () => {
     try {
       setTestLoading(prev => ({ ...prev, [connectionId]: true }));
       const response = await axios.post(`http://localhost:8000/database-connections/${connectionId}/test`);
-      
-      if (response.data.test_result === 'success') {
-        message.success(`連線測試成功 (${response.data.response_time.toFixed(2)}s)`);
+      if (response.data.success) {
+        message.success('連線測試成功');
       } else {
-        message.error(`連線測試失敗: ${response.data.error_message}`);
+        message.error('連線測試失敗');
       }
     } catch (error) {
-      message.error('連線測試失敗: ' + (error.response?.data?.detail || error.message));
+      message.error('連線測試失敗');
+      console.error('Error testing connection:', error);
     } finally {
       setTestLoading(prev => ({ ...prev, [connectionId]: false }));
     }
   };
 
   const getDbTypeColor = (type) => {
-    switch (type) {
-      case 'sqlite': return 'green';
-      case 'mysql': return 'blue';
-      case 'postgresql': return 'purple';
-      case 'oracle': return 'orange';
-      case 'mssql': return 'red';
-      default: return 'default';
-    }
+    const colors = {
+      sqlite: 'blue',
+      mysql: 'orange',
+      postgresql: 'green',
+      oracle: 'red',
+      mssql: 'purple',
+      mongodb: 'cyan'
+    };
+    return colors[type] || 'default';
   };
 
   const getDbTypeText = (type) => {
-    switch (type) {
-      case 'sqlite': return 'SQLite';
-      case 'mysql': return 'MySQL';
-      case 'postgresql': return 'PostgreSQL';
-      case 'oracle': return 'Oracle';
-      case 'mssql': return 'SQL Server';
-      default: return type;
-    }
+    const texts = {
+      sqlite: 'SQLite',
+      mysql: 'MySQL',
+      postgresql: 'PostgreSQL',
+      oracle: 'Oracle',
+      mssql: 'SQL Server',
+      mongodb: 'MongoDB'
+    };
+    return texts[type] || type;
   };
 
   const getDefaultPort = (dbType) => {
-    switch (dbType) {
-      case 'mysql': return 3306;
-      case 'postgresql': return 5432;
-      case 'oracle': return 1521;
-      case 'mssql': return 1433;
-      default: return null;
-    }
+    const ports = {
+      mysql: 3306,
+      postgresql: 5432,
+      oracle: 1521,
+      mssql: 1433,
+      mongodb: 27017
+    };
+    return ports[dbType] || 0;
   };
 
   const handleDbTypeChange = (value) => {
-    const port = getDefaultPort(value);
-    if (port) {
-      form.setFieldsValue({ port });
-    }
+    form.setFieldsValue({
+      port: getDefaultPort(value),
+      host: value === 'sqlite' ? '' : 'localhost'
+    });
+  };
+
+  const handleEdit = (connection) => {
+    setSelectedConnection(connection);
+    form.setFieldsValue(connection);
+    setModalVisible(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedConnection(null);
+    form.resetFields();
+    setModalVisible(true);
   };
 
   const columns = [
@@ -181,10 +278,10 @@ const DatabaseConnectionManagement = () => {
       key: 'name',
       render: (text, record) => (
         <Space>
+          <DatabaseOutlined style={{ color: getDbTypeColor(record.db_type) }} />
           <Text strong>{text}</Text>
-          {record.is_default && <Tag color="blue">預設</Tag>}
         </Space>
-      ),
+      )
     },
     {
       title: '資料庫類型',
@@ -194,379 +291,482 @@ const DatabaseConnectionManagement = () => {
         <Tag color={getDbTypeColor(type)}>
           {getDbTypeText(type)}
         </Tag>
-      ),
+      )
     },
     {
       title: '主機',
       dataIndex: 'host',
       key: 'host',
-      render: (host) => host || '-',
+      render: (host, record) => record.db_type === 'sqlite' ? '-' : host
+    },
+    {
+      title: '埠號',
+      dataIndex: 'port',
+      key: 'port',
+      render: (port, record) => record.db_type === 'sqlite' ? '-' : port
     },
     {
       title: '資料庫',
       dataIndex: 'database',
-      key: 'database',
+      key: 'database'
     },
     {
       title: '狀態',
       dataIndex: 'is_active',
       key: 'is_active',
-      render: (active) => (
+      render: (isActive) => (
         <Badge 
-          status={active ? 'success' : 'error'} 
-          text={active ? '啟用' : '停用'} 
+          status={isActive ? 'success' : 'error'} 
+          text={isActive ? '啟用' : '停用'} 
         />
-      ),
+      )
+    },
+    {
+      title: '最後測試',
+      dataIndex: 'last_test_result',
+      key: 'last_test_result',
+      render: (result) => {
+        if (!result) return '-';
+        return (
+          <Space>
+            {result === 'success' ? (
+              <CheckCircleOutlined style={{ color: '#52c41a' }} />
+            ) : (
+              <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+            )}
+            <Text type={result === 'success' ? 'success' : 'danger'}>
+              {result === 'success' ? '成功' : '失敗'}
+            </Text>
+          </Space>
+        );
+      }
     },
     {
       title: '操作',
-      key: 'action',
+      key: 'actions',
       render: (_, record) => (
         <Space>
-          <Tooltip title="測試連線">
-            <Button
-              size="small"
-              icon={<ExperimentOutlined />}
-              loading={testLoading[record.id]}
-              onClick={() => testConnection(record.id)}
-            >
-              測試
-            </Button>
-          </Tooltip>
-          <Tooltip title="編輯連線">
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setSelectedConnection(record);
-                setModalVisible(true);
-                form.setFieldsValue(record);
-              }}
-            >
-              編輯
-            </Button>
-          </Tooltip>
+          <Button 
+            type="primary" 
+            size="small" 
+            icon={<ExperimentOutlined />}
+            loading={testLoading[record.id]}
+            onClick={() => testConnection(record.id)}
+          >
+            測試
+          </Button>
+          <Button 
+            type="default" 
+            size="small" 
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            編輯
+          </Button>
           <Popconfirm
             title="確定要刪除此連線嗎？"
-            description="此操作無法復原"
             onConfirm={() => deleteConnection(record.id)}
             okText="確定"
             cancelText="取消"
           >
-            <Tooltip title="刪除連線">
-              <Button
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-              >
-                刪除
-              </Button>
-            </Tooltip>
+            <Button 
+              type="default" 
+              size="small" 
+              danger 
+              icon={<DeleteOutlined />}
+            >
+              刪除
+            </Button>
           </Popconfirm>
         </Space>
-      ),
-    },
+      )
+    }
   ];
 
-  const connectionStats = {
-    total: connections.length,
-    active: connections.filter(c => c.is_active).length,
-    default: connections.filter(c => c.is_default).length,
-    sqlite: connections.filter(c => c.db_type === 'sqlite').length,
-    mysql: connections.filter(c => c.db_type === 'mysql').length,
-    postgresql: connections.filter(c => c.db_type === 'postgresql').length,
-  };
-
   return (
-    <div>
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Card 
-            title={
-              <Space>
-                <DatabaseOutlined />
-                <span>資料庫連線管理</span>
-              </Space>
-            }
-            extra={
-              <Space>
-                <Button 
-                  icon={<ReloadOutlined />} 
-                  onClick={fetchConnections}
-                  loading={loading}
-                >
-                  重新整理
-                </Button>
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />} 
-                  onClick={() => {
-                    setSelectedConnection(null);
-                    setModalVisible(true);
-                    form.resetFields();
-                  }}
-                >
-                  新增連線
-                </Button>
-              </Space>
-            }
+    <div style={{ padding: '24px' }}>
+      <Card
+        title={
+          <Space>
+            <DatabaseOutlined />
+            <Title level={4} style={{ margin: 0 }}>資料庫連線管理</Title>
+          </Space>
+        }
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            新增連線
+          </Button>
+        }
+      >
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col span={6}>
+            <Statistic title="總連線數" value={connections.length} />
+          </Col>
+          <Col span={6}>
+            <Statistic 
+              title="啟用連線" 
+              value={connections.filter(c => c.is_active).length} 
+              valueStyle={{ color: '#3f8600' }}
+            />
+          </Col>
+          <Col span={6}>
+            <Statistic 
+              title="測試成功" 
+              value={connections.filter(c => c.last_test_result === 'success').length}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Col>
+          <Col span={6}>
+            <Statistic 
+              title="測試失敗" 
+              value={connections.filter(c => c.last_test_result === 'failed').length}
+              valueStyle={{ color: '#cf1322' }}
+            />
+          </Col>
+        </Row>
+
+        <Table
+          dataSource={connections}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+        />
+
+        <Modal
+          title={selectedConnection ? '編輯資料庫連線' : '新增資料庫連線'}
+          open={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+          width={800}
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={createConnection}
+            initialValues={{
+              db_type: 'mysql',
+              host: 'localhost',
+              port: 3306,
+              is_active: true
+            }}
           >
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-              <Col span={4}>
-                <Statistic
-                  title="總連線數"
-                  value={connectionStats.total}
-                  prefix={<DatabaseOutlined />}
-                />
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="name"
+                  label="連線名稱"
+                  rules={[{ required: true, message: '請輸入連線名稱' }]}
+                >
+                  <Input placeholder="請輸入連線名稱" />
+                </Form.Item>
               </Col>
-              <Col span={4}>
-                <Statistic
-                  title="啟用連線"
-                  value={connectionStats.active}
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Col>
-              <Col span={4}>
-                <Statistic
-                  title="預設連線"
-                  value={connectionStats.default}
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Col>
-              <Col span={4}>
-                <Statistic
-                  title="SQLite"
-                  value={connectionStats.sqlite}
-                  valueStyle={{ color: '#52c41a' }}
-                />
-              </Col>
-              <Col span={4}>
-                <Statistic
-                  title="MySQL"
-                  value={connectionStats.mysql}
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Col>
-              <Col span={4}>
-                <Statistic
-                  title="PostgreSQL"
-                  value={connectionStats.postgresql}
-                  valueStyle={{ color: '#722ed1' }}
-                />
+              <Col span={12}>
+                <Form.Item
+                  name="db_type"
+                  label="資料庫類型"
+                  rules={[{ required: true, message: '請選擇資料庫類型' }]}
+                >
+                  <Select onChange={handleDbTypeChange}>
+                    <Option value="sqlite">SQLite</Option>
+                    <Option value="mysql">MySQL</Option>
+                    <Option value="postgresql">PostgreSQL</Option>
+                    <Option value="oracle">Oracle</Option>
+                    <Option value="mssql">SQL Server</Option>
+                    <Option value="mongodb">MongoDB</Option>
+                  </Select>
+                </Form.Item>
               </Col>
             </Row>
 
-            {connections.length === 0 && (
-              <Alert
-                message="尚未建立任何資料庫連線"
-                description="點擊「新增連線」按鈕來建立第一個資料庫連線配置"
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
-            )}
-
-            <Table
-              dataSource={connections}
-              columns={columns}
-              rowKey="id"
-              loading={loading}
-              size="small"
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
-              }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Modal
-        title={
-          <Space>
-            <SettingOutlined />
-            {selectedConnection ? "編輯資料庫連線" : "新增資料庫連線"}
-          </Space>
-        }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={800}
-        destroyOnClose
-      >
-        <Form
-          form={form}
-          onFinish={createConnection}
-          layout="vertical"
-          initialValues={{
-            is_active: true,
-            is_default: false,
-            port: 3306
-          }}
-        >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="連線名稱"
-                name="name"
-                rules={[{ required: true, message: '請輸入連線名稱' }]}
-              >
-                <Input placeholder="例如: 主資料庫" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="資料庫類型"
-                name="db_type"
-                rules={[{ required: true, message: '請選擇資料庫類型' }]}
-              >
-                <Select 
-                  placeholder="選擇資料庫類型"
-                  onChange={handleDbTypeChange}
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="host"
+                  label="主機"
+                  rules={[{ required: true, message: '請輸入主機地址' }]}
                 >
-                  <Option value="sqlite">SQLite</Option>
-                  <Option value="mysql">MySQL</Option>
-                  <Option value="postgresql">PostgreSQL</Option>
-                  <Option value="oracle">Oracle</Option>
-                  <Option value="mssql">SQL Server</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+                  <Input placeholder="localhost" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="port"
+                  label="埠號"
+                  rules={[{ required: true, message: '請輸入埠號' }]}
+                >
+                  <InputNumber 
+                    placeholder="3306" 
+                    style={{ width: '100%' }}
+                    min={1}
+                    max={65535}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                label="主機地址"
-                name="host"
-                rules={[
-                  ({ getFieldValue }) => ({
-                    required: getFieldValue('db_type') !== 'sqlite',
-                    message: '主機地址為必填項'
-                  })
-                ]}
-              >
-                <Input placeholder="例如: localhost" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="端口"
-                name="port"
-                rules={[
-                  ({ getFieldValue }) => ({
-                    required: getFieldValue('db_type') !== 'sqlite',
-                    message: '端口為必填項'
-                  })
-                ]}
-              >
-                <InputNumber 
-                  placeholder="例如: 3306" 
-                  style={{ width: '100%' }}
-                  min={1}
-                  max={65535}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="資料庫名稱"
-                name="database"
-                rules={[{ required: true, message: '請輸入資料庫名稱' }]}
-              >
-                <Input placeholder="例如: iot_platform" />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="database"
+                  label="資料庫名稱"
+                  rules={[{ required: true, message: '請輸入資料庫名稱' }]}
+                >
+                  <Input placeholder="請輸入資料庫名稱" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="username"
+                  label="用戶名"
+                >
+                  <Input placeholder="請輸入用戶名" />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="用戶名"
-                name="username"
-                rules={[
-                  ({ getFieldValue }) => ({
-                    required: getFieldValue('db_type') !== 'sqlite',
-                    message: '用戶名為必填項'
-                  })
-                ]}
-              >
-                <Input placeholder="資料庫用戶名" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="密碼"
-                name="password"
-                rules={[
-                  ({ getFieldValue }) => ({
-                    required: getFieldValue('db_type') !== 'sqlite',
-                    message: '密碼為必填項'
-                  })
-                ]}
-              >
-                <Input.Password placeholder="資料庫密碼" />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Form.Item
+              name="password"
+              label="密碼"
+            >
+              <Input.Password placeholder="請輸入密碼" />
+            </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="啟用"
-                name="is_active"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="設為預設"
-                name="is_default"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Form.Item
+              name="is_active"
+              label="啟用狀態"
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
 
-          <Divider />
+            {/* MongoDB 特定配置 */}
+            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.db_type !== currentValues.db_type}>
+              {({ getFieldValue }) => {
+                const dbType = getFieldValue('db_type');
+                if (dbType === 'mongodb') {
+                  return (
+                    <Collapse ghost>
+                      <Panel header="MongoDB 進階配置" key="mongodb-advanced">
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              name="auth_source"
+                              label="認證資料庫"
+                            >
+                              <Input placeholder="admin" />
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item
+                              name="auth_mechanism"
+                              label="認證機制"
+                            >
+                              <Select placeholder="選擇認證機制">
+                                <Option value="SCRAM-SHA-1">SCRAM-SHA-1</Option>
+                                <Option value="SCRAM-SHA-256">SCRAM-SHA-256</Option>
+                                <Option value="MONGODB-CR">MONGODB-CR</Option>
+                                <Option value="PLAIN">PLAIN</Option>
+                                <Option value="GSSAPI">GSSAPI</Option>
+                                <Option value="MONGODB-X509">MONGODB-X509</Option>
+                              </Select>
+                            </Form.Item>
+                          </Col>
+                        </Row>
 
-          <Alert
-            message="連線資訊"
-            description={
-              <div>
-                <Paragraph>
-                  <Text strong>SQLite:</Text> 本地檔案資料庫，無需主機和認證
-                </Paragraph>
-                <Paragraph>
-                  <Text strong>MySQL/PostgreSQL:</Text> 需要主機、端口、用戶名和密碼
-                </Paragraph>
-                <Paragraph>
-                  <Text strong>Oracle/SQL Server:</Text> 企業級資料庫，需要完整的連線資訊
-                </Paragraph>
-              </div>
-            }
-            type="info"
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              name="replica_set"
+                              label="複製集名稱"
+                            >
+                              <Input placeholder="rs0" />
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item
+                              name="ssl_enabled"
+                              label="SSL 連線"
+                              valuePropName="checked"
+                            >
+                              <Switch />
+                            </Form.Item>
+                          </Col>
+                        </Row>
 
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                {selectedConnection ? '更新連線' : '創建連線'}
-              </Button>
-              <Button onClick={() => setModalVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              name="max_pool_size"
+                              label="最大連線池大小"
+                            >
+                              <InputNumber 
+                                placeholder="100" 
+                                style={{ width: '100%' }}
+                                min={1}
+                                max={1000}
+                              />
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item
+                              name="min_pool_size"
+                              label="最小連線池大小"
+                            >
+                              <InputNumber 
+                                placeholder="0" 
+                                style={{ width: '100%' }}
+                                min={0}
+                                max={100}
+                              />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              name="max_idle_time_ms"
+                              label="最大閒置時間 (ms)"
+                            >
+                              <InputNumber 
+                                placeholder="30000" 
+                                style={{ width: '100%' }}
+                                min={0}
+                              />
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item
+                              name="server_selection_timeout_ms"
+                              label="伺服器選擇超時 (ms)"
+                            >
+                              <InputNumber 
+                                placeholder="30000" 
+                                style={{ width: '100%' }}
+                                min={0}
+                              />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              name="socket_timeout_ms"
+                              label="Socket 超時 (ms)"
+                            >
+                              <InputNumber 
+                                placeholder="20000" 
+                                style={{ width: '100%' }}
+                                min={0}
+                              />
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item
+                              name="connect_timeout_ms"
+                              label="連線超時 (ms)"
+                            >
+                              <InputNumber 
+                                placeholder="20000" 
+                                style={{ width: '100%' }}
+                                min={0}
+                              />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              name="retry_writes"
+                              label="重試寫入"
+                              valuePropName="checked"
+                            >
+                              <Switch />
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item
+                              name="retry_reads"
+                              label="重試讀取"
+                              valuePropName="checked"
+                            >
+                              <Switch />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              name="read_preference"
+                              label="讀取偏好"
+                            >
+                              <Select placeholder="選擇讀取偏好">
+                                <Option value="primary">Primary</Option>
+                                <Option value="primaryPreferred">Primary Preferred</Option>
+                                <Option value="secondary">Secondary</Option>
+                                <Option value="secondaryPreferred">Secondary Preferred</Option>
+                                <Option value="nearest">Nearest</Option>
+                              </Select>
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item
+                              name="write_concern"
+                              label="寫入關注"
+                            >
+                              <Select placeholder="選擇寫入關注">
+                                <Option value="1">1</Option>
+                                <Option value="majority">Majority</Option>
+                                <Option value="all">All</Option>
+                              </Select>
+                            </Form.Item>
+                          </Col>
+                        </Row>
+
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              name="direct_connection"
+                              label="直接連線"
+                              valuePropName="checked"
+                            >
+                              <Switch />
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item
+                              name="app_name"
+                              label="應用程式名稱"
+                            >
+                              <Input placeholder="IIoT Platform" />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+                      </Panel>
+                    </Collapse>
+                  );
+                }
+                return null;
+              }}
+            </Form.Item>
+
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={loading}>
+                  {selectedConnection ? '更新' : '創建'}
+                </Button>
+                <Button onClick={() => setModalVisible(false)}>
+                  取消
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Card>
     </div>
   );
 };

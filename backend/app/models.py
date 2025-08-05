@@ -5,8 +5,6 @@ import datetime
 
 Base = declarative_base()
 
-# 在檔案開頭新增權限相關的模型
-
 # 權限分類
 class PermissionCategory(Base):
     __tablename__ = "permission_categories"
@@ -52,7 +50,7 @@ class UserPermission(Base):
     granted_by = Column(Integer, ForeignKey("users.id"))  # 授權者
     granted_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-# 更新 Role 模型
+# 角色
 class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True, index=True)
@@ -65,7 +63,7 @@ class Role(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
-# 更新 User 模型
+# 用戶
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -105,13 +103,42 @@ class ResourcePermission(Base):
     granted_by = Column(Integer, ForeignKey("users.id"))  # 授權者
     granted_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-# 用戶設備權限關聯表
-user_device_permissions = Table('user_device_permissions', Base.metadata,
-    Column('user_id', Integer, ForeignKey('users.id')),
-    Column('device_id', Integer, ForeignKey('devices.id')),
-    Column('permission', String)  # read, write, control
-)
+# 頁面分類
+class PageCategory(Base):
+    __tablename__ = "page_categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 分類名稱
+    display_name = Column(String)  # 顯示名稱
+    description = Column(String)  # 描述
+    icon = Column(String)  # 圖示
+    order_index = Column(Integer, default=0)  # 排序索引
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+# 頁面
+class Page(Base):
+    __tablename__ = "pages"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)  # 頁面名稱
+    display_name = Column(String)  # 顯示名稱
+    path = Column(String)  # 路由路徑
+    category_id = Column(Integer, ForeignKey("page_categories.id"))  # 頁面分類
+    icon = Column(String)  # 圖示
+    order_index = Column(Integer, default=0)  # 排序索引
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 角色頁面權限
+class RolePagePermission(Base):
+    __tablename__ = "role_page_permissions"
+    id = Column(Integer, primary_key=True, index=True)
+    role_id = Column(Integer, ForeignKey("roles.id"))
+    page_id = Column(Integer, ForeignKey("pages.id"))
+    granted = Column(Boolean, default=True)  # 是否授權
+    granted_by = Column(Integer, ForeignKey("users.id"))  # 授權者
+    granted_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 設備
 class Device(Base):
     __tablename__ = "devices"
     id = Column(Integer, primary_key=True, index=True)
@@ -130,6 +157,7 @@ class Device(Base):
     registration_date = Column(DateTime)
     api_key = Column(String, unique=True)  # 設備API註冊金鑰
 
+# 設備數據
 class DeviceData(Base):
     __tablename__ = "device_data"
     id = Column(Integer, primary_key=True, index=True)
@@ -137,6 +165,7 @@ class DeviceData(Base):
     value = Column(Float)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
+# 告警
 class Alert(Base):
     __tablename__ = "alerts"
     id = Column(Integer, primary_key=True, index=True)
@@ -145,12 +174,13 @@ class Alert(Base):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     message = Column(String)
 
+# 設備群組
 class DeviceGroup(Base):
     __tablename__ = "device_groups"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
 
-# OTA 更新相關
+# 韌體
 class Firmware(Base):
     __tablename__ = "firmwares"
     id = Column(Integer, primary_key=True, index=True)
@@ -161,6 +191,7 @@ class Firmware(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+# OTA 更新
 class OTAUpdate(Base):
     __tablename__ = "ota_updates"
     id = Column(Integer, primary_key=True, index=True)
@@ -171,7 +202,7 @@ class OTAUpdate(Base):
     completed_at = Column(DateTime)
     error_message = Column(String, nullable=True)
 
-# 規則引擎相關
+# 規則
 class Rule(Base):
     __tablename__ = "rules"
     id = Column(Integer, primary_key=True, index=True)
@@ -183,7 +214,7 @@ class Rule(Base):
     created_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-# 工作流程相關
+# 工作流程
 class Workflow(Base):
     __tablename__ = "workflows"
     id = Column(Integer, primary_key=True, index=True)
@@ -196,6 +227,7 @@ class Workflow(Base):
     created_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+# 工作流程執行
 class WorkflowExecution(Base):
     __tablename__ = "workflow_executions"
     id = Column(Integer, primary_key=True, index=True)
@@ -218,7 +250,7 @@ class AuditLog(Base):
     user_agent = Column(String)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
-# 設備控制命令
+# 設備命令
 class DeviceCommand(Base):
     __tablename__ = "device_commands"
     id = Column(Integer, primary_key=True, index=True)
@@ -232,7 +264,7 @@ class DeviceCommand(Base):
     result = Column(JSON, nullable=True)
     sent_by = Column(Integer, ForeignKey("users.id"))
 
-# 通訊協定配置
+# 通訊協定
 class CommunicationProtocol(Base):
     __tablename__ = "communication_protocols"
     id = Column(Integer, primary_key=True, index=True)
@@ -279,15 +311,15 @@ class OPCUAConfig(Base):
     username = Column(String, nullable=True)
     password = Column(String, nullable=True)
     security_policy = Column(String, default="Basic256Sha256")
-    message_security_mode = Column(String, default="SignAndEncrypt") 
+    message_security_mode = Column(String, default="SignAndEncrypt")
 
-# 資料庫連線配置
+# 資料庫連線
 class DatabaseConnection(Base):
     __tablename__ = "database_connections"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, unique=True)
-    db_type = Column(String(50), nullable=False)  # sqlite, mysql, postgresql, oracle, mssql, mongodb, influxdb
+    db_type = Column(String(50), nullable=False)  # sqlite, mysql, postgresql, oracle, mssql, mongodb
     host = Column(String(255))
     port = Column(Integer)
     database = Column(String(100), nullable=False)
@@ -296,824 +328,175 @@ class DatabaseConnection(Base):
     connection_string = Column(Text)
     is_active = Column(Boolean, default=True)
     is_default = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     last_test_time = Column(DateTime)
     last_test_result = Column(String(50))  # success, failed
     last_test_error = Column(Text)
     response_time = Column(Float)  # 連線測試響應時間（秒）
     description = Column(Text)
-    ssl_enabled = Column(Boolean, default=False)
-    ssl_cert = Column(Text)
-    connection_pool_size = Column(Integer, default=10)
-    max_overflow = Column(Integer, default=20)
-    timeout = Column(Integer, default=30)
-    retry_count = Column(Integer, default=3)
-    retry_delay = Column(Integer, default=5)
-    auto_reconnect = Column(Boolean, default=True)
-    read_only = Column(Boolean, default=False)
-    compression_enabled = Column(Boolean, default=False)
-    encryption_enabled = Column(Boolean, default=False)
-    backup_enabled = Column(Boolean, default=False)
-    backup_schedule = Column(String(100))
-    monitoring_enabled = Column(Boolean, default=True)
-    alert_threshold = Column(Float, default=5.0)  # 連線超時閾值（秒）
-    health_check_interval = Column(Integer, default=300)  # 健康檢查間隔（秒）
-    max_connections = Column(Integer, default=100)
-    idle_timeout = Column(Integer, default=3600)
-    query_timeout = Column(Integer, default=30)
-    transaction_timeout = Column(Integer, default=300)
-    deadlock_retry_count = Column(Integer, default=3)
-    deadlock_retry_delay = Column(Integer, default=1000)
-    connection_validation_query = Column(String(255))
-    connection_validation_timeout = Column(Integer, default=5)
-    connection_validation_interval = Column(Integer, default=60)
-    connection_validation_enabled = Column(Boolean, default=True)
-    connection_pool_pre_ping = Column(Boolean, default=True)
-    connection_pool_recycle = Column(Integer, default=3600)
-    connection_pool_reset_on_return = Column(String(50), default='commit')
-    connection_pool_echo = Column(Boolean, default=False)
-    connection_pool_echo_pool = Column(Boolean, default=False)
-    connection_pool_logging_name = Column(String(100))
-    connection_pool_overflow_exc = Column(Boolean, default=True)
-    connection_pool_use_lifo = Column(Boolean, default=False)
-    connection_pool_handle_asyncio = Column(Boolean, default=False)
-    connection_pool_handle_threading = Column(Boolean, default=True)
-    connection_pool_handle_multiprocessing = Column(Boolean, default=False)
-    connection_pool_handle_multiprocessing_shutdown = Column(Boolean, default=True)
-    connection_pool_handle_multiprocessing_shutdown_timeout = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_graceful = Column(Boolean, default=True)
-    connection_pool_handle_multiprocessing_shutdown_force = Column(Boolean, default=False)
-    connection_pool_handle_multiprocessing_shutdown_wait = Column(Boolean, default=True)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful = Column(Integer, default=30)
-    connection_pool_handle_multiprocessing_shutdown_timeout_graceful_force_wait_graceful_force_wait_graceful_force_wait_graceful_force_wait_force = Column(Integer, default
+    
+    # MongoDB 特定欄位
+    auth_source = Column(String(50))  # MongoDB 認證資料庫
+    auth_mechanism = Column(String(50))  # MongoDB 認證機制
+    replica_set = Column(String(100))  # MongoDB 複製集名稱
+    ssl_enabled = Column(Boolean, default=False)  # MongoDB SSL 連線
+    ssl_cert_reqs = Column(String(50))  # MongoDB SSL 憑證要求
+    max_pool_size = Column(Integer, default=100)  # MongoDB 連線池大小
+    min_pool_size = Column(Integer, default=0)  # MongoDB 最小連線池大小
+    max_idle_time_ms = Column(Integer, default=30000)  # MongoDB 最大閒置時間
+    server_selection_timeout_ms = Column(Integer, default=30000)  # MongoDB 伺服器選擇超時
+    socket_timeout_ms = Column(Integer, default=20000)  # MongoDB Socket 超時
+    connect_timeout_ms = Column(Integer, default=20000)  # MongoDB 連線超時
+    retry_writes = Column(Boolean, default=True)  # MongoDB 重試寫入
+    retry_reads = Column(Boolean, default=True)  # MongoDB 重試讀取
+    read_preference = Column(String(50))  # MongoDB 讀取偏好
+    write_concern = Column(String(50))  # MongoDB 寫入關注
+    read_concern = Column(String(50))  # MongoDB 讀取關注
+    journal = Column(Boolean, default=True)  # MongoDB 日誌寫入
+    wtimeout = Column(Integer)  # MongoDB 寫入超時
+    w = Column(String(50))  # MongoDB 寫入確認
+    j = Column(Boolean, default=True)  # MongoDB 日誌確認
+    fsync = Column(Boolean, default=False)  # MongoDB 檔案同步
+    direct_connection = Column(Boolean, default=False)  # MongoDB 直接連線
+    app_name = Column(String(100))  # MongoDB 應用程式名稱
+    compressors = Column(String(100))  # MongoDB 壓縮器
+    zlib_compression_level = Column(Integer)  # MongoDB Zlib 壓縮等級
+    uuid_representation = Column(String(50))  # MongoDB UUID 表示
+    unicode_decode_error_handler = Column(String(50))  # MongoDB Unicode 解碼錯誤處理
+    tz_aware = Column(Boolean, default=False)  # MongoDB 時區感知
+    connect = Column(Boolean, default=True)  # MongoDB 連線時機
+    max_connecting = Column(Integer)  # MongoDB 最大連線數
+    load_balanced = Column(Boolean, default=False)  # MongoDB 負載平衡
+    server_api = Column(String(50))  # MongoDB 伺服器 API 版本
+    heartbeat_frequency_ms = Column(Integer)  # MongoDB 心跳頻率
+    local_threshold_ms = Column(Integer)  # MongoDB 本地閾值
+
+# 使用者行為分析
+class UserBehavior(Base):
+    __tablename__ = "user_behaviors"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    session_id = Column(String)  # 會話 ID
+    page_path = Column(String)  # 頁面路徑
+    page_name = Column(String)  # 頁面名稱
+    action_type = Column(String)  # 動作類型 (view, click, submit, etc.)
+    action_details = Column(JSON)  # 動作詳細資訊
+    duration = Column(Integer, nullable=True)  # 停留時間 (秒)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    ip_address = Column(String)
+    user_agent = Column(String)
+    referrer = Column(String, nullable=True)  # 來源頁面
+
+# 使用者會話
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    session_id = Column(String, unique=True)
+    login_time = Column(DateTime, default=datetime.datetime.utcnow)
+    logout_time = Column(DateTime, nullable=True)
+    duration = Column(Integer, nullable=True)  # 會話持續時間 (秒)
+    ip_address = Column(String)
+    user_agent = Column(String)
+    is_active = Column(Boolean, default=True)
+    last_activity = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 功能使用統計
+class FeatureUsage(Base):
+    __tablename__ = "feature_usage"
+    id = Column(Integer, primary_key=True, index=True)
+    feature_name = Column(String)  # 功能名稱
+    feature_path = Column(String)  # 功能路徑
+    user_id = Column(Integer, ForeignKey("users.id"))
+    usage_count = Column(Integer, default=1)  # 使用次數
+    total_duration = Column(Integer, default=0)  # 總使用時間 (秒)
+    first_used = Column(DateTime, default=datetime.datetime.utcnow)
+    last_used = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# API Token
+class APIToken(Base):
+    __tablename__ = "api_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)  # Token 名稱
+    token_hash = Column(String, unique=True)  # Token 雜湊值
+    user_id = Column(Integer, ForeignKey("users.id"))
+    permissions = Column(JSON)  # 權限列表
+    is_active = Column(Boolean, default=True)
+    expires_at = Column(DateTime, nullable=True)  # 過期時間
+    last_used = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# Webhook
+class Webhook(Base):
+    __tablename__ = "webhooks"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)  # Webhook 名稱
+    url = Column(String)  # 目標 URL
+    events = Column(JSON)  # 觸發事件列表
+    headers = Column(JSON)  # 自定義標頭
+    is_active = Column(Boolean, default=True)
+    secret_key = Column(String)  # 簽名密鑰
+    retry_count = Column(Integer, default=3)  # 重試次數
+    timeout = Column(Integer, default=30)  # 超時時間 (秒)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# Webhook 發送記錄
+class WebhookDelivery(Base):
+    __tablename__ = "webhook_deliveries"
+    id = Column(Integer, primary_key=True, index=True)
+    webhook_id = Column(Integer, ForeignKey("webhooks.id"))
+    event_type = Column(String)  # 事件類型
+    payload = Column(JSON)  # 發送內容
+    response_status = Column(Integer)  # 回應狀態碼
+    response_body = Column(String)  # 回應內容
+    response_time = Column(Float)  # 回應時間 (秒)
+    is_success = Column(Boolean)  # 是否成功
+    error_message = Column(String, nullable=True)  # 錯誤訊息
+    retry_count = Column(Integer, default=0)  # 重試次數
+    sent_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# API 使用統計
+class APIUsage(Base):
+    __tablename__ = "api_usage"
+    id = Column(Integer, primary_key=True, index=True)
+    token_id = Column(Integer, ForeignKey("api_tokens.id"))
+    endpoint = Column(String)  # API 端點
+    method = Column(String)  # HTTP 方法
+    status_code = Column(Integer)  # 狀態碼
+    response_time = Column(Float)  # 回應時間 (秒)
+    request_size = Column(Integer)  # 請求大小 (bytes)
+    response_size = Column(Integer)  # 回應大小 (bytes)
+    ip_address = Column(String)
+    user_agent = Column(String)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+# SDK 下載統計
+class SDKDownload(Base):
+    __tablename__ = "sdk_downloads"
+    id = Column(Integer, primary_key=True, index=True)
+    sdk_name = Column(String)  # SDK 名稱 (python, javascript, go)
+    version = Column(String)  # 版本號
+    download_count = Column(Integer, default=1)  # 下載次數
+    ip_address = Column(String)
+    user_agent = Column(String)
+    downloaded_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# API 文檔
+class APIDocumentation(Base):
+    __tablename__ = "api_documentation"
+    id = Column(Integer, primary_key=True, index=True)
+    version = Column(String)  # 文檔版本
+    title = Column(String)  # 標題
+    description = Column(String)  # 描述
+    content = Column(JSON)  # 文檔內容 (OpenAPI 格式)
+    is_active = Column(Boolean, default=True)
+    is_default = Column(Boolean, default=False)  # 是否為預設版本
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
