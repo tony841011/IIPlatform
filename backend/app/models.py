@@ -154,7 +154,7 @@ class DatabaseConnection(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
-    db_type = Column(String(20), nullable=False)  # postgresql, mysql, mongodb, influxdb
+    db_type = Column(String(20), nullable=False)  # postgresql, mysql, mongodb, influxdb, oracle, sqlserver
     host = Column(String(100), nullable=True)
     port = Column(Integer, nullable=True)
     database = Column(String(100), nullable=False)
@@ -168,6 +168,70 @@ class DatabaseConnection(Base):
     last_test_result = Column(String(20), nullable=True)  # success, failed
     last_test_error = Column(Text, nullable=True)
     response_time = Column(Float, nullable=True)
+    
+    # 連線設定
+    timeout = Column(Integer, default=30)  # 連線超時時間 (秒)
+    retry_attempts = Column(Integer, default=3)  # 重試次數
+    connection_pool_size = Column(Integer, default=10)  # 連線池大小
+    
+    # MongoDB 特定欄位
+    auth_source = Column(String(50), nullable=True)  # MongoDB 認證資料庫
+    auth_mechanism = Column(String(50), nullable=True)  # MongoDB 認證機制
+    replica_set = Column(String(100), nullable=True)  # MongoDB 複製集名稱
+    ssl_enabled = Column(Boolean, default=False)  # MongoDB SSL 連線
+    ssl_cert_reqs = Column(String(20), nullable=True)  # MongoDB SSL 憑證要求
+    max_pool_size = Column(Integer, nullable=True)  # MongoDB 連線池大小
+    min_pool_size = Column(Integer, nullable=True)  # MongoDB 最小連線池大小
+    max_idle_time_ms = Column(Integer, nullable=True)  # MongoDB 最大閒置時間
+    server_selection_timeout_ms = Column(Integer, nullable=True)  # MongoDB 伺服器選擇超時
+    socket_timeout_ms = Column(Integer, nullable=True)  # MongoDB Socket 超時
+    connect_timeout_ms = Column(Integer, nullable=True)  # MongoDB 連線超時
+    retry_writes = Column(Boolean, default=True)  # MongoDB 重試寫入
+    retry_reads = Column(Boolean, default=True)  # MongoDB 重試讀取
+    read_preference = Column(String(20), nullable=True)  # MongoDB 讀取偏好
+    write_concern = Column(String(20), nullable=True)  # MongoDB 寫入關注
+    read_concern = Column(String(20), nullable=True)  # MongoDB 讀取關注
+    journal = Column(Boolean, default=True)  # MongoDB 日誌寫入
+    wtimeout = Column(Integer, nullable=True)  # MongoDB 寫入超時
+    w = Column(String(20), nullable=True)  # MongoDB 寫入確認
+    j = Column(Boolean, default=True)  # MongoDB 日誌確認
+    fsync = Column(Boolean, default=False)  # MongoDB 檔案同步
+    direct_connection = Column(Boolean, default=False)  # MongoDB 直接連線
+    app_name = Column(String(100), nullable=True)  # MongoDB 應用程式名稱
+    compressors = Column(String(100), nullable=True)  # MongoDB 壓縮器
+    zlib_compression_level = Column(Integer, nullable=True)  # MongoDB Zlib 壓縮等級
+    uuid_representation = Column(String(20), nullable=True)  # MongoDB UUID 表示
+    unicode_decode_error_handler = Column(String(20), nullable=True)  # MongoDB Unicode 解碼錯誤處理
+    tz_aware = Column(Boolean, default=False)  # MongoDB 時區感知
+    connect = Column(Boolean, default=True)  # MongoDB 連線時機
+    max_connecting = Column(Integer, nullable=True)  # MongoDB 最大連線數
+    load_balanced = Column(Boolean, default=False)  # MongoDB 負載平衡
+    server_api = Column(String(20), nullable=True)  # MongoDB 伺服器 API 版本
+    heartbeat_frequency_ms = Column(Integer, nullable=True)  # MongoDB 心跳頻率
+    local_threshold_ms = Column(Integer, nullable=True)  # MongoDB 本地閾值
+    
+    # InfluxDB 特定欄位
+    token = Column(String(500), nullable=True)  # InfluxDB API Token
+    org = Column(String(100), nullable=True)  # InfluxDB 組織
+    bucket = Column(String(100), nullable=True)  # InfluxDB 儲存桶
+    
+    # MySQL 特定欄位
+    charset = Column(String(20), default='utf8mb4')  # MySQL 字符集
+    collation = Column(String(50), default='utf8mb4_unicode_ci')  # MySQL 排序規則
+    autocommit = Column(Boolean, default=True)  # MySQL 自動提交
+    sql_mode = Column(String(200), nullable=True)  # MySQL SQL 模式
+    
+    # Oracle 特定欄位
+    service_name = Column(String(100), nullable=True)  # Oracle 服務名稱
+    sid = Column(String(100), nullable=True)  # Oracle SID
+    tns = Column(String(500), nullable=True)  # Oracle TNS 字串
+    
+    # SQL Server 特定欄位
+    driver = Column(String(50), nullable=True)  # SQL Server 驅動程式
+    trusted_connection = Column(Boolean, default=False)  # SQL Server 信任連線
+    encrypt = Column(Boolean, default=False)  # SQL Server 加密
+    trust_server_certificate = Column(Boolean, default=False)  # SQL Server 信任伺服器憑證
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
