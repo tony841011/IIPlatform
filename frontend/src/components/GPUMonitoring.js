@@ -28,7 +28,8 @@ import {
   List,
   Avatar,
   Rate,
-  Gauge
+  Gauge,
+  Select
 } from 'antd';
 import {
   DesktopOutlined,
@@ -41,16 +42,17 @@ import {
   ReloadOutlined,
   EyeOutlined,
   ThunderboltOutlined,
-  ThermometerOutlined,
-  MemoryOutlined,
+  FireOutlined,
+  HddOutlined,
   PoweroffOutlined,
-  FanOutlined,
+  CloudOutlined,
   ClockCircleOutlined,
   InfoCircleOutlined,
   CloudServerOutlined,
   RocketOutlined,
   SafetyCertificateOutlined,
-  BulbOutlined
+  BulbOutlined,
+  PlusOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -100,25 +102,25 @@ const GPUMonitoring = () => {
 
   const loadGPUMonitoring = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/gpu/monitoring/?gpu_device_id=${selectedGPU}&limit=50`);
+      const response = await axios.get(`http://localhost:8000/gpu/monitoring/${selectedGPU.id}/`);
       setGpuMonitoring(response.data);
     } catch (error) {
-      message.error('載入 GPU 監測數據失敗');
+      message.error('載入 GPU 監控數據失敗');
     }
   };
 
   const loadGPUAlerts = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/gpu/alerts/?gpu_device_id=${selectedGPU}&limit=50`);
+      const response = await axios.get(`http://localhost:8000/gpu/alerts/${selectedGPU.id}/`);
       setGpuAlerts(response.data);
     } catch (error) {
-      message.error('載入 GPU 警報失敗');
+      message.error('載入 GPU 告警失敗');
     }
   };
 
   const loadGPUResourceAllocations = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/gpu/allocations/?gpu_device_id=${selectedGPU}`);
+      const response = await axios.get(`http://localhost:8000/gpu/allocations/${selectedGPU.id}/`);
       setGpuResourceAllocations(response.data);
     } catch (error) {
       message.error('載入 GPU 資源分配失敗');
@@ -127,19 +129,19 @@ const GPUMonitoring = () => {
 
   const loadGPUPerformanceConfig = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/gpu/performance-config/${selectedGPU}`);
+      const response = await axios.get(`http://localhost:8000/gpu/config/${selectedGPU.id}/`);
       setGpuPerformanceConfig(response.data);
     } catch (error) {
-      // 如果沒有配置，不顯示錯誤
+      message.error('載入 GPU 性能配置失敗');
     }
   };
 
   const loadGPUResourceUsage = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/gpu/resource-usage/${selectedGPU}`);
+      const response = await axios.get(`http://localhost:8000/gpu/usage/${selectedGPU.id}/`);
       setGpuResourceUsage(response.data);
     } catch (error) {
-      message.error('載入 GPU 資源使用統計失敗');
+      message.error('載入 GPU 資源使用情況失敗');
     }
   };
 
@@ -156,24 +158,25 @@ const GPUMonitoring = () => {
   };
 
   const simulateMonitoring = async () => {
+    setLoading(true);
     try {
-      await axios.post(`http://localhost:8000/gpu/simulate-monitoring/${selectedGPU}`);
-      message.success('模擬監測數據已生成');
+      await axios.post(`http://localhost:8000/gpu/simulate/${selectedGPU.id}/`);
+      message.success('模擬監控數據生成成功');
       loadGPUMonitoring();
-      loadGPUAlerts();
-      loadGPUResourceUsage();
     } catch (error) {
-      message.error('生成模擬數據失敗');
+      message.error('模擬監控數據失敗');
+    } finally {
+      setLoading(false);
     }
   };
 
   const acknowledgeAlert = async (alertId) => {
     try {
-      await axios.patch(`http://localhost:8000/gpu/alerts/${alertId}/acknowledge`);
-      message.success('警報已確認');
+      await axios.put(`http://localhost:8000/gpu/alerts/${alertId}/acknowledge/`);
+      message.success('告警已確認');
       loadGPUAlerts();
     } catch (error) {
-      message.error('確認警報失敗');
+      message.error('確認告警失敗');
     }
   };
 
@@ -185,16 +188,30 @@ const GPUMonitoring = () => {
 
   const getTemperatureColor = (temp) => {
     if (temp < 60) return '#52c41a';
-    if (temp < 75) return '#faad14';
+    if (temp < 80) return '#faad14';
     return '#ff4d4f';
   };
 
-  const gpuMonitoringColumns = [
+  const gpuColumns = [
     {
-      title: '時間',
-      dataIndex: 'timestamp',
-      key: 'timestamp',
-      render: (time) => new Date(time).toLocaleString(),
+      title: '設備名稱',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: '型號',
+      dataIndex: 'model',
+      key: 'model',
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={status === 'online' ? 'green' : 'red'}>
+          {status === 'online' ? '在線' : '離線'}
+        </Tag>
+      ),
     },
     {
       title: 'GPU 使用率',
@@ -205,7 +222,6 @@ const GPUMonitoring = () => {
           percent={value} 
           size="small" 
           strokeColor={getUtilizationColor(value)}
-          format={() => `${value.toFixed(1)}%`}
         />
       ),
     },
@@ -218,7 +234,6 @@ const GPUMonitoring = () => {
           percent={value} 
           size="small" 
           strokeColor={getUtilizationColor(value)}
-          format={() => `${value.toFixed(1)}%`}
         />
       ),
     },
@@ -226,342 +241,465 @@ const GPUMonitoring = () => {
       title: '溫度',
       dataIndex: 'temperature',
       key: 'temperature',
-      render: (temp) => (
-        <Tag color={getTemperatureColor(temp)}>
-          <ThermometerOutlined /> {temp.toFixed(1)}°C
-        </Tag>
-      ),
-    },
-    {
-      title: '功耗',
-      dataIndex: 'power_consumption',
-      key: 'power_consumption',
-      render: (power) => (
-        <Tag color="blue">
-          <PoweroffOutlined /> {power.toFixed(1)}W
-        </Tag>
-      ),
-    },
-    {
-      title: '風扇轉速',
-      dataIndex: 'fan_speed',
-      key: 'fan_speed',
-      render: (speed) => (
-        <Tag color="green">
-          <FanOutlined /> {speed.toFixed(1)}%
-        </Tag>
-      ),
-    },
-  ];
-
-  const gpuAlertColumns = [
-    {
-      title: '時間',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (time) => new Date(time).toLocaleString(),
-    },
-    {
-      title: '警報類型',
-      dataIndex: 'alert_type',
-      key: 'alert_type',
-      render: (type) => {
-        const colors = {
-          temperature: 'red',
-          memory: 'orange',
-          utilization: 'yellow',
-          power: 'purple'
-        };
-        return <Tag color={colors[type]}>{type.toUpperCase()}</Tag>;
-      },
-    },
-    {
-      title: '等級',
-      dataIndex: 'alert_level',
-      key: 'alert_level',
-      render: (level) => {
-        const colors = {
-          warning: 'orange',
-          critical: 'red'
-        };
-        return <Tag color={colors[level]}>{level.toUpperCase()}</Tag>;
-      },
-    },
-    {
-      title: '訊息',
-      dataIndex: 'alert_message',
-      key: 'alert_message',
-    },
-    {
-      title: '狀態',
-      dataIndex: 'is_acknowledged',
-      key: 'is_acknowledged',
-      render: (acknowledged) => (
-        <Badge 
-          status={acknowledged ? 'success' : 'processing'} 
-          text={acknowledged ? '已確認' : '未確認'} 
-        />
+      render: (value) => (
+        <Text style={{ color: getTemperatureColor(value) }}>
+          {value.toFixed(1)}°C
+        </Text>
       ),
     },
     {
       title: '操作',
       key: 'action',
       render: (_, record) => (
-        !record.is_acknowledged && (
+        <Space>
           <Button 
-            size="small" 
-            type="primary"
-            onClick={() => acknowledgeAlert(record.id)}
+            type="primary" 
+            size="small"
+            onClick={() => setSelectedGPU(record)}
           >
-            確認
+            查看詳情
           </Button>
-        )
+        </Space>
       ),
     },
   ];
 
-  const gpuResourceAllocationColumns = [
+  const alertColumns = [
     {
-      title: '開始時間',
-      dataIndex: 'started_at',
-      key: 'started_at',
-      render: (time) => new Date(time).toLocaleString(),
+      title: '時間',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      render: (timestamp) => new Date(timestamp).toLocaleString(),
     },
     {
-      title: 'AI 模型',
-      dataIndex: 'ai_model_id',
-      key: 'ai_model_id',
-      render: (modelId) => `模型 ${modelId}`,
+      title: '類型',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type) => (
+        <Tag color={type === 'warning' ? 'orange' : 'red'}>
+          {type === 'warning' ? '警告' : '錯誤'}
+        </Tag>
+      ),
     },
     {
-      title: '分配記憶體',
-      dataIndex: 'allocated_memory',
-      key: 'allocated_memory',
-      render: (memory) => `${memory} MB`,
-    },
-    {
-      title: '優先級',
-      dataIndex: 'priority',
-      key: 'priority',
-      render: (priority) => {
-        const colors = {
-          high: 'red',
-          medium: 'orange',
-          low: 'green'
-        };
-        return <Tag color={colors[priority]}>{priority.toUpperCase()}</Tag>;
-      },
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
     },
     {
       title: '狀態',
       dataIndex: 'status',
       key: 'status',
-      render: (status) => {
-        const colors = {
-          running: 'green',
-          idle: 'orange',
-          stopped: 'red'
-        };
-        return <Tag color={colors[status]}>{status.toUpperCase()}</Tag>;
-      },
+      render: (status) => (
+        <Tag color={status === 'acknowledged' ? 'green' : 'orange'}>
+          {status === 'acknowledged' ? '已確認' : '未確認'}
+        </Tag>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Space>
+          {record.status !== 'acknowledged' && (
+            <Button 
+              size="small"
+              onClick={() => acknowledgeAlert(record.id)}
+            >
+              確認
+            </Button>
+          )}
+        </Space>
+      ),
     },
   ];
 
   return (
     <div>
+      <Title level={2}>GPU 監控與 AI 異常偵測</Title>
+      
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card 
-            title={
-              <Space>
-                <DesktopOutlined />
-                <span>GPU 效能監測系統</span>
-              </Space>
-            }
+            title="GPU 設備列表" 
             extra={
-              <Space>
-                <Button 
-                  icon={<ReloadOutlined />} 
-                  onClick={() => {
-                    loadGPUDevices();
-                    if (selectedGPU) {
-                      loadGPUMonitoring();
-                      loadGPUAlerts();
-                      loadGPUResourceAllocations();
-                      loadGPUResourceUsage();
-                    }
-                  }}
-                >
-                  重新整理
-                </Button>
-                <Button 
-                  type="primary" 
-                  icon={<SettingOutlined />}
-                  onClick={() => setModalVisible(true)}
-                >
-                  新增 GPU
-                </Button>
-              </Space>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={() => setModalVisible(true)}
+              >
+                新增 GPU 設備
+              </Button>
             }
           >
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-              <Col span={6}>
-                <Statistic
-                  title="GPU 設備數"
-                  value={gpuDevices.length}
-                  prefix={<DesktopOutlined />}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="活躍 GPU"
-                  value={gpuDevices.filter(g => g.is_active).length}
-                  prefix={<ThunderboltOutlined />}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="未確認警報"
-                  value={gpuAlerts.filter(a => !a.is_acknowledged).length}
-                  prefix={<WarningOutlined />}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="資源分配"
-                  value={gpuResourceAllocations.filter(a => a.status === 'running').length}
-                  prefix={<CloudServerOutlined />}
-                />
-              </Col>
-            </Row>
-
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-              <Col span={12}>
-                <Select
-                  placeholder="選擇 GPU 設備"
-                  style={{ width: '100%' }}
-                  onChange={setSelectedGPU}
-                  value={selectedGPU}
-                >
-                  {gpuDevices.map(gpu => (
-                    <Option key={gpu.id} value={gpu.id}>
-                      {gpu.name} ({gpu.manufacturer})
-                    </Option>
-                  ))}
-                </Select>
-              </Col>
-              <Col span={12}>
-                <Space>
-                  <Button 
-                    icon={<PlayCircleOutlined />}
-                    onClick={simulateMonitoring}
-                    disabled={!selectedGPU}
-                  >
-                    模擬監測
-                  </Button>
-                  <Button 
-                    icon={<SettingOutlined />}
-                    onClick={() => setConfigModalVisible(true)}
-                    disabled={!selectedGPU}
-                  >
-                    效能設定
-                  </Button>
-                  <Button 
-                    icon={<RocketOutlined />}
-                    onClick={() => setAllocationModalVisible(true)}
-                    disabled={!selectedGPU}
-                  >
-                    資源分配
-                  </Button>
-                </Space>
-              </Col>
-            </Row>
+            <Table 
+              columns={gpuColumns} 
+              dataSource={gpuDevices}
+              rowKey="id"
+              pagination={{ pageSize: 10 }}
+            />
           </Card>
         </Col>
       </Row>
 
-      {selectedGPU && gpuResourceUsage && (
-        <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-          <Col span={24}>
-            <Card title="GPU 資源使用情況">
-              <Row gutter={16}>
-                <Col span={6}>
-                  <Card size="small">
-                    <Statistic
-                      title="總記憶體"
-                      value={gpuResourceUsage.total_memory}
-                      suffix="MB"
-                      prefix={<MemoryOutlined />}
-                    />
-                  </Card>
-                </Col>
-                <Col span={6}>
-                  <Card size="small">
-                    <Statistic
-                      title="已使用記憶體"
-                      value={gpuResourceUsage.used_memory}
-                      suffix="MB"
-                      valueStyle={{ color: getUtilizationColor(gpuResourceUsage.memory_utilization) }}
-                    />
-                  </Card>
-                </Col>
-                <Col span={6}>
-                  <Card size="small">
-                    <Statistic
-                      title="可用記憶體"
-                      value={gpuResourceUsage.free_memory}
-                      suffix="MB"
-                      valueStyle={{ color: '#52c41a' }}
-                    />
-                  </Card>
-                </Col>
-                <Col span={6}>
-                  <Card size="small">
-                    <Statistic
-                      title="AI 可用性"
-                      value={gpuResourceUsage.available_for_ai ? '可用' : '不可用'}
-                      valueStyle={{ color: gpuResourceUsage.available_for_ai ? '#52c41a' : '#ff4d4f' }}
-                      prefix={<RocketOutlined />}
-                    />
-                  </Card>
-                </Col>
-              </Row>
+      {selectedGPU && (
+        <>
+          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+            <Col span={24}>
+              <Card 
+                title={`${selectedGPU.name} - 詳細監控`}
+                extra={
+                  <Space>
+                    <Button 
+                      icon={<ReloadOutlined />}
+                      onClick={() => {
+                        loadGPUMonitoring();
+                        loadGPUAlerts();
+                        loadGPUResourceUsage();
+                      }}
+                    >
+                      刷新
+                    </Button>
+                    <Button 
+                      icon={<PlayCircleOutlined />}
+                      onClick={simulateMonitoring}
+                      loading={loading}
+                    >
+                      模擬監控
+                    </Button>
+                    <Button 
+                      icon={<SettingOutlined />}
+                      onClick={() => setConfigModalVisible(true)}
+                    >
+                      性能配置
+                    </Button>
+                    <Button 
+                      icon={<RocketOutlined />}
+                      onClick={() => setAllocationModalVisible(true)}
+                      disabled={!selectedGPU}
+                    >
+                      資源分配
+                    </Button>
+                  </Space>
+                }
+              >
+                <Row gutter={16}>
+                  <Col span={6}>
+                    <Card size="small">
+                      <Statistic
+                        title="GPU 使用率"
+                        value={selectedGPU.gpu_utilization}
+                        suffix="%"
+                        prefix={<DesktopOutlined />}
+                        valueStyle={{ color: getUtilizationColor(selectedGPU.gpu_utilization) }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col span={6}>
+                    <Card size="small">
+                      <Statistic
+                        title="記憶體使用率"
+                        value={selectedGPU.memory_utilization}
+                        suffix="%"
+                        prefix={<HddOutlined />}
+                        valueStyle={{ color: getUtilizationColor(selectedGPU.memory_utilization) }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col span={6}>
+                    <Card size="small">
+                      <Statistic
+                        title="溫度"
+                        value={selectedGPU.temperature}
+                        suffix="°C"
+                        prefix={<FireOutlined />}
+                        valueStyle={{ color: getTemperatureColor(selectedGPU.temperature) }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col span={6}>
+                    <Card size="small">
+                      <Statistic
+                        title="風扇轉速"
+                        value={selectedGPU.fan_speed}
+                        suffix="RPM"
+                        prefix={<CloudOutlined />}
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+          </Row>
 
-              <Divider />
+          {gpuResourceUsage && (
+            <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+              <Col span={24}>
+                <Card title="GPU 資源使用情況">
+                  <Row gutter={16}>
+                    <Col span={6}>
+                      <Card size="small">
+                                              <Statistic
+                        title="總記憶體"
+                        value={gpuResourceUsage.total_memory}
+                        suffix="MB"
+                        prefix={<HddOutlined />}
+                      />
+                      </Card>
+                    </Col>
+                    <Col span={6}>
+                      <Card size="small">
+                        <Statistic
+                          title="已使用記憶體"
+                          value={gpuResourceUsage.used_memory}
+                          suffix="MB"
+                          valueStyle={{ color: getUtilizationColor(gpuResourceUsage.memory_utilization) }}
+                        />
+                      </Card>
+                    </Col>
+                    <Col span={6}>
+                      <Card size="small">
+                        <Statistic
+                          title="可用記憶體"
+                          value={gpuResourceUsage.free_memory}
+                          suffix="MB"
+                          valueStyle={{ color: '#52c41a' }}
+                        />
+                      </Card>
+                    </Col>
+                    <Col span={6}>
+                      <Card size="small">
+                        <Statistic
+                          title="AI 可用性"
+                          value={gpuResourceUsage.available_for_ai ? '可用' : '不可用'}
+                          valueStyle={{ color: gpuResourceUsage.available_for_ai ? '#52c41a' : '#ff4d4f' }}
+                          prefix={<RocketOutlined />}
+                        />
+                      </Card>
+                    </Col>
+                  </Row>
 
-              <Row gutter={16}>
-                <Col span={8}>
-                  <Card title="GPU 使用率" size="small">
-                    <Progress 
-                      type="circle" 
-                      percent={gpuResourceUsage.gpu_utilization} 
-                      strokeColor={getUtilizationColor(gpuResourceUsage.gpu_utilization)}
-                      format={() => `${gpuResourceUsage.gpu_utilization.toFixed(1)}%`}
-                    />
-                  </Card>
-                </Col>
-                <Col span={8}>
-                  <Card title="記憶體使用率" size="small">
-                    <Progress 
-                      type="circle" 
-                      percent={gpuResourceUsage.memory_utilization} 
-                      strokeColor={getUtilizationColor(gpuResourceUsage.memory_utilization)}
-                      format={() => `${gpuResourceUsage.memory_utilization.toFixed(1)}%`}
-                    />
-                  </Card>
-                </Col>
-                <Col span={8}>
-                  <Card title="溫度" size="small">
-                    <div style={{ textAlign: 'center' }}>
-                      <Text style={{ fontSize: '24px', color: getTemperatureColor(gpuResourceUsage.temperature) }}>
-                        {gpuResourceUsage.temperature.toFixed(1)}°C
-                      </Text>
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
-
-              {gpuResourceUsage.recommended_models.length > 0 && (
-                <>
                   <Divider />
-                  <Card titl 
+
+                  <Row gutter={16}>
+                    <Col span={8}>
+                      <Card title="GPU 使用率" size="small">
+                        <Progress 
+                          type="circle" 
+                          percent={gpuResourceUsage.gpu_utilization} 
+                          strokeColor={getUtilizationColor(gpuResourceUsage.gpu_utilization)}
+                          format={() => `${gpuResourceUsage.gpu_utilization.toFixed(1)}%`}
+                        />
+                      </Card>
+                    </Col>
+                    <Col span={8}>
+                      <Card title="記憶體使用率" size="small">
+                        <Progress 
+                          type="circle" 
+                          percent={gpuResourceUsage.memory_utilization} 
+                          strokeColor={getUtilizationColor(gpuResourceUsage.memory_utilization)}
+                          format={() => `${gpuResourceUsage.memory_utilization.toFixed(1)}%`}
+                        />
+                      </Card>
+                    </Col>
+                    <Col span={8}>
+                      <Card title="溫度" size="small">
+                        <div style={{ textAlign: 'center' }}>
+                          <Text style={{ fontSize: '24px', color: getTemperatureColor(gpuResourceUsage.temperature) }}>
+                            {gpuResourceUsage.temperature.toFixed(1)}°C
+                          </Text>
+                        </div>
+                      </Card>
+                    </Col>
+                  </Row>
+
+                  {gpuResourceUsage.recommended_models && gpuResourceUsage.recommended_models.length > 0 && (
+                    <>
+                      <Divider />
+                      <Card title="推薦模型">
+                        <List
+                          dataSource={gpuResourceUsage.recommended_models}
+                          renderItem={(model) => (
+                            <List.Item>
+                              <List.Item.Meta
+                                avatar={<Avatar icon={<RocketOutlined />} />}
+                                title={model.name}
+                                description={`記憶體需求: ${model.memory_requirement}MB, 性能評分: ${model.performance_score}/10`}
+                              />
+                              <Tag color="blue">{model.type}</Tag>
+                            </List.Item>
+                          )}
+                        />
+                      </Card>
+                    </>
+                  )}
+                </Card>
+              </Col>
+            </Row>
+          )}
+
+          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+            <Col span={12}>
+              <Card title="GPU 告警">
+                <Table 
+                  columns={alertColumns} 
+                  dataSource={gpuAlerts}
+                  rowKey="id"
+                  pagination={{ pageSize: 5 }}
+                  size="small"
+                />
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card title="資源分配">
+                <Table 
+                  columns={[
+                    {
+                      title: '應用名稱',
+                      dataIndex: 'application_name',
+                      key: 'application_name',
+                    },
+                    {
+                      title: '分配記憶體',
+                      dataIndex: 'allocated_memory',
+                      key: 'allocated_memory',
+                      render: (value) => `${value}MB`,
+                    },
+                    {
+                      title: '狀態',
+                      dataIndex: 'status',
+                      key: 'status',
+                      render: (status) => (
+                        <Tag color={status === 'running' ? 'green' : 'orange'}>
+                          {status === 'running' ? '運行中' : '已停止'}
+                        </Tag>
+                      ),
+                    },
+                  ]} 
+                  dataSource={gpuResourceAllocations}
+                  rowKey="id"
+                  pagination={{ pageSize: 5 }}
+                  size="small"
+                />
+              </Card>
+            </Col>
+          </Row>
+        </>
+      )}
+
+      {/* 新增 GPU 設備模態框 */}
+      <Modal
+        title="新增 GPU 設備"
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+      >
+        <Form form={form} onFinish={createGPUDevice} layout="vertical">
+          <Form.Item
+            name="name"
+            label="設備名稱"
+            rules={[{ required: true, message: '請輸入設備名稱！' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="model"
+            label="GPU 型號"
+            rules={[{ required: true, message: '請輸入 GPU 型號！' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="memory"
+            label="記憶體大小 (MB)"
+            rules={[{ required: true, message: '請輸入記憶體大小！' }]}
+          >
+            <InputNumber min={1} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              創建
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 性能配置模態框 */}
+      <Modal
+        title="GPU 性能配置"
+        open={configModalVisible}
+        onCancel={() => setConfigModalVisible(false)}
+        footer={null}
+      >
+        <Form form={configForm} layout="vertical">
+          <Form.Item
+            name="power_limit"
+            label="功率限制 (W)"
+          >
+            <InputNumber min={1} max={500} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item
+            name="temperature_limit"
+            label="溫度限制 (°C)"
+          >
+            <InputNumber min={1} max={100} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item
+            name="auto_fan_control"
+            label="自動風扇控制"
+            valuePropName="checked"
+          >
+            <Switch />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" block>
+              保存配置
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 資源分配模態框 */}
+      <Modal
+        title="GPU 資源分配"
+        open={allocationModalVisible}
+        onCancel={() => setAllocationModalVisible(false)}
+        footer={null}
+      >
+        <Form form={allocationForm} layout="vertical">
+          <Form.Item
+            name="application_name"
+            label="應用名稱"
+            rules={[{ required: true, message: '請輸入應用名稱！' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="memory_allocation"
+            label="記憶體分配 (MB)"
+            rules={[{ required: true, message: '請輸入記憶體分配！' }]}
+          >
+            <InputNumber min={1} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item
+            name="priority"
+            label="優先級"
+          >
+            <Select>
+              <Option value="high">高</Option>
+              <Option value="medium">中</Option>
+              <Option value="low">低</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" block>
+              分配資源
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+};
+
+export default GPUMonitoring; 

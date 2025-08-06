@@ -119,6 +119,18 @@ import CommunicationProtocols from './components/CommunicationProtocols';
 import TableSchema from './components/TableSchema';
 import DataProcessing from './components/DataProcessing';
 import DataTransformation from './components/DataTransformation';
+import VideoRecognition from './components/VideoRecognition';
+import MLOps from './components/MLOps';
+import GPUMonitoring from './components/GPUMonitoring';
+import EdgeGateway from './components/EdgeGateway';
+import GISIntegration from './components/GISIntegration';
+import RuleEngine from './components/RuleEngine';
+import WorkflowAutomation from './components/WorkflowAutomation';
+import AuditTrail from './components/AuditTrail';
+import ReportingSystem from './components/ReportingSystem';
+import OTAUpdate from './components/OTAUpdate';
+import CustomDashboard from './components/CustomDashboard';
+import AIModelManagement from './components/AIModelManagement';
 import Login from './components/Login';
 
 const { Header, Content, Sider } = Layout;
@@ -208,6 +220,11 @@ const App = () => {
         icon: <RobotOutlined />,
         label: 'AI 應用',
         children: [
+          {
+            key: 'ai-model-management',
+            icon: <RocketOutlined />,
+            label: <Link to="/ai-model-management">AI Model 管理</Link>,
+          },
           {
             key: 'ai-anomaly-detection',
             icon: <BugOutlined />,
@@ -508,6 +525,8 @@ const App = () => {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/platform-intro" element={<PlatformIntro />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/custom-dashboard" element={<CustomDashboard />} />
+                <Route path="/ai-model-management" element={<AIModelManagement />} />
                 <Route path="/device-management" element={<DeviceManagement />} />
                 <Route path="/device-categories" element={<DeviceCategories />} />
                 <Route path="/notification-preferences" element={<NotificationPreferences />} />
@@ -523,16 +542,16 @@ const App = () => {
                 <Route path="/table-schema" element={<TableSchema />} />
                 <Route path="/data-processing" element={<DataProcessing />} />
                 <Route path="/data-transformation" element={<DataTransformation />} />
-                <Route path="/ai-anomaly-detection" element={<div>AI 異常偵測系統</div>} />
-                <Route path="/stream-video-recognition" element={<div>串流影像辨識</div>} />
-                <Route path="/mlops" element={<div>MLOPs</div>} />
-                <Route path="/ota-update" element={<div>OTA更新</div>} />
-                <Route path="/edge-gateway" element={<div>邊緣閘道</div>} />
-                <Route path="/gis-integration" element={<div>地理資訊</div>} />
-                <Route path="/rule-engine" element={<div>規則引擎</div>} />
-                <Route path="/workflow" element={<div>工作流程</div>} />
-                <Route path="/audit-logs" element={<div>審計日誌</div>} />
-                <Route path="/report-system" element={<div>報表系統</div>} />
+                <Route path="/ai-anomaly-detection" element={<GPUMonitoring />} />
+                <Route path="/stream-video-recognition" element={<VideoRecognition />} />
+                <Route path="/mlops" element={<MLOps />} />
+                <Route path="/ota-update" element={<OTAUpdate />} />
+                <Route path="/edge-gateway" element={<EdgeGateway />} />
+                <Route path="/gis-integration" element={<GISIntegration />} />
+                <Route path="/rule-engine" element={<RuleEngine />} />
+                <Route path="/workflow" element={<WorkflowAutomation />} />
+                <Route path="/audit-logs" element={<AuditTrail />} />
+                <Route path="/report-system" element={<ReportingSystem />} />
                 <Route path="/system-settings" element={<div>系統設定</div>} />
                 <Route path="/user-management" element={<div>用戶管理</div>} />
               </Routes>

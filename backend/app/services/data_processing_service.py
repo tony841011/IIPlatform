@@ -10,8 +10,8 @@ import numpy as np
 from dataclasses import dataclass
 from enum import Enum
 
-from ..database import get_postgres_session, influx_client, INFLUXDB_BUCKET, INFLUXDB_ORG
-from ..models import Device, DeviceData, ProcessingRule, DataSource
+from ..database import get_postgres_session, get_influx_client
+from ..models import Device
 from ..config.data_processing_config import (
     DEFAULT_DATA_SOURCES, 
     DEFAULT_PROCESSING_PIPELINES,
@@ -458,18 +458,26 @@ class DataProcessingService:
     def _save_to_influxdb(self, result: ProcessingResult):
         """保存到 InfluxDB"""
         if result.success and result.data:
-            point = {
-                "measurement": "processed_data",
-                "tags": {
-                    "source_id": result.metadata.get("source_id", "unknown"),
-                    "status": "success"
-                },
-                "fields": result.data,
-                "time": datetime.utcnow()
-            }
-            
-            write_api = influx_client.write_api()
-            write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
+            try:
+                influx_client = get_influx_client()
+                if influx_client:
+                    point = {
+                        "measurement": "processed_data",
+                        "tags": {
+                            "source_id": result.metadata.get("source_id", "unknown"),
+                            "status": "success"
+                        },
+                        "fields": result.data,
+                        "time": datetime.utcnow()
+                    }
+                    
+                    write_api = influx_client.write_api()
+                    write_api.write(bucket="iot_platform", org="IIPlatform", record=point)
+                    logger.info("數據已保存到 InfluxDB")
+                else:
+                    logger.warning("InfluxDB 客戶端不可用")
+            except Exception as e:
+                logger.error(f"保存到 InfluxDB 失敗: {str(e)}")
     
     def _save_to_postgresql(self, result: ProcessingResult):
         """保存到 PostgreSQL"""

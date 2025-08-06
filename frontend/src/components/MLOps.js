@@ -1129,10 +1129,10 @@ import {
 
 const { TextArea } = Input;
 
-const MLOps: React.FC = () => {
+const MLOps = () => {
   const [form] = Form.useForm();
 
-  const onFinish = (values: any) => {
+  const onFinish = (values) => {
     console.log('Form values:', values);
   };
 

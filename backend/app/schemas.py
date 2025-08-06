@@ -470,31 +470,100 @@ class DatabaseConnectionTestRequest(BaseModel):
 # AI 模型相關
 class AIModelBase(BaseModel):
     name: str
-    model_type: str  # isolation_forest, autoencoder, lstm, etc.
-    device_id: int
-    configuration: Dict[str, Any]  # 改名為 configuration 避免與 Pydantic 保留字衝突
-    is_active: bool = True
-    is_production: bool = False
+    version: str
+    type: str
+    framework: str
+    source: str
+    description: Optional[str] = None
+    endpoint: Optional[str] = None
+    status: str = 'inactive'
+    size: Optional[str] = None
+    accuracy: Optional[float] = None
+    latency: Optional[int] = None
+    file_path: Optional[str] = None
+    config: Optional[dict] = None
+    tags: Optional[List[str]] = None
 
 class AIModelCreate(AIModelBase):
     pass
 
-class AIModelUpdate(AIModelBase):
-    pass
+class AIModelUpdate(BaseModel):
+    name: Optional[str] = None
+    version: Optional[str] = None
+    type: Optional[str] = None
+    framework: Optional[str] = None
+    source: Optional[str] = None
+    description: Optional[str] = None
+    endpoint: Optional[str] = None
+    status: Optional[str] = None
+    size: Optional[str] = None
+    accuracy: Optional[float] = None
+    latency: Optional[int] = None
+    file_path: Optional[str] = None
+    config: Optional[dict] = None
+    tags: Optional[List[str]] = None
 
 class AIModelOut(AIModelBase):
     id: int
-    model_path: Optional[str] = None
-    training_data_size: Optional[int] = None
-    accuracy: Optional[float] = None
-    f1_score: Optional[float] = None
-    precision: Optional[float] = None
-    recall: Optional[float] = None
-    created_by: int
     created_at: datetime
     updated_at: datetime
+    created_by: Optional[str] = None
+    last_used: Optional[datetime] = None
+
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+class AIModelUsageBase(BaseModel):
+    model_id: int
+    user_id: Optional[str] = None
+    request_type: str
+    input_data: Optional[dict] = None
+    output_data: Optional[dict] = None
+    processing_time: Optional[float] = None
+    success: bool = True
+    error_message: Optional[str] = None
+
+class AIModelUsageCreate(AIModelUsageBase):
+    pass
+
+class AIModelUsageOut(AIModelUsageBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class AIModelPerformanceBase(BaseModel):
+    model_id: int
+    cpu_usage: Optional[float] = None
+    memory_usage: Optional[float] = None
+    gpu_usage: Optional[float] = None
+    gpu_memory_usage: Optional[float] = None
+    request_count: int = 0
+    error_count: int = 0
+    avg_latency: Optional[float] = None
+    throughput: Optional[float] = None
+
+class AIModelPerformanceCreate(AIModelPerformanceBase):
+    pass
+
+class AIModelPerformanceOut(AIModelPerformanceBase):
+    id: int
+    timestamp: datetime
+
+    class Config:
+        orm_mode = True
+
+class AIModelTestRequest(BaseModel):
+    model_id: int
+    input_data: dict
+    config: Optional[dict] = None
+
+class AIModelTestResponse(BaseModel):
+    success: bool
+    output_data: Optional[dict] = None
+    processing_time: Optional[float] = None
+    error_message: Optional[str] = None
 
 # 資料預處理相關
 class DataPreprocessingBase(BaseModel):
@@ -1112,3 +1181,148 @@ class DeviceOut(BaseModel):
     
     class Config:
         from_attributes = True 
+
+# 資料庫連線設定相關
+class DatabaseConnectionSettingsBase(BaseModel):
+    db_type: str
+    name: str
+    host: str
+    port: int
+    database: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    description: Optional[str] = None
+    is_active: bool = True
+    is_default: bool = False
+    auto_initialize: bool = True
+
+class DatabaseConnectionSettingsCreate(DatabaseConnectionSettingsBase):
+    pass
+
+class DatabaseConnectionSettingsUpdate(BaseModel):
+    name: Optional[str] = None
+    host: Optional[str] = None
+    port: Optional[int] = None
+    database: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_default: Optional[bool] = None
+    auto_initialize: Optional[bool] = None
+
+class DatabaseConnectionSettingsOut(DatabaseConnectionSettingsBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+# 系統設定相關
+class SystemSettingsBase(BaseModel):
+    key: str
+    value: Optional[str] = None
+    description: Optional[str] = None
+
+class SystemSettingsCreate(SystemSettingsBase):
+    pass
+
+class SystemSettingsUpdate(BaseModel):
+    value: Optional[str] = None
+    description: Optional[str] = None
+
+class SystemSettingsOut(SystemSettingsBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
+
+# 首次登入設定相關
+class FirstTimeSetup(BaseModel):
+    """首次登入設定"""
+    postgresql: DatabaseConnectionSettingsCreate
+    mongodb: DatabaseConnectionSettingsCreate
+    influxdb: DatabaseConnectionSettingsCreate
+
+class SetupStatus(BaseModel):
+    """設定狀態"""
+    is_first_time: bool
+    setup_completed: bool
+    message: str 
+
+# 平台內容管理相關
+class PlatformContentBase(BaseModel):
+    section: str
+    content_type: str
+    content_key: str
+    content_value: Optional[str] = None
+    content_json: Optional[dict] = None
+    sort_order: int = 0
+    is_active: bool = True
+
+class PlatformContentCreate(PlatformContentBase):
+    pass
+
+class PlatformContentUpdate(BaseModel):
+    content_value: Optional[str] = None
+    content_json: Optional[dict] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class PlatformContentOut(PlatformContentBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+# 平台圖片管理相關
+class PlatformImageBase(BaseModel):
+    name: str
+    original_filename: str
+    file_size: int
+    file_type: str
+    alt_text: Optional[str] = None
+    description: Optional[str] = None
+    category: str
+    width: Optional[int] = None
+    height: Optional[int] = None
+    is_active: bool = True
+
+class PlatformImageCreate(PlatformImageBase):
+    pass
+
+class PlatformImageUpdate(BaseModel):
+    name: Optional[str] = None
+    alt_text: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class PlatformImageOut(PlatformImageBase):
+    id: int
+    filename: str
+    file_path: str
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+# 平台內容完整結構
+class PlatformContentFull(BaseModel):
+    basic: dict
+    features: list
+    modules: list
+    quickstart: list
+    images: list
+
+    class Config:
+        orm_mode = True 

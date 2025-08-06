@@ -142,12 +142,32 @@ python init_all_databases.py
 ```
 
 3. **啟動平台**
+
+#### 方法一：使用自動初始化啟動腳本（推薦）
+```bash
+# 在 backend 目錄下執行
+cd backend
+python start_with_init.py
+```
+
+#### 方法二：使用原有啟動腳本
 ```bash
 # Linux/Mac
 ./start_platform.sh
 
 # Windows
 start_platform.bat
+```
+
+#### 方法三：手動啟動
+```bash
+# 啟動後端
+cd backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# 啟動前端
+cd frontend
+npm start
 ```
 
 4. **訪問平台**
@@ -158,6 +178,40 @@ start_platform.bat
 ### 🔑 預設帳號
 - **用戶名**: admin
 - **密碼**: admin123
+
+### 🔧 首次登入設定
+
+平台支援首次登入時的資料庫連線設定，包括：
+
+- **PostgreSQL**: 主資料庫，用於存儲核心業務數據
+- **MongoDB**: 文檔資料庫，用於存儲日誌和配置
+- **InfluxDB**: 時序資料庫，用於存儲感測器數據
+
+#### 首次登入流程
+1. 使用預設帳號登入（admin/admin123）
+2. 系統檢測是否為首次登入
+3. 如果是首次登入，會顯示資料庫連線設定介面
+4. 設定完成後，系統會保存設定並測試連線
+5. 之後的登入會直接使用已保存的設定
+
+#### 設定功能
+- 支援三種資料庫類型的連線設定
+- 提供連線測試功能
+- 自動保存設定到資料庫
+- 支援設定的修改和管理
+
+#### 初始化資料庫表格
+在首次使用前，需要初始化資料庫表格：
+```bash
+cd backend
+python init_database_tables.py
+```
+
+#### 手動設定管理
+如果需要重新設定或管理資料庫連線，可以：
+1. 登入後進入「系統管理」→「資料庫連線」
+2. 查看、編輯或刪除現有設定
+3. 新增其他資料庫連線
 
 ## 📋 功能模組
 

@@ -9,6 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from urllib.parse import quote_plus
 from datetime import timedelta
 from sqlalchemy import text
+from . import schemas
 
 # 嘗試導入 dotenv，如果失敗則使用預設值
 try:
@@ -431,6 +432,334 @@ def get_alerts(db: Session, device_id: int = None):
     if device_id:
         query = query.filter(Alert.device_id == device_id)
     return query.all()
+
+# 資料庫連線設定管理
+def create_database_connection_setting(db: Session, setting: schemas.DatabaseConnectionSettingsCreate, created_by: str = None):
+    """創建資料庫連線設定"""
+    db_setting = models.DatabaseConnectionSettings(
+        **setting.dict(),
+        created_by=created_by
+    )
+    db.add(db_setting)
+    db.commit()
+    db.refresh(db_setting)
+    return db_setting
+
+def get_database_connection_settings(db: Session, skip: int = 0, limit: int = 100):
+    """獲取所有資料庫連線設定"""
+    return db.query(models.DatabaseConnectionSettings).offset(skip).limit(limit).all()
+
+def get_database_connection_setting_by_type(db: Session, db_type: str):
+    """根據類型獲取資料庫連線設定"""
+    return db.query(models.DatabaseConnectionSettings).filter(
+        models.DatabaseConnectionSettings.db_type == db_type,
+        models.DatabaseConnectionSettings.is_active == True
+    ).first()
+
+def get_active_database_connection_settings(db: Session):
+    """獲取所有活躍的資料庫連線設定"""
+    return db.query(models.DatabaseConnectionSettings).filter(
+        models.DatabaseConnectionSettings.is_active == True
+    ).all()
+
+def update_database_connection_setting(db: Session, setting_id: int, setting: schemas.DatabaseConnectionSettingsUpdate):
+    """更新資料庫連線設定"""
+    db_setting = db.query(models.DatabaseConnectionSettings).filter(
+        models.DatabaseConnectionSettings.id == setting_id
+    ).first()
+    if db_setting:
+        update_data = setting.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_setting, field, value)
+        db_setting.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_setting)
+    return db_setting
+
+def delete_database_connection_setting(db: Session, setting_id: int):
+    """刪除資料庫連線設定"""
+    db_setting = db.query(models.DatabaseConnectionSettings).filter(
+        models.DatabaseConnectionSettings.id == setting_id
+    ).first()
+    if db_setting:
+        db.delete(db_setting)
+        db.commit()
+    return db_setting
+
+def check_first_time_setup(db: Session):
+    """檢查是否為首次設定"""
+    # 檢查是否有任何資料庫連線設定
+    settings_count = db.query(models.DatabaseConnectionSettings).count()
+    return settings_count == 0
+
+def get_system_setting(db: Session, key: str):
+    """獲取系統設定"""
+    return db.query(models.SystemSettings).filter(
+        models.SystemSettings.key == key
+    ).first()
+
+def create_or_update_system_setting(db: Session, key: str, value: str, description: str = None):
+    """創建或更新系統設定"""
+    db_setting = get_system_setting(db, key)
+    if db_setting:
+        db_setting.value = value
+        db_setting.description = description
+        db_setting.updated_at = datetime.utcnow()
+    else:
+        db_setting = models.SystemSettings(
+            key=key,
+            value=value,
+            description=description
+        )
+        db.add(db_setting)
+    db.commit()
+    db.refresh(db_setting)
+    return db_setting
+
+def mark_setup_completed(db: Session):
+    """標記設定完成"""
+    return create_or_update_system_setting(
+        db, 
+        "first_time_setup_completed", 
+        "true", 
+        "首次設定已完成"
+    )
+
+# AI Model 管理
+def create_ai_model(db: Session, model: schemas.AIModelCreate, created_by: str = None):
+    """創建 AI Model"""
+    db_model = models.AIModel(
+        **model.dict(),
+        created_by=created_by
+    )
+    db.add(db_model)
+    db.commit()
+    db.refresh(db_model)
+    return db_model
+
+def get_ai_models(db: Session, skip: int = 0, limit: int = 100, type_filter: str = None):
+    """獲取 AI Model 列表"""
+    query = db.query(models.AIModel)
+    if type_filter:
+        query = query.filter(models.AIModel.type == type_filter)
+    return query.offset(skip).limit(limit).all()
+
+def get_ai_model(db: Session, model_id: int):
+    """根據 ID 獲取 AI Model"""
+    return db.query(models.AIModel).filter(models.AIModel.id == model_id).first()
+
+def update_ai_model(db: Session, model_id: int, model: schemas.AIModelUpdate):
+    """更新 AI Model"""
+    db_model = get_ai_model(db, model_id)
+    if db_model:
+        update_data = model.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_model, field, value)
+        db_model.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_model)
+    return db_model
+
+def delete_ai_model(db: Session, model_id: int):
+    """刪除 AI Model"""
+    db_model = get_ai_model(db, model_id)
+    if db_model:
+        db.delete(db_model)
+        db.commit()
+    return db_model
+
+def toggle_ai_model_status(db: Session, model_id: int):
+    """切換 AI Model 狀態"""
+    db_model = get_ai_model(db, model_id)
+    if db_model:
+        db_model.status = 'active' if db_model.status == 'inactive' else 'inactive'
+        db_model.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_model)
+    return db_model
+
+def create_ai_model_usage(db: Session, usage: schemas.AIModelUsageCreate):
+    """創建 AI Model 使用記錄"""
+    db_usage = models.AIModelUsage(**usage.dict())
+    db.add(db_usage)
+    
+    # 更新模型的最後使用時間
+    db_model = get_ai_model(db, usage.model_id)
+    if db_model:
+        db_model.last_used = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(db_usage)
+    return db_usage
+
+def get_ai_model_usage(db: Session, model_id: int, skip: int = 0, limit: int = 100):
+    """獲取 AI Model 使用記錄"""
+    return db.query(models.AIModelUsage).filter(
+        models.AIModelUsage.model_id == model_id
+    ).offset(skip).limit(limit).all()
+
+def create_ai_model_performance(db: Session, performance: schemas.AIModelPerformanceCreate):
+    """創建 AI Model 性能記錄"""
+    db_performance = models.AIModelPerformance(**performance.dict())
+    db.add(db_performance)
+    db.commit()
+    db.refresh(db_performance)
+    return db_performance
+
+def get_ai_model_performance(db: Session, model_id: int, hours: int = 24):
+    """獲取 AI Model 性能記錄"""
+    from datetime import timedelta
+    start_time = datetime.utcnow() - timedelta(hours=hours)
+    
+    return db.query(models.AIModelPerformance).filter(
+        models.AIModelPerformance.model_id == model_id,
+        models.AIModelPerformance.timestamp >= start_time
+    ).order_by(models.AIModelPerformance.timestamp.desc()).all()
+
+def get_ai_model_stats(db: Session):
+    """獲取 AI Model 統計信息"""
+    total_models = db.query(models.AIModel).count()
+    active_models = db.query(models.AIModel).filter(models.AIModel.status == 'active').count()
+    uploading_models = db.query(models.AIModel).filter(models.AIModel.status == 'uploading').count()
+    
+    # 獲取不同類型的模型數量
+    type_counts = db.query(
+        models.AIModel.type,
+        db.func.count(models.AIModel.id)
+    ).group_by(models.AIModel.type).all()
+    
+    return {
+        'total': total_models,
+        'active': active_models,
+        'uploading': uploading_models,
+        'types': dict(type_counts)
+    }
+
+# 平台內容管理
+def create_platform_content(db: Session, content: schemas.PlatformContentCreate, created_by: str = None):
+    """創建平台內容"""
+    db_content = models.PlatformContent(
+        **content.dict(),
+        created_by=created_by
+    )
+    db.add(db_content)
+    db.commit()
+    db.refresh(db_content)
+    return db_content
+
+def get_platform_content(db: Session, section: str = None, content_type: str = None):
+    """獲取平台內容"""
+    query = db.query(models.PlatformContent).filter(models.PlatformContent.is_active == True)
+    
+    if section:
+        query = query.filter(models.PlatformContent.section == section)
+    if content_type:
+        query = query.filter(models.PlatformContent.content_type == content_type)
+    
+    return query.order_by(models.PlatformContent.sort_order).all()
+
+def update_platform_content(db: Session, content_id: int, content: schemas.PlatformContentUpdate):
+    """更新平台內容"""
+    db_content = db.query(models.PlatformContent).filter(models.PlatformContent.id == content_id).first()
+    if db_content:
+        update_data = content.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_content, field, value)
+        db_content.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_content)
+    return db_content
+
+def delete_platform_content(db: Session, content_id: int):
+    """刪除平台內容"""
+    db_content = db.query(models.PlatformContent).filter(models.PlatformContent.id == content_id).first()
+    if db_content:
+        db.delete(db_content)
+        db.commit()
+    return db_content
+
+def get_platform_content_full(db: Session):
+    """獲取完整的平台內容結構"""
+    contents = get_platform_content(db)
+    
+    # 組織內容結構
+    result = {
+        'basic': {},
+        'features': [],
+        'modules': [],
+        'quickstart': [],
+        'images': []
+    }
+    
+    for content in contents:
+        if content.section == 'basic':
+            result['basic'][content.content_key] = content.content_value
+        elif content.section == 'features':
+            if content.content_json:
+                result['features'].append(content.content_json)
+        elif content.section == 'modules':
+            if content.content_json:
+                result['modules'].append(content.content_json)
+        elif content.section == 'quickstart':
+            if content.content_json:
+                result['quickstart'].append(content.content_json)
+    
+    return result
+
+# 平台圖片管理
+def create_platform_image(db: Session, image: schemas.PlatformImageCreate, created_by: str = None):
+    """創建平台圖片記錄"""
+    db_image = models.PlatformImage(
+        **image.dict(),
+        created_by=created_by
+    )
+    db.add(db_image)
+    db.commit()
+    db.refresh(db_image)
+    return db_image
+
+def get_platform_images(db: Session, category: str = None, is_active: bool = True):
+    """獲取平台圖片"""
+    query = db.query(models.PlatformImage).filter(models.PlatformImage.is_active == is_active)
+    
+    if category:
+        query = query.filter(models.PlatformImage.category == category)
+    
+    return query.order_by(models.PlatformImage.created_at.desc()).all()
+
+def get_platform_image(db: Session, image_id: int):
+    """根據 ID 獲取平台圖片"""
+    return db.query(models.PlatformImage).filter(models.PlatformImage.id == image_id).first()
+
+def update_platform_image(db: Session, image_id: int, image: schemas.PlatformImageUpdate):
+    """更新平台圖片"""
+    db_image = get_platform_image(db, image_id)
+    if db_image:
+        update_data = image.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_image, field, value)
+        db_image.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_image)
+    return db_image
+
+def delete_platform_image(db: Session, image_id: int):
+    """刪除平台圖片"""
+    db_image = get_platform_image(db, image_id)
+    if db_image:
+        # 這裡可以添加實際檔案刪除邏輯
+        db.delete(db_image)
+        db.commit()
+    return db_image
+
+def get_platform_images_by_category(db: Session):
+    """按分類獲取圖片統計"""
+    categories = db.query(
+        models.PlatformImage.category,
+        db.func.count(models.PlatformImage.id)
+    ).filter(models.PlatformImage.is_active == True).group_by(models.PlatformImage.category).all()
+    
+    return dict(categories)
 
 # 初始化資料庫管理器
 db_manager = DatabaseManager() 

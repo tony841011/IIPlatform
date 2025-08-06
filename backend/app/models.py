@@ -235,6 +235,43 @@ class DatabaseConnection(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class DatabaseConnectionSettings(Base):
+    """資料庫連線設定模型"""
+    __tablename__ = "database_connection_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    db_type = Column(String, nullable=False, index=True)  # postgresql, mongodb, influxdb
+    name = Column(String, nullable=False)
+    host = Column(String, nullable=False)
+    port = Column(Integer, nullable=False)
+    database = Column(String, nullable=False)
+    username = Column(String, nullable=True)
+    password = Column(String, nullable=True)
+    description = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    is_default = Column(Boolean, default=False)
+    auto_initialize = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String, nullable=True)  # 創建者用戶名
+
+    class Config:
+        orm_mode = True
+
+class SystemSettings(Base):
+    """系統設定模型"""
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, nullable=False, index=True)
+    value = Column(Text, nullable=True)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    class Config:
+        orm_mode = True
+
 # 通訊協定相關
 class CommunicationProtocol(Base):
     __tablename__ = "communication_protocols"
@@ -249,15 +286,109 @@ class CommunicationProtocol(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-# 系統設定
-class SystemSetting(Base):
-    __tablename__ = "system_settings"
-    
+class AIModel(Base):
+    """AI Model 模型"""
+    __tablename__ = "ai_models"
+
     id = Column(Integer, primary_key=True, index=True)
-    key = Column(String(100), unique=True, nullable=False)
-    value = Column(Text, nullable=True)
+    name = Column(String, nullable=False, index=True)
+    version = Column(String, nullable=False)
+    type = Column(String, nullable=False, index=True)  # llm, vision, audio, multimodal, embedding, custom
+    framework = Column(String, nullable=False)  # pytorch, tensorflow, onnx, tensorrt, openvino, custom
+    source = Column(String, nullable=False)  # huggingface, openai, anthropic, local, url, custom
     description = Column(Text, nullable=True)
-    category = Column(String(50), nullable=True)
-    is_public = Column(Boolean, default=False)
+    endpoint = Column(String, nullable=True)
+    status = Column(String, default='inactive')  # active, inactive, uploading, error
+    size = Column(String, nullable=True)  # 模型大小
+    accuracy = Column(Float, nullable=True)  # 準確率
+    latency = Column(Integer, nullable=True)  # 延遲 (ms)
+    file_path = Column(String, nullable=True)  # 模型文件路徑
+    config = Column(JSON, nullable=True)  # 模型配置
+    tags = Column(JSON, nullable=True)  # 標籤
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String, nullable=True)
+    last_used = Column(DateTime, nullable=True)
+
+    class Config:
+        orm_mode = True
+
+class AIModelUsage(Base):
+    """AI Model 使用記錄"""
+    __tablename__ = "ai_model_usage"
+
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("ai_models.id"), nullable=False)
+    user_id = Column(String, nullable=True)
+    request_type = Column(String, nullable=False)  # inference, training, evaluation
+    input_data = Column(JSON, nullable=True)
+    output_data = Column(JSON, nullable=True)
+    processing_time = Column(Float, nullable=True)  # 處理時間 (秒)
+    success = Column(Boolean, default=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    class Config:
+        orm_mode = True
+
+class AIModelPerformance(Base):
+    """AI Model 性能監控"""
+    __tablename__ = "ai_model_performance"
+
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("ai_models.id"), nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    cpu_usage = Column(Float, nullable=True)
+    memory_usage = Column(Float, nullable=True)
+    gpu_usage = Column(Float, nullable=True)
+    gpu_memory_usage = Column(Float, nullable=True)
+    request_count = Column(Integer, default=0)
+    error_count = Column(Integer, default=0)
+    avg_latency = Column(Float, nullable=True)
+    throughput = Column(Float, nullable=True)  # 每秒請求數
+
+    class Config:
+        orm_mode = True
+
+class PlatformContent(Base):
+    """平台內容管理"""
+    __tablename__ = "platform_content"
+
+    id = Column(Integer, primary_key=True, index=True)
+    section = Column(String, nullable=False, index=True)  # basic, features, modules, quickstart
+    content_type = Column(String, nullable=False)  # title, subtitle, description, feature, module
+    content_key = Column(String, nullable=False)  # 內容的鍵值
+    content_value = Column(Text, nullable=True)  # 文字內容
+    content_json = Column(JSON, nullable=True)  # JSON 格式內容
+    sort_order = Column(Integer, default=0)  # 排序順序
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String, nullable=True)
+
+    class Config:
+        orm_mode = True
+
+class PlatformImage(Base):
+    """平台圖片管理"""
+    __tablename__ = "platform_images"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    filename = Column(String, nullable=False)  # 實際檔案名稱
+    original_filename = Column(String, nullable=False)  # 原始檔案名稱
+    file_path = Column(String, nullable=False)  # 檔案路徑
+    file_size = Column(Integer, nullable=False)  # 檔案大小 (bytes)
+    file_type = Column(String, nullable=False)  # 檔案類型 (MIME)
+    alt_text = Column(String, nullable=True)  # 替代文字
+    description = Column(Text, nullable=True)  # 圖片描述
+    category = Column(String, nullable=False, index=True)  # 圖片分類
+    width = Column(Integer, nullable=True)  # 圖片寬度
+    height = Column(Integer, nullable=True)  # 圖片高度
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String, nullable=True)
+
+    class Config:
+        orm_mode = True

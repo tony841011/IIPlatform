@@ -1,15 +1,19 @@
 import React from 'react';
-import { Card, Row, Col, Statistic, Progress, Table, Tag } from 'antd';
+import { Card, Row, Col, Statistic, Progress, Table, Tag, Button, Space } from 'antd';
 import { 
   DesktopOutlined, 
   AlertOutlined, 
   CheckCircleOutlined, 
   ExclamationCircleOutlined,
   LineChartOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  PlusOutlined
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  
   // 模擬數據
   const deviceData = [
     { key: '1', name: '溫度感測器-01', status: 'online', category: '感測器', lastUpdate: '2024-01-15 14:30:00' },
@@ -68,7 +72,24 @@ const Dashboard = () => {
 
   return (
     <div>
-      <h2>總覽儀表板</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h2>總覽儀表板</h2>
+        <Space>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/custom-dashboard')}
+          >
+            自定義儀表板
+          </Button>
+          <Button 
+            icon={<BarChartOutlined />}
+            onClick={() => navigate('/custom-dashboard')}
+          >
+            圖表管理
+          </Button>
+        </Space>
+      </div>
       
       {/* 統計卡片 */}
       <Row gutter={16} style={{ marginBottom: 24 }}>

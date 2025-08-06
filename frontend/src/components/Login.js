@@ -20,6 +20,7 @@ import {
   InputNumber,
   Checkbox
 } from 'antd';
+import FirstTimeSetup from './FirstTimeSetup';
 import {
   UserOutlined,
   LockOutlined,
@@ -59,6 +60,8 @@ const Login = ({ onLoginSuccess }) => {
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [editingConnection, setEditingConnection] = useState(null);
   const [connectionForm] = Form.useForm();
+  const [isFirstTime, setIsFirstTime] = useState(false);
+  const [showFirstTimeSetup, setShowFirstTimeSetup] = useState(false);
 
   // 獲取資料庫連線列表
   useEffect(() => {
@@ -238,43 +241,66 @@ const Login = ({ onLoginSuccess }) => {
   const handleLogin = async (values) => {
     setLoading(true);
     try {
-      // 模擬登入 API 呼叫
+      // 呼叫實際的登入 API
       const loginData = {
         username: values.username,
         password: values.password,
         selected_databases: selectedDatabases
       };
 
-      // 這裡應該呼叫實際的登入 API
-      // const response = await axios.post('http://localhost:8000/api/v1/auth/login', loginData);
+      const response = await axios.post('http://localhost:8000/api/v1/auth/login', loginData);
       
-      // 模擬登入成功
-      setTimeout(() => {
-        if (values.username === 'admin' && values.password === 'admin123') {
+      if (response.data.success) {
+        // 檢查是否為首次登入
+        if (response.data.is_first_time) {
+          setIsFirstTime(true);
+          setShowFirstTimeSetup(true);
+          message.info('首次登入，請設定資料庫連線');
+        } else {
           const userData = {
-            username: values.username,
-            displayName: '系統管理員',
-            role: 'admin',
-            permissions: ['all'],
-            selectedDatabases
+            username: response.data.user.username,
+            displayName: response.data.user.display_name,
+            role: response.data.user.role,
+            permissions: response.data.user.permissions,
+            selectedDatabases: response.data.user.selected_databases,
+            databaseStatus: response.data.user.database_status
           };
-
-          // 初始化選定的資料庫
-          initializeSelectedDatabases();
 
           // 觸發登入成功回調
           onLoginSuccess(userData);
-          message.success('登入成功！');
-        } else {
-          message.error('用戶名或密碼錯誤！');
+          message.success(response.data.message || '登入成功！');
         }
-        setLoading(false);
-      }, 1000);
-
+      } else {
+        message.error(response.data.message || '登入失敗！');
+      }
     } catch (error) {
+      console.error('登入錯誤:', error);
       message.error('登入失敗，請檢查網路連線');
+    } finally {
       setLoading(false);
     }
+  };
+
+  const handleFirstTimeSetupComplete = (setupData) => {
+    setShowFirstTimeSetup(false);
+    
+    // 創建用戶數據
+    const userData = {
+      username: 'admin',
+      displayName: '系統管理員',
+      role: 'admin',
+      permissions: ['all'],
+      selectedDatabases: {
+        postgresql: true,
+        mongodb: true,
+        influxdb: true
+      },
+      databaseStatus: setupData.test_results
+    };
+
+    // 觸發登入成功回調
+    onLoginSuccess(userData);
+    message.success('首次設定完成，歡迎使用 IIPlatform！');
   };
 
   // 資料庫類型選項
@@ -286,6 +312,11 @@ const Login = ({ onLoginSuccess }) => {
     { value: 'oracle', label: 'Oracle', icon: <DatabaseOutlined /> },
     { value: 'sqlserver', label: 'SQL Server', icon: <DatabaseOutlined /> }
   ];
+
+  // 如果顯示首次設定，則渲染 FirstTimeSetup 組件
+  if (showFirstTimeSetup) {
+    return <FirstTimeSetup onSetupComplete={handleFirstTimeSetupComplete} />;
+  }
 
   return (
     <div style={{
