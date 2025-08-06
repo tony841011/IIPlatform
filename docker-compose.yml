@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # PostgreSQL
+  postgres:
+    image: postgres:15
+    container_name: iot_postgres
+    environment:
+      POSTGRES_DB: iot_platform
+      POSTGRES_USER: iot_user
+      POSTGRES_PASSWORD: iot_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - iot_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iot_user -d iot_platform"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB
+  mongodb:
+    image: mongo:7
+    container_name: iot_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: iot_user
+      MONGO_INITDB_ROOT_PASSWORD: iot_password
+      MONGO_INITDB_DATABASE: iot_platform
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - iot_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # InfluxDB
+  influxdb:
+    image: influxdb:2.7
+    container_name: iot_influxdb
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: iot_user
+      DOCKER_INFLUXDB_INIT_PASSWORD: iot_password
+      DOCKER_INFLUXDB_INIT_ORG: iot_org
+      DOCKER_INFLUXDB_INIT_BUCKET: iot_platform
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: iot_admin_token
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - iot_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 後端 API
+  backend:
+    build: ./backend
+    container_name: iot_backend
+    environment:
+      - POSTGRES_URL=postgresql://iot_user:iot_password@postgres:5432/iot_platform
+      - MONGO_URL=mongodb://iot_user:iot_password@mongodb:27017/
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=iot_admin_token
+      - INFLUX_ORG=iot_org
+      - INFLUX_BUCKET=iot_platform
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    networks:
+      - iot_network
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # 前端
+  frontend:
+    build: ./frontend
+    container_name: iot_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - iot_network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  influxdb_data:
+
+networks:
+  iot_network:
+    driver: bridge 

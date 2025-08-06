@@ -1,5 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from pymongo import MongoClient
+from influxdb_client import InfluxDBClient
+import os
 from .models import (
     Device, DeviceData, User, Alert, Base, DeviceGroup, Role, 
     Firmware, OTAUpdate, Rule, Workflow, WorkflowExecution, 
@@ -9,18 +12,157 @@ from .models import (
 import datetime
 import uuid
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./iot.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# 多資料庫配置
+class DatabaseManager:
+    def __init__(self):
+        # PostgreSQL 配置
+        self.postgres_url = os.getenv("POSTGRES_URL", "postgresql://iot_user:iot_password@localhost:5432/iot_platform")
+        self.postgres_engine = create_engine(self.postgres_url)
+        self.PostgresSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.postgres_engine)
+        
+        # MongoDB 配置
+        self.mongo_url = os.getenv("MONGO_URL", "mongodb://iot_user:iot_password@localhost:27017/")
+        self.mongo_client = MongoClient(self.mongo_url)
+        self.mongo_db = self.mongo_client.iot_platform
+        
+        # InfluxDB 配置
+        self.influx_url = os.getenv("INFLUX_URL", "http://localhost:8086")
+        self.influx_token = os.getenv("INFLUX_TOKEN", "iot_admin_token")
+        self.influx_org = os.getenv("INFLUX_ORG", "iot_org")
+        self.influx_bucket = os.getenv("INFLUX_BUCKET", "iot_platform")
+        
+        self.influx_client = InfluxDBClient(
+            url=self.influx_url,
+            token=self.influx_token,
+            org=self.influx_org
+        )
+    
+    def get_postgres_session(self):
+        """獲取 PostgreSQL 會話"""
+        db = self.PostgresSessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+    
+    def get_mongo_db(self):
+        """獲取 MongoDB 資料庫"""
+        return self.mongo_db
+    
+    def get_influx_client(self):
+        """獲取 InfluxDB 客戶端"""
+        return self.influx_client
+    
+    def test_connections(self):
+        """測試所有資料庫連線"""
+        results = {}
+        
+        # 測試 PostgreSQL
+        try:
+            with self.postgres_engine.connect() as conn:
+                conn.execute("SELECT 1")
+            results["postgresql"] = {"status": "success", "message": "PostgreSQL 連線正常"}
+        except Exception as e:
+            results["postgresql"] = {"status": "error", "message": f"PostgreSQL 連線失敗: {str(e)}"}
+        
+        # 測試 MongoDB
+        try:
+            self.mongo_client.admin.command('ping')
+            results["mongodb"] = {"status": "success", "message": "MongoDB 連線正常"}
+        except Exception as e:
+            results["mongodb"] = {"status": "error", "message": f"MongoDB 連線失敗: {str(e)}"}
+        
+        # 測試 InfluxDB
+        try:
+            self.influx_client.ping()
+            results["influxdb"] = {"status": "success", "message": "InfluxDB 連線正常"}
+        except Exception as e:
+            results["influxdb"] = {"status": "error", "message": f"InfluxDB 連線失敗: {str(e)}"}
+        
+        return results
+    
+    def close_all(self):
+        """關閉所有資料庫連線"""
+        if hasattr(self, 'mongo_client'):
+            self.mongo_client.close()
+        if hasattr(self, 'influx_client'):
+            self.influx_client.close()
 
+# 全域資料庫管理器
+db_manager = DatabaseManager()
+
+# 向後相容的函數
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    """獲取 PostgreSQL 會話（向後相容）"""
+    return db_manager.get_postgres_session()
 
-# 基本 CRUD 操作
+def get_mongo_db():
+    """獲取 MongoDB 資料庫"""
+    return db_manager.get_mongo_db()
+
+def get_influx_client():
+    """獲取 InfluxDB 客戶端"""
+    return db_manager.get_influx_client()
+
+# 更新現有的資料庫操作函數以支援多資料庫
+def create_device_data_multi_db(db, data, use_influxdb=True):
+    """創建設備數據（支援多資料庫）"""
+    # PostgreSQL 存儲基本資訊
+    db_data = DeviceData(
+        device_id=data.device_id,
+        value=data.value,
+        timestamp=data.timestamp
+    )
+    db.add(db_data)
+    db.commit()
+    db.refresh(db_data)
+    
+    # InfluxDB 存儲時序數據
+    if use_influxdb:
+        try:
+            from .influxdb_client import influxdb_manager
+            influxdb_manager.write_device_sensor_data(
+                device_id=str(data.device_id),
+                sensor_type="general",
+                sensor_id="sensor_1",
+                value=data.value,
+                timestamp=data.timestamp
+            )
+        except Exception as e:
+            print(f"InfluxDB 寫入失敗: {e}")
+    
+    return db_data
+
+def get_device_history_multi_db(db, device_id, start_time=None, end_time=None, use_influxdb=True):
+    """獲取設備歷史數據（支援多資料庫）"""
+    # PostgreSQL 查詢
+    query = db.query(DeviceData).filter(DeviceData.device_id == device_id)
+    if start_time:
+        query = query.filter(DeviceData.timestamp >= start_time)
+    if end_time:
+        query = query.filter(DeviceData.timestamp <= end_time)
+    
+    postgres_data = query.order_by(DeviceData.timestamp.desc()).all()
+    
+    # InfluxDB 查詢（如果啟用）
+    influx_data = []
+    if use_influxdb:
+        try:
+            from .influxdb_client import influxdb_manager
+            influx_data = influxdb_manager.query_device_sensor_data(
+                device_id=str(device_id),
+                start_time=start_time,
+                end_time=end_time
+            )
+        except Exception as e:
+            print(f"InfluxDB 查詢失敗: {e}")
+    
+    return {
+        "postgresql": postgres_data,
+        "influxdb": influx_data
+    }
+
+# 保留原有的函數以維持向後相容性
 def create_device(db, device):
     db_device = Device(name=device.name, location=device.location)
     db.add(db_device)
@@ -32,11 +174,7 @@ def get_devices(db):
     return db.query(Device).all()
 
 def save_device_data(db, data):
-    db_data = DeviceData(device_id=data.device_id, value=data.value, timestamp=data.timestamp)
-    db.add(db_data)
-    db.commit()
-    db.refresh(db_data)
-    return db_data
+    return create_device_data_multi_db(db, data)
 
 def get_user_by_username(db, username):
     return db.query(User).filter(User.username == username).first()
@@ -62,7 +200,6 @@ def get_alerts(db, device_id=None):
     return q.order_by(Alert.timestamp.desc()).all()
 
 def create_device_group(db, group):
-    # 修復：使用相對導入
     db_group = DeviceGroup(name=group.name)
     db.add(db_group)
     db.commit()
@@ -70,7 +207,6 @@ def create_device_group(db, group):
     return db_group
 
 def get_device_groups(db):
-    # 修復：使用相對導入
     return db.query(DeviceGroup).all()
 
 def update_device(db, device_id, update):
@@ -369,7 +505,6 @@ def get_opc_ua_configs(db, device_id=None):
 def create_database_connection(db, connection):
     """創建資料庫連線"""
     try:
-        # 修復：使用 Pydantic v2 的 model_dump() 方法
         connection_data = connection.model_dump()
         db_connection = DatabaseConnection(**connection_data)
         db.add(db_connection)
@@ -395,7 +530,6 @@ def update_database_connection(db, connection_id, connection):
         if not db_connection:
             raise Exception("資料庫連線不存在")
         
-        # 修復：使用 Pydantic v2 的 model_dump() 方法
         update_data = connection.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_connection, field, value)
@@ -413,166 +547,6 @@ def delete_database_connection(db, connection_id):
         db.delete(db_connection)
         db.commit()
     return {"message": "連線已刪除"}
-
-# 資料表配置管理
-def create_table_schema(db, schema):
-    """創建資料表配置"""
-    # 這裡需要實現資料表配置的創建邏輯
-    return {"message": "資料表配置創建成功"}
-
-def get_table_schemas(db):
-    """獲取資料表配置列表"""
-    return []
-
-def get_table_schema(db, schema_id):
-    """獲取特定資料表配置"""
-    return None
-
-def update_table_schema(db, schema_id, schema):
-    """更新資料表配置"""
-    return {"message": "資料表配置更新成功"}
-
-def delete_table_schema(db, schema_id):
-    """刪除資料表配置"""
-    return {"message": "資料表配置刪除成功"}
-
-# 資料表欄位配置管理
-def create_table_column(db, column):
-    """創建資料表欄位配置"""
-    return {"message": "資料表欄位配置創建成功"}
-
-def get_table_columns(db, table_id):
-    """獲取資料表欄位配置列表"""
-    return []
-
-def update_table_column(db, column_id, column):
-    """更新資料表欄位配置"""
-    return {"message": "資料表欄位配置更新成功"}
-
-def delete_table_column(db, column_id):
-    """刪除資料表欄位配置"""
-    return {"message": "資料表欄位配置刪除成功"}
-
-# ONVIF 相關功能
-def discover_onvif_devices(db, request, user_id):
-    """發現 ONVIF 設備"""
-    # 這裡實現 ONVIF 設備發現邏輯
-    return []
-
-def configure_onvif_device(db, config, user_id):
-    """配置 ONVIF 設備"""
-    return {"message": "ONVIF 設備配置成功"}
-
-def test_onvif_connection(db, test, user_id):
-    """測試 ONVIF 連線"""
-    return {"message": "ONVIF 連線測試成功"}
-
-def start_onvif_stream(db, stream, user_id):
-    """開始 ONVIF 串流"""
-    return {"message": "ONVIF 串流開始成功"}
-
-def control_onvif_ptz(db, control, user_id):
-    """控制 ONVIF PTZ"""
-    return {"message": "ONVIF PTZ 控制成功"}
-
-def configure_onvif_events(db, events, user_id):
-    """配置 ONVIF 事件"""
-    return {"message": "ONVIF 事件配置成功"}
-
-def get_onvif_status(db, device_id, user_id):
-    """獲取 ONVIF 設備狀態"""
-    return {"status": "online"}
-
-def take_onvif_snapshot(db, snapshot, user_id):
-    """拍攝 ONVIF 快照"""
-    return {"message": "ONVIF 快照拍攝成功"}
-
-# 使用者行為分析
-def create_user_behavior(db, behavior):
-    """創建使用者行為記錄"""
-    # 這裡需要實現使用者行為記錄的創建邏輯
-    return {"message": "使用者行為記錄創建成功"}
-
-def get_usage_analytics(db):
-    """獲取使用分析"""
-    return {
-        "total_users": 0,
-        "active_users_today": 0,
-        "active_users_week": 0,
-        "active_users_month": 0,
-        "total_sessions": 0,
-        "avg_session_duration": 0.0,
-        "most_used_features": [],
-        "user_activity_timeline": []
-    }
-
-def get_feature_usage(db, start_date=None, end_date=None):
-    """獲取功能使用統計"""
-    return []
-
-def get_user_sessions(db, user_id=None, start_date=None, end_date=None):
-    """獲取使用者會話統計"""
-    return []
-
-# 開發者入口
-def create_api_token(db, token):
-    """創建 API Token"""
-    return {"message": "API Token 創建成功"}
-
-def get_api_tokens(db, user_id=None):
-    """獲取 API Token 列表"""
-    return []
-
-def delete_api_token(db, token_id):
-    """刪除 API Token"""
-    return {"message": "API Token 刪除成功"}
-
-def create_webhook(db, webhook):
-    """創建 Webhook"""
-    return {"message": "Webhook 創建成功"}
-
-def get_webhooks(db, user_id=None):
-    """獲取 Webhook 列表"""
-    return []
-
-def test_webhook(db, webhook_id):
-    """測試 Webhook"""
-    return {"message": "Webhook 測試成功"}
-
-def get_webhook_deliveries(db, webhook_id):
-    """獲取 Webhook 發送記錄"""
-    return []
-
-def get_api_usage(db, token_id=None, start_date=None, end_date=None):
-    """獲取 API 使用統計"""
-    return []
-
-def get_sdk_downloads(db):
-    """獲取 SDK 下載統計"""
-    return []
-
-def record_sdk_download(db, download):
-    """記錄 SDK 下載"""
-    return {"message": "SDK 下載記錄成功"}
-
-def get_api_documentation(db, version=None):
-    """獲取 API 文檔"""
-    return {"content": "API 文檔內容"}
-
-def create_api_documentation(db, doc):
-    """創建 API 文檔"""
-    return {"message": "API 文檔創建成功"}
-
-def get_developer_portal_stats(db):
-    """獲取開發者入口統計"""
-    return {
-        "total_tokens": 0,
-        "active_tokens": 0,
-        "total_webhooks": 0,
-        "active_webhooks": 0,
-        "api_calls_today": 0,
-        "api_calls_week": 0
-    }
 
 # MongoDB 連線測試功能
 def test_mongodb_connection(connection_data):
@@ -690,11 +664,11 @@ def authenticate_user(db, username: str, password: str):
 
 def create_device_data(db, data):
     """創建設備數據"""
-    return save_device_data(db, data)
+    return create_device_data_multi_db(db, data)
 
 def get_device_history(db, device_id):
     """獲取設備歷史數據"""
-    return db.query(DeviceData).filter(DeviceData.device_id == device_id).order_by(DeviceData.timestamp.desc()).all()
+    return get_device_history_multi_db(db, device_id)
 
 def detect_anomaly(db, device_id):
     """AI 異常檢測"""
