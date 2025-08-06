@@ -98,7 +98,7 @@ import {
   FileGifOutlined,
   FileBmpOutlined,
   FileTiffOutlined,
-  TagOutlined,
+  TagOutlined
 } from '@ant-design/icons';
 
 // 導入組件
@@ -114,7 +114,6 @@ import DatabaseConnectionManagement from './components/DatabaseConnectionManagem
 import TableSchemaManagement from './components/TableSchemaManagement';
 import VideoRecognition from './components/VideoRecognition';
 import MLOps from './components/MLOps';
-
 import OTAUpdate from './components/OTAUpdate';
 import EdgeGateway from './components/EdgeGateway';
 import GISIntegration from './components/GISIntegration';
@@ -123,80 +122,129 @@ import WorkflowAutomation from './components/WorkflowAutomation';
 import AuditTrail from './components/AuditTrail';
 import ReportingSystem from './components/ReportingSystem';
 import NotificationPreferences from './components/NotificationPreferences';
-import PlatformIntro from './components/PlatformIntro';
 import SystemSupport from './components/SystemSupport';
-import Login from './components/Login';
-import DeviceCategoryManagement from './components/DeviceCategoryManagement';
+import PlatformIntro from './components/PlatformIntro';
+import DeviceCategories from './components/DeviceCategories';
 
-const { Header, Sider, Content } = Layout;
+const { Header, Content, Sider } = Layout;
 
 const App = () => {
+  const [collapsed, setCollapsed] = useState(false);
+  const [currentUser, setCurrentUser] = useState({
+    displayName: '系統管理員',
+    role: 'admin'
+  });
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
+  const [roleSwitchModalVisible, setRoleSwitchModalVisible] = useState(false);
+  const [form] = Form.useForm();
+  const [roleForm] = Form.useForm();
+
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const [collapsed, setCollapsed] = useState(false);
-  const [currentUser, setCurrentUser] = useState({
-    username: 'admin',
-    displayName: '系統管理員',
-    role: 'admin',
-    avatar: 'https://joeschmoe.io/api/v1/admin'
-  });
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [switchRoleModalVisible, setSwitchRoleModalVisible] = useState(false);
-  const [form] = Form.useForm();
-
   const handleLogin = (values) => {
+    console.log('登入資訊:', values);
     setCurrentUser({
-      username: values.username,
-      displayName: values.displayName || values.username,
-      role: values.role || 'admin',
-      avatar: `https://joeschmoe.io/api/v1/${values.username}`
+      displayName: values.username,
+      role: 'admin'
     });
     setIsLoggedIn(true);
+    setLoginModalVisible(false);
+    form.resetFields();
     message.success('登入成功');
   };
 
   const handleLogout = () => {
-    setCurrentUser(null);
     setIsLoggedIn(false);
-    message.success('已成功登出');
+    setCurrentUser(null);
+    message.success('登出成功');
   };
 
   const handleRoleSwitch = (values) => {
-    setCurrentUser({
-      ...currentUser,
-      role: values.role,
-      displayName: values.displayName
-    });
-    setSwitchRoleModalVisible(false);
+    console.log('角色切換:', values);
+    setCurrentUser(prev => ({
+      ...prev,
+      role: values.role
+    }));
+    setRoleSwitchModalVisible(false);
+    roleForm.resetFields();
     message.success('角色切換成功');
   };
 
-  // 用戶選單
   const userMenuItems = [
     {
-      key: 'switch-role',
+      key: 'profile',
+      icon: <UserOutlined />,
+      label: '個人資料',
+    },
+    {
+      key: 'role-switch',
       icon: <SwapOutlined />,
       label: '切換角色',
-      onClick: () => setSwitchRoleModalVisible(true)
+      onClick: () => setRoleSwitchModalVisible(true)
     },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '登出',
       onClick: handleLogout
-    }
+    },
   ];
 
   if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      }}>
+        <div style={{ 
+          background: 'white', 
+          padding: '40px', 
+          borderRadius: '8px', 
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          width: '400px'
+        }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>IIPlatform 登入</h2>
+          <Form form={form} onFinish={handleLogin}>
+            <Form.Item
+              name="username"
+              rules={[{ required: true, message: '請輸入用戶名' }]}
+            >
+              <Input placeholder="用戶名" prefix={<UserOutlined />} />
+            </Form.Item>
+            <Form.Item
+              name="password"
+              rules={[{ required: true, message: '請輸入密碼' }]}
+            >
+              <Input.Password placeholder="密碼" prefix={<KeyOutlined />} />
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+                登入
+              </Button>
+            </Form.Item>
+          </Form>
+        </div>
+      </div>
+    );
   }
 
   return (
     <Router>
       <Layout style={{ minHeight: '100vh' }}>
-        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
+        <Sider 
+          collapsible 
+          collapsed={collapsed} 
+          onCollapse={(value) => setCollapsed(value)}
+          style={{
+            background: '#001529',
+          }}
+        >
           {/* Logo 區域 */}
           <div style={{ 
             height: 64, 
@@ -283,9 +331,6 @@ const App = () => {
               <Menu.Item key="communication-protocols" icon={<ApiOutlined />}>
                 <Link to="/communication-protocols">通訊協定</Link>
               </Menu.Item>
-              <Menu.Item key="database-connection" icon={<DatabaseOutlined />}>
-                <Link to="/database-connection">資料庫連線</Link>
-              </Menu.Item>
               <Menu.Item key="table-schema" icon={<TableOutlined />}>
                 <Link to="/table-schema">資料表結構</Link>
               </Menu.Item>
@@ -308,6 +353,9 @@ const App = () => {
             <Menu.SubMenu key="device-management" icon={<DesktopOutlined />} title="設備管理">
               <Menu.Item key="device-management" icon={<DesktopOutlined />}>
                 <Link to="/device-management">設備管理</Link>
+              </Menu.Item>
+              <Menu.Item key="device-categories" icon={<TagOutlined />}>
+                <Link to="/device-categories">設備類別管理</Link>
               </Menu.Item>
               <Menu.Item key="ota-update" icon={<CloudUploadOutlined />}>
                 <Link to="/ota-update">OTA更新</Link>
@@ -354,11 +402,6 @@ const App = () => {
                 <Link to="/system-support">系統維護聯絡</Link>
               </Menu.Item>
             </Menu.SubMenu>
-
-            {/* 設備類別管理 */}
-            <Menu.Item key="device-categories" icon={<TagOutlined />}>
-              <Link to="/device-categories">設備類別管理</Link>
-            </Menu.Item>
           </Menu>
         </Sider>
         <Layout>
@@ -382,7 +425,9 @@ const App = () => {
             <div style={{ padding: 24, minHeight: 360, background: colorBgContainer, borderRadius: borderRadiusLG }}>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/platform-intro" element={<PlatformIntro />} />
                 <Route path="/device-management" element={<DeviceManagement />} />
+                <Route path="/device-categories" element={<DeviceCategories />} />
                 <Route path="/alert-center" element={<AlertCenter />} />
                 <Route path="/history-analysis" element={<HistoryAnalysis />} />
                 <Route path="/ai-analysis" element={<AIAnalysis />} />
@@ -401,50 +446,63 @@ const App = () => {
                 <Route path="/audit-trail" element={<AuditTrail />} />
                 <Route path="/reporting-system" element={<ReportingSystem />} />
                 <Route path="/notification-preferences" element={<NotificationPreferences />} />
-                <Route path="/platform-intro" element={<PlatformIntro />} />
                 <Route path="/system-support" element={<SystemSupport />} />
-                <Route path="/device-categories" element={<DeviceCategoryManagement />} />
               </Routes>
             </div>
           </Content>
         </Layout>
       </Layout>
 
+      {/* 登入模態框 */}
+      <Modal
+        title="登入"
+        open={loginModalVisible}
+        onCancel={() => setLoginModalVisible(false)}
+        footer={null}
+      >
+        <Form form={form} onFinish={handleLogin}>
+          <Form.Item
+            name="username"
+            rules={[{ required: true, message: '請輸入用戶名' }]}
+          >
+            <Input placeholder="用戶名" prefix={<UserOutlined />} />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: '請輸入密碼' }]}
+          >
+            <Input.Password placeholder="密碼" prefix={<KeyOutlined />} />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+              登入
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
       {/* 角色切換模態框 */}
       <Modal
         title="切換角色"
-        open={switchRoleModalVisible}
-        onCancel={() => setSwitchRoleModalVisible(false)}
+        open={roleSwitchModalVisible}
+        onCancel={() => setRoleSwitchModalVisible(false)}
         footer={null}
       >
-        <Form form={form} onFinish={handleRoleSwitch}>
+        <Form form={roleForm} onFinish={handleRoleSwitch}>
           <Form.Item
             name="role"
-            label="選擇角色"
             rules={[{ required: true, message: '請選擇角色' }]}
           >
-            <Select>
+            <Select placeholder="選擇角色">
               <Select.Option value="admin">系統管理員</Select.Option>
               <Select.Option value="operator">操作員</Select.Option>
               <Select.Option value="viewer">檢視者</Select.Option>
             </Select>
           </Form.Item>
-          <Form.Item
-            name="displayName"
-            label="顯示名稱"
-            rules={[{ required: true, message: '請輸入顯示名稱' }]}
-          >
-            <Input />
-          </Form.Item>
           <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                確認切換
-              </Button>
-              <Button onClick={() => setSwitchRoleModalVisible(false)}>
-                取消
-              </Button>
-            </Space>
+            <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+              切換
+            </Button>
           </Form.Item>
         </Form>
       </Modal>

@@ -345,6 +345,7 @@ class DatabaseConnectionBase(BaseModel):
     connection_string: str
     is_active: bool = True
     is_default: bool = False
+    description: Optional[str] = None  # 添加 description 欄位
     # MongoDB 特定欄位
     auth_source: Optional[str] = None  # MongoDB 認證資料庫
     auth_mechanism: Optional[str] = None  # MongoDB 認證機制
@@ -391,6 +392,10 @@ class DatabaseConnectionOut(DatabaseConnectionBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    last_test_time: Optional[datetime] = None
+    last_test_result: Optional[str] = None
+    last_test_error: Optional[str] = None
+    response_time: Optional[float] = None
     class Config:
         from_attributes = True
 

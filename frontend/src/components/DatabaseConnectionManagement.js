@@ -40,25 +40,29 @@ const DatabaseConnectionManagement = () => {
     fetchConnections();
   }, []);
 
-  // 生成連線字串的函數
+  // 修復：生成連線字串時進行 URL 編碼
   const generateConnectionString = (values) => {
     const { db_type, host, port, database, username, password } = values;
     
+    // 對用戶名和密碼進行 URL 編碼
+    const encodedUsername = encodeURIComponent(username || '');
+    const encodedPassword = encodeURIComponent(password || '');
+    
     switch (db_type) {
       case 'mongodb':
-        return `mongodb://${username}:${password}@${host}:${port}/${database}`;
+        return `mongodb://${encodedUsername}:${encodedPassword}@${host}:${port}/${database}`;
       case 'postgresql':
-        return `postgresql://${username}:${password}@${host}:${port}/${database}`;
+        return `postgresql://${encodedUsername}:${encodedPassword}@${host}:${port}/${database}`;
       case 'mysql':
-        return `mysql://${username}:${password}@${host}:${port}/${database}`;
+        return `mysql://${encodedUsername}:${encodedPassword}@${host}:${port}/${database}`;
       case 'influxdb':
-        return `http://${username}:${password}@${host}:${port}/${database}`;
+        return `http://${encodedUsername}:${encodedPassword}@${host}:${port}/${database}`;
       case 'oracle':
-        return `oracle://${username}:${password}@${host}:${port}/${database}`;
+        return `oracle://${encodedUsername}:${encodedPassword}@${host}:${port}/${database}`;
       case 'sqlserver':
-        return `mssql://${username}:${password}@${host}:${port}/${database}`;
+        return `mssql://${encodedUsername}:${encodedPassword}@${host}:${port}/${database}`;
       default:
-        return `unknown://${username}:${password}@${host}:${port}/${database}`;
+        return `unknown://${encodedUsername}:${encodedPassword}@${host}:${port}/${database}`;
     }
   };
 
@@ -96,7 +100,7 @@ const DatabaseConnectionManagement = () => {
       setLoading(true);
       console.log('正在創建連線:', values);
       
-      // 生成連線字串
+      // 生成連線字串（包含 URL 編碼）
       const connectionData = {
         ...values,
         connection_string: generateConnectionString(values)
@@ -320,7 +324,7 @@ const DatabaseConnectionManagement = () => {
       try {
         setLoading(true);
         
-        // 生成連線字串
+        // 生成連線字串（包含 URL 編碼）
         const connectionData = {
           ...values,
           connection_string: generateConnectionString(values)
