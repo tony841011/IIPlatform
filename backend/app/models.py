@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, Table, ForeignKey, Boolean, Text, JSON
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 import datetime
 
 Base = declarative_base()
@@ -145,6 +145,7 @@ class Device(Base):
     name = Column(String, unique=True, index=True)
     location = Column(String)
     group = Column(Integer, ForeignKey("device_groups.id"), nullable=True)
+    category_id = Column(Integer, ForeignKey("device_categories.id"), nullable=True)  # 新增類別關聯
     tags = Column(String, default="")
     # 設備管理新增欄位
     device_type = Column(String)  # sensor, actuator, controller
@@ -156,6 +157,9 @@ class Device(Base):
     is_registered = Column(Boolean, default=False)
     registration_date = Column(DateTime)
     api_key = Column(String, unique=True)  # 設備API註冊金鑰
+    
+    # 關聯
+    category = relationship("DeviceCategory", back_populates="devices")
 
 # 設備數據
 class DeviceData(Base):
@@ -500,3 +504,24 @@ class APIDocumentation(Base):
     created_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+# 設備類別
+class DeviceCategory(Base):
+    __tablename__ = "device_categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)  # 類別名稱
+    display_name = Column(String(200), nullable=False)  # 顯示名稱
+    description = Column(Text)  # 描述
+    icon = Column(String(100))  # 圖示
+    color = Column(String(20))  # 顏色代碼
+    parent_id = Column(Integer, ForeignKey("device_categories.id"), nullable=True)  # 父類別
+    order_index = Column(Integer, default=0)  # 排序索引
+    is_active = Column(Boolean, default=True)  # 是否啟用
+    is_system = Column(Boolean, default=False)  # 是否為系統類別
+    created_by = Column(Integer, ForeignKey("users.id"))  # 創建者
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # 關聯
+    children = relationship("DeviceCategory", backref=backref("parent", remote_side=[id]))
+    devices = relationship("Device", back_populates="category")

@@ -98,7 +98,7 @@ import {
   FileGifOutlined,
   FileBmpOutlined,
   FileTiffOutlined,
-  FileSvgOutlined
+  TagOutlined,
 } from '@ant-design/icons';
 
 // 導入組件
@@ -126,6 +126,7 @@ import NotificationPreferences from './components/NotificationPreferences';
 import PlatformIntro from './components/PlatformIntro';
 import SystemSupport from './components/SystemSupport';
 import Login from './components/Login';
+import DeviceCategoryManagement from './components/DeviceCategoryManagement';
 
 const { Header, Sider, Content } = Layout;
 
@@ -353,6 +354,11 @@ const App = () => {
                 <Link to="/system-support">系統維護聯絡</Link>
               </Menu.Item>
             </Menu.SubMenu>
+
+            {/* 設備類別管理 */}
+            <Menu.Item key="device-categories" icon={<TagOutlined />}>
+              <Link to="/device-categories">設備類別管理</Link>
+            </Menu.Item>
           </Menu>
         </Sider>
         <Layout>
@@ -397,6 +403,7 @@ const App = () => {
                 <Route path="/notification-preferences" element={<NotificationPreferences />} />
                 <Route path="/platform-intro" element={<PlatformIntro />} />
                 <Route path="/system-support" element={<SystemSupport />} />
+                <Route path="/device-categories" element={<DeviceCategoryManagement />} />
               </Routes>
             </div>
           </Content>

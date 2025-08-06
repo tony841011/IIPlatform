@@ -1,6 +1,6 @@
-from pydantic import BaseModel
-import datetime
+from datetime import datetime
 from typing import Optional, List, Dict, Any
+from pydantic import BaseModel
 
 # 設備相關
 class DeviceBase(BaseModel):
@@ -17,11 +17,11 @@ class Device(DeviceBase):
     device_type: Optional[str] = None
     status: Optional[str] = None
     firmware_version: Optional[str] = None
-    last_heartbeat: Optional[datetime.datetime] = None
+    last_heartbeat: Optional[datetime] = None
     battery_level: Optional[float] = None
     temperature: Optional[float] = None
     is_registered: Optional[bool] = None
-    registration_date: Optional[datetime.datetime] = None
+    registration_date: Optional[datetime] = None
     api_key: Optional[str] = None
     class Config:
         from_attributes = True
@@ -29,13 +29,13 @@ class Device(DeviceBase):
 class DeviceData(BaseModel):
     device_id: int
     value: float
-    timestamp: datetime.datetime = None
+    timestamp: datetime = None
 
 # 告警相關
 class AlertBase(BaseModel):
     device_id: int
     value: float
-    timestamp: datetime.datetime = None
+    timestamp: datetime = None
     message: str
 
 class AlertCreate(AlertBase):
@@ -58,8 +58,8 @@ class UserOut(UserBase):
     role: str
     email: Optional[str] = None
     is_active: bool
-    created_at: datetime.datetime
-    last_login: Optional[datetime.datetime] = None
+    created_at: datetime
+    last_login: Optional[datetime] = None
     class Config:
         from_attributes = True
 
@@ -119,7 +119,7 @@ class FirmwareOut(FirmwareBase):
     id: int
     file_path: Optional[str] = None
     is_active: bool
-    created_at: datetime.datetime
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -134,8 +134,8 @@ class OTAUpdateCreate(OTAUpdateBase):
 class OTAUpdateOut(OTAUpdateBase):
     id: int
     status: str
-    started_at: Optional[datetime.datetime] = None
-    completed_at: Optional[datetime.datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     error_message: Optional[str] = None
     class Config:
         from_attributes = True
@@ -154,7 +154,7 @@ class RuleOut(RuleBase):
     id: int
     is_active: bool
     created_by: int
-    created_at: datetime.datetime
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -173,7 +173,7 @@ class WorkflowOut(WorkflowBase):
     id: int
     is_active: bool
     created_by: int
-    created_at: datetime.datetime
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -187,8 +187,8 @@ class WorkflowExecutionCreate(WorkflowExecutionBase):
 class WorkflowExecutionOut(WorkflowExecutionBase):
     id: int
     status: str
-    started_at: datetime.datetime
-    completed_at: Optional[datetime.datetime] = None
+    started_at: datetime
+    completed_at: Optional[datetime] = None
     result: Optional[Dict[str, Any]] = None
     class Config:
         from_attributes = True
@@ -208,7 +208,7 @@ class AuditLogCreate(AuditLogBase):
 class AuditLogOut(AuditLogBase):
     id: int
     user_id: Optional[int] = None
-    timestamp: datetime.datetime
+    timestamp: datetime
     class Config:
         from_attributes = True
 
@@ -224,9 +224,9 @@ class DeviceCommandCreate(DeviceCommandBase):
 class DeviceCommandOut(DeviceCommandBase):
     id: int
     status: str
-    sent_at: datetime.datetime
-    acknowledged_at: Optional[datetime.datetime] = None
-    completed_at: Optional[datetime.datetime] = None
+    sent_at: datetime
+    acknowledged_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     result: Optional[Dict[str, Any]] = None
     sent_by: int
     class Config:
@@ -266,8 +266,8 @@ class CommunicationProtocolCreate(CommunicationProtocolBase):
 class CommunicationProtocolOut(CommunicationProtocolBase):
     id: int
     is_active: bool
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -389,8 +389,8 @@ class DatabaseConnectionUpdate(DatabaseConnectionBase):
 
 class DatabaseConnectionOut(DatabaseConnectionBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -411,8 +411,8 @@ class TableSchemaUpdate(TableSchemaBase):
 
 class TableSchemaOut(TableSchemaBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -438,7 +438,7 @@ class TableColumnUpdate(TableColumnBase):
 
 class TableColumnOut(TableColumnBase):
     id: int
-    created_at: datetime.datetime
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -454,7 +454,7 @@ class DatabaseConnectionTestCreate(DatabaseConnectionTestBase):
 
 class DatabaseConnectionTestOut(DatabaseConnectionTestBase):
     id: int
-    tested_at: datetime.datetime
+    tested_at: datetime
     tested_by: Optional[int] = None
     class Config:
         from_attributes = True
@@ -486,8 +486,8 @@ class AIModelOut(AIModelBase):
     precision: Optional[float] = None
     recall: Optional[float] = None
     created_by: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -506,7 +506,7 @@ class DataPreprocessingUpdate(DataPreprocessingBase):
 
 class DataPreprocessingOut(DataPreprocessingBase):
     id: int
-    created_at: datetime.datetime
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -525,15 +525,15 @@ class ModelTrainingUpdate(ModelTrainingBase):
 
 class ModelTrainingOut(ModelTrainingBase):
     id: int
-    training_start: datetime.datetime
-    training_end: Optional[datetime.datetime] = None
+    training_start: datetime
+    training_end: Optional[datetime] = None
     training_duration: Optional[float] = None
     final_accuracy: Optional[float] = None
     final_loss: Optional[float] = None
     training_logs: Optional[Dict[str, Any]] = None
     error_message: Optional[str] = None
     created_by: int
-    created_at: datetime.datetime
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -553,7 +553,7 @@ class AnomalyDetectionCreate(AnomalyDetectionBase):
 
 class AnomalyDetectionOut(AnomalyDetectionBase):
     id: int
-    detection_time: datetime.datetime
+    detection_time: datetime
     class Config:
         from_attributes = True
 
@@ -574,8 +574,8 @@ class AnomalyAlertOut(AnomalyAlertBase):
     id: int
     is_acknowledged: bool
     acknowledged_by: Optional[int] = None
-    acknowledged_at: Optional[datetime.datetime] = None
-    created_at: datetime.datetime
+    acknowledged_at: Optional[datetime] = None
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -593,7 +593,7 @@ class ModelExplainabilityCreate(ModelExplainabilityBase):
 
 class ModelExplainabilityOut(ModelExplainabilityBase):
     id: int
-    created_at: datetime.datetime
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -616,8 +616,8 @@ class ModelOperationsUpdate(ModelOperationsBase):
 class ModelOperationsOut(ModelOperationsBase):
     id: int
     created_by: int
-    created_at: datetime.datetime
-    completed_at: Optional[datetime.datetime] = None
+    created_at: datetime
+    completed_at: Optional[datetime] = None
     class Config:
         from_attributes = True
 
@@ -639,9 +639,9 @@ class ModelVersionUpdate(ModelVersionBase):
 
 class ModelVersionOut(ModelVersionBase):
     id: int
-    deployed_at: Optional[datetime.datetime] = None
+    deployed_at: Optional[datetime] = None
     created_by: int
-    created_at: datetime.datetime
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -682,8 +682,8 @@ class GPUDeviceUpdate(GPUDeviceBase):
 
 class GPUDeviceOut(GPUDeviceBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -705,7 +705,7 @@ class GPUMonitoringCreate(GPUMonitoringBase):
 
 class GPUMonitoringOut(GPUMonitoringBase):
     id: int
-    timestamp: datetime.datetime
+    timestamp: datetime
     class Config:
         from_attributes = True
 
@@ -725,8 +725,8 @@ class GPUResourceAllocationUpdate(GPUResourceAllocationBase):
 
 class GPUResourceAllocationOut(GPUResourceAllocationBase):
     id: int
-    started_at: datetime.datetime
-    ended_at: Optional[datetime.datetime] = None
+    started_at: datetime
+    ended_at: Optional[datetime] = None
     created_by: int
     class Config:
         from_attributes = True
@@ -750,8 +750,8 @@ class GPUAlertOut(GPUAlertBase):
     id: int
     is_acknowledged: bool
     acknowledged_by: Optional[int] = None
-    acknowledged_at: Optional[datetime.datetime] = None
-    created_at: datetime.datetime
+    acknowledged_at: Optional[datetime] = None
+    created_at: datetime
     class Config:
         from_attributes = True
 
@@ -773,8 +773,8 @@ class GPUPerformanceConfigUpdate(GPUPerformanceConfigBase):
 
 class GPUPerformanceConfigOut(GPUPerformanceConfigBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -809,20 +809,20 @@ class UserBehaviorCreate(UserBehaviorBase):
 
 class UserBehaviorOut(UserBehaviorBase):
     id: int
-    timestamp: datetime.datetime
+    timestamp: datetime
     class Config:
         from_attributes = True
 
 class UserSessionBase(BaseModel):
     user_id: int
     session_id: str
-    login_time: datetime.datetime
-    logout_time: Optional[datetime.datetime] = None
+    login_time: datetime
+    logout_time: Optional[datetime] = None
     duration: Optional[int] = None
     ip_address: str
     user_agent: str
     is_active: bool = True
-    last_activity: datetime.datetime
+    last_activity: datetime
 
 class UserSessionCreate(UserSessionBase):
     pass
@@ -838,16 +838,16 @@ class FeatureUsageBase(BaseModel):
     user_id: int
     usage_count: int = 1
     total_duration: int = 0
-    first_used: datetime.datetime
-    last_used: datetime.datetime
+    first_used: datetime
+    last_used: datetime
 
 class FeatureUsageCreate(FeatureUsageBase):
     pass
 
 class FeatureUsageOut(FeatureUsageBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -857,7 +857,7 @@ class APITokenBase(BaseModel):
     user_id: int
     permissions: List[str]
     is_active: bool = True
-    expires_at: Optional[datetime.datetime] = None
+    expires_at: Optional[datetime] = None
 
 class APITokenCreate(APITokenBase):
     pass
@@ -865,9 +865,9 @@ class APITokenCreate(APITokenBase):
 class APITokenOut(APITokenBase):
     id: int
     token_hash: str
-    last_used: Optional[datetime.datetime] = None
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    last_used: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -887,8 +887,8 @@ class WebhookCreate(WebhookBase):
 
 class WebhookOut(WebhookBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -908,7 +908,7 @@ class WebhookDeliveryCreate(WebhookDeliveryBase):
 
 class WebhookDeliveryOut(WebhookDeliveryBase):
     id: int
-    sent_at: datetime.datetime
+    sent_at: datetime
     class Config:
         from_attributes = True
 
@@ -928,7 +928,7 @@ class APIUsageCreate(APIUsageBase):
 
 class APIUsageOut(APIUsageBase):
     id: int
-    timestamp: datetime.datetime
+    timestamp: datetime
     class Config:
         from_attributes = True
 
@@ -944,7 +944,7 @@ class SDKDownloadCreate(SDKDownloadBase):
 
 class SDKDownloadOut(SDKDownloadBase):
     id: int
-    downloaded_at: datetime.datetime
+    downloaded_at: datetime
     class Config:
         from_attributes = True
 
@@ -962,8 +962,8 @@ class APIDocumentationCreate(APIDocumentationBase):
 
 class APIDocumentationOut(APIDocumentationBase):
     id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
     class Config:
         from_attributes = True
 
@@ -1028,3 +1028,82 @@ class ONVIFSnapshotRequest(BaseModel):
     profile: str = "Profile_1"
     quality: str = "high"
     format: str = "JPEG"  # JPEG, PNG 
+
+# 新增設備類別相關的 Schema
+class DeviceCategoryBase(BaseModel):
+    name: str
+    display_name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    parent_id: Optional[int] = None
+    order_index: int = 0
+    is_active: bool = True
+
+class DeviceCategoryCreate(DeviceCategoryBase):
+    pass
+
+class DeviceCategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    display_name: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    parent_id: Optional[int] = None
+    order_index: Optional[int] = None
+    is_active: Optional[bool] = None
+
+# 修復 DeviceCategoryOut 類別
+class DeviceCategoryOut(DeviceCategoryBase):
+    id: int
+    is_system: bool
+    created_by: Optional[int]
+    created_at: datetime  # 改為 datetime.datetime
+    updated_at: datetime  # 改為 datetime.datetime
+    children_count: Optional[int] = 0
+    devices_count: Optional[int] = 0
+    
+    class Config:
+        from_attributes = True
+
+# 更新設備相關的 Schema
+class DeviceCreate(BaseModel):
+    name: str
+    location: str
+    category_id: Optional[int] = None
+    group: Optional[int] = None
+    tags: Optional[str] = ""
+    device_type: Optional[str] = None
+    firmware_version: Optional[str] = None
+
+class DeviceUpdate(BaseModel):
+    name: Optional[str] = None
+    location: Optional[str] = None
+    category_id: Optional[int] = None
+    group: Optional[int] = None
+    tags: Optional[str] = None
+    device_type: Optional[str] = None
+    firmware_version: Optional[str] = None
+    status: Optional[str] = None
+
+# 同時修復 DeviceOut 類別中的 datetime 問題
+class DeviceOut(BaseModel):
+    id: int
+    name: str
+    location: str
+    category_id: Optional[int]
+    category_name: Optional[str] = None
+    group: Optional[int]
+    tags: str
+    device_type: Optional[str]
+    status: str
+    firmware_version: Optional[str]
+    last_heartbeat: Optional[datetime]  # 改為 datetime.datetime
+    battery_level: Optional[float]
+    temperature: Optional[float]
+    is_registered: bool
+    registration_date: Optional[datetime]  # 改為 datetime.datetime
+    api_key: Optional[str]
+    
+    class Config:
+        from_attributes = True 

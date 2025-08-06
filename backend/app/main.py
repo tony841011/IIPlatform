@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -11,6 +12,20 @@ from . import schemas
 from . import database
 
 app = FastAPI(title="工業物聯網平台 API", version="1.0.0")
+
+# 添加 CORS 中間件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # 允許前端域名
+    allow_credentials=True,
+    allow_methods=["*"],  # 允許所有 HTTP 方法
+    allow_headers=["*"],  # 允許所有標頭
+)
+
+# 健康檢查端點
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 # 資料庫依賴
 def get_db():
@@ -286,17 +301,87 @@ def test_protocol(test: schemas.ProtocolTest, db: Session = Depends(database.get
 
 # 資料庫連線管理 API
 @app.post("/database-connections/", response_model=schemas.DatabaseConnectionOut)
-def create_database_connection(connection: schemas.DatabaseConnectionCreate, db: Session = Depends(database.get_db)):
+def create_database_connection(connection: schemas.DatabaseConnectionCreate, db: Session = Depends(get_db)):
     """創建資料庫連線"""
     try:
-        return database.create_database_connection(db, connection)
+        print(f"收到創建連線請求: {connection.name}")
+        
+        # 驗證連線參數
+        if not connection.name or not connection.db_type:
+            raise HTTPException(status_code=400, detail="連線名稱和資料庫類型為必填項")
+        
+        # 創建連線記錄
+        db_connection = models.DatabaseConnection(
+            name=connection.name,
+            db_type=connection.db_type,
+            host=connection.host,
+            port=connection.port,
+            database=connection.database,
+            username=connection.username,
+            password=connection.password,
+            connection_string=connection.connection_string,
+            is_active=connection.is_active,
+            is_default=connection.is_default,
+            description=connection.description,
+            # MongoDB 特定欄位
+            auth_source=connection.auth_source,
+            auth_mechanism=connection.auth_mechanism,
+            replica_set=connection.replica_set,
+            ssl_enabled=connection.ssl_enabled,
+            ssl_cert_reqs=connection.ssl_cert_reqs,
+            max_pool_size=connection.max_pool_size,
+            min_pool_size=connection.min_pool_size,
+            max_idle_time_ms=connection.max_idle_time_ms,
+            server_selection_timeout_ms=connection.server_selection_timeout_ms,
+            socket_timeout_ms=connection.socket_timeout_ms,
+            connect_timeout_ms=connection.connect_timeout_ms,
+            retry_writes=connection.retry_writes,
+            retry_reads=connection.retry_reads,
+            read_preference=connection.read_preference,
+            write_concern=connection.write_concern,
+            read_concern=connection.read_concern,
+            journal=connection.journal,
+            wtimeout=connection.wtimeout,
+            w=connection.w,
+            j=connection.j,
+            fsync=connection.fsync,
+            direct_connection=connection.direct_connection,
+            app_name=connection.app_name,
+            compressors=connection.compressors,
+            zlib_compression_level=connection.zlib_compression_level,
+            uuid_representation=connection.uuid_representation,
+            unicode_decode_error_handler=connection.unicode_decode_error_handler,
+            tz_aware=connection.tz_aware,
+            connect=connection.connect,
+            max_connecting=connection.max_connecting,
+            load_balanced=connection.load_balanced,
+            server_api=connection.server_api,
+            heartbeat_frequency_ms=connection.heartbeat_frequency_ms,
+            local_threshold_ms=connection.local_threshold_ms
+        )
+        
+        db.add(db_connection)
+        db.commit()
+        db.refresh(db_connection)
+        
+        print(f"成功創建連線: {db_connection.id}")
+        return db_connection
+        
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"創建連線失敗: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"創建連線失敗: {str(e)}")
 
 @app.get("/database-connections/", response_model=List[schemas.DatabaseConnectionOut])
-def list_database_connections(db: Session = Depends(database.get_db)):
+def list_database_connections(db: Session = Depends(get_db)):
     """獲取資料庫連線列表"""
-    return database.get_database_connections(db)
+    try:
+        connections = database.get_database_connections(db)
+        print(f"獲取到 {len(connections)} 個連線")
+        return connections
+    except Exception as e:
+        print(f"獲取連線列表失敗: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"獲取連線列表失敗: {str(e)}")
 
 @app.get("/database-connections/{connection_id}", response_model=schemas.DatabaseConnectionOut)
 def get_database_connection(connection_id: int, db: Session = Depends(database.get_db)):
@@ -337,18 +422,36 @@ def delete_database_connection(connection_id: int, db: Session = Depends(databas
 def test_database_connection_endpoint(connection_id: int, db: Session = Depends(get_db)):
     """測試資料庫連線"""
     try:
-        result = database.test_database_connection(db, connection_id)
-        return {
-            "success": True,
-            "message": "Database connection test successful",
-            "details": result
-        }
+        print(f"測試連線 ID: {connection_id}")
+        
+        # 獲取連線配置
+        connection = db.query(models.DatabaseConnection).filter(
+            models.DatabaseConnection.id == connection_id
+        ).first()
+        
+        if not connection:
+            raise HTTPException(status_code=404, detail="連線不存在")
+        
+        print(f"測試連線: {connection.name} ({connection.db_type})")
+        
+        # 測試連線
+        test_result = database.test_database_connection(connection)
+        
+        print(f"測試結果: {test_result}")
+        
+        # 更新測試結果
+        connection.last_test_time = datetime.utcnow()
+        connection.last_test_result = "success" if test_result["success"] else "failed"
+        connection.last_test_error = test_result.get("error_message")
+        connection.response_time = test_result.get("response_time")
+        
+        db.commit()
+        
+        return test_result
+        
     except Exception as e:
-        return {
-            "success": False,
-            "message": f"Database connection test failed: {str(e)}",
-            "details": None
-        }
+        print(f"測試連線失敗: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"測試連線失敗: {str(e)}")
 
 # 表格結構管理
 @app.post("/table-schemas/", response_model=schemas.TableSchemaOut)
@@ -553,3 +656,93 @@ def get_swagger_ui():
 def get_redoc():
     """ReDoc 文檔"""
     return {"message": "ReDoc available at /redoc"} 
+
+# 設備類別管理 API
+@app.post("/device-categories/", response_model=schemas.DeviceCategoryOut)
+def create_device_category(
+    category: schemas.DeviceCategoryCreate, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """創建設備類別"""
+    try:
+        return database.create_device_category(db, category, current_user.id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/device-categories/", response_model=List[schemas.DeviceCategoryOut])
+def list_device_categories(
+    parent_id: Optional[int] = None,
+    include_inactive: bool = False,
+    db: Session = Depends(database.get_db)
+):
+    """獲取設備類別列表"""
+    return database.get_device_categories(db, parent_id, include_inactive)
+
+@app.get("/device-categories/tree")
+def get_device_category_tree(db: Session = Depends(database.get_db)):
+    """獲取設備類別樹狀結構"""
+    return database.get_device_category_tree(db)
+
+@app.get("/device-categories/{category_id}", response_model=schemas.DeviceCategoryOut)
+def get_device_category(category_id: int, db: Session = Depends(database.get_db)):
+    """獲取特定設備類別"""
+    category = database.get_device_category_with_stats(db, category_id)
+    if not category:
+        raise HTTPException(status_code=404, detail="設備類別不存在")
+    return category
+
+@app.patch("/device-categories/{category_id}", response_model=schemas.DeviceCategoryOut)
+def update_device_category(
+    category_id: int,
+    category: schemas.DeviceCategoryUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """更新設備類別"""
+    try:
+        result = database.update_device_category(db, category_id, category)
+        if not result:
+            raise HTTPException(status_code=404, detail="設備類別不存在")
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/device-categories/{category_id}")
+def delete_device_category(
+    category_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """刪除設備類別"""
+    try:
+        result = database.delete_device_category(db, category_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 更新現有的設備 API 端點
+@app.post("/devices/", response_model=schemas.DeviceOut)
+def create_device(device: schemas.DeviceCreate, db: Session = Depends(database.get_db)):
+    """創建設備"""
+    return database.create_device(db, device)
+
+@app.get("/devices/", response_model=List[schemas.DeviceOut])
+def list_devices(
+    category_id: Optional[int] = None,
+    db: Session = Depends(database.get_db)
+):
+    """獲取設備列表"""
+    return database.get_devices(db, category_id)
+
+@app.patch("/devices/{device_id}", response_model=schemas.DeviceOut)
+def update_device(
+    device_id: int,
+    update: schemas.DeviceUpdate,
+    db: Session = Depends(database.get_db)
+):
+    """更新設備資訊"""
+    result = database.update_device(db, device_id, update)
+    if not result:
+        raise HTTPException(status_code=404, detail="設備不存在")
+    return result 

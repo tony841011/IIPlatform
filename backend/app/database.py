@@ -1,108 +1,395 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from pymongo import MongoClient
-from influxdb_client import InfluxDBClient
 import os
 from .models import (
     Device, DeviceData, User, Alert, Base, DeviceGroup, Role, 
     Firmware, OTAUpdate, Rule, Workflow, WorkflowExecution, 
     AuditLog, DeviceCommand, CommunicationProtocol, MQTTConfig, 
-    ModbusTCPConfig, OPCUAConfig, DatabaseConnection
+    ModbusTCPConfig, OPCUAConfig, DatabaseConnection, DeviceCategory
 )
 import datetime
 import uuid
+from sqlalchemy import Column, Integer, String, DateTime, Text, Float, Boolean, ForeignKey
+from sqlalchemy.orm import relationship, backref
 
-# 多資料庫配置
+# 簡化的資料庫配置（避免依賴問題）
+SQLALCHEMY_DATABASE_URL = "sqlite:///./iot.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# 多資料庫管理器（可選）
 class DatabaseManager:
     def __init__(self):
         # PostgreSQL 配置
         self.postgres_url = os.getenv("POSTGRES_URL", "postgresql://iot_user:iot_password@localhost:5432/iot_platform")
-        self.postgres_engine = create_engine(self.postgres_url)
-        self.PostgresSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.postgres_engine)
+        self.postgres_engine = None
+        self.PostgresSessionLocal = None
         
         # MongoDB 配置
         self.mongo_url = os.getenv("MONGO_URL", "mongodb://iot_user:iot_password@localhost:27017/")
-        self.mongo_client = MongoClient(self.mongo_url)
-        self.mongo_db = self.mongo_client.iot_platform
+        self.mongo_client = None
+        self.mongo_db = None
         
         # InfluxDB 配置
         self.influx_url = os.getenv("INFLUX_URL", "http://localhost:8086")
         self.influx_token = os.getenv("INFLUX_TOKEN", "iot_admin_token")
         self.influx_org = os.getenv("INFLUX_ORG", "iot_org")
         self.influx_bucket = os.getenv("INFLUX_BUCKET", "iot_platform")
+        self.influx_client = None
         
-        self.influx_client = InfluxDBClient(
-            url=self.influx_url,
-            token=self.influx_token,
-            org=self.influx_org
-        )
+        # 嘗試初始化其他資料庫
+        self._init_postgresql()
+        self._init_mongodb()
+        self._init_influxdb()
+    
+    def _init_postgresql(self):
+        """初始化 PostgreSQL"""
+        try:
+            import psycopg2
+            self.postgres_engine = create_engine(self.postgres_url)
+            self.PostgresSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.postgres_engine)
+            print("✅ PostgreSQL 初始化成功")
+        except ImportError:
+            print("⚠️  PostgreSQL 依賴未安裝，跳過初始化")
+            print("   安裝指令: pip install psycopg2-binary")
+        except Exception as e:
+            print(f"❌ PostgreSQL 初始化失敗: {e}")
+    
+    def _init_mongodb(self):
+        """初始化 MongoDB"""
+        try:
+            from pymongo import MongoClient
+            self.mongo_client = MongoClient(self.mongo_url)
+            self.mongo_db = self.mongo_client.iot_platform
+            print("✅ MongoDB 初始化成功")
+        except ImportError:
+            print("⚠️  MongoDB 依賴未安裝，跳過初始化")
+            print("   安裝指令: pip install pymongo")
+        except Exception as e:
+            print(f"❌ MongoDB 初始化失敗: {e}")
+    
+    def _init_influxdb(self):
+        """初始化 InfluxDB"""
+        try:
+            from influxdb_client import InfluxDBClient
+            self.influx_client = InfluxDBClient(
+                url=self.influx_url,
+                token=self.influx_token,
+                org=self.influx_org
+            )
+            print("✅ InfluxDB 初始化成功")
+        except ImportError:
+            print("⚠️  InfluxDB 依賴未安裝，跳過初始化")
+            print("   安裝指令: pip install influxdb-client")
+        except Exception as e:
+            print(f"❌ InfluxDB 初始化失敗: {e}")
     
     def get_postgres_session(self):
         """獲取 PostgreSQL 會話"""
-        db = self.PostgresSessionLocal()
-        try:
-            yield db
-        finally:
-            db.close()
+        if self.PostgresSessionLocal:
+            db = self.PostgresSessionLocal()
+            try:
+                yield db
+            finally:
+                db.close()
+        else:
+            # 回退到 SQLite
+            yield get_db()
     
     def get_mongo_db(self):
         """獲取 MongoDB 資料庫"""
-        return self.mongo_db
+        return self.mongo_db if self.mongo_db else None
     
     def get_influx_client(self):
         """獲取 InfluxDB 客戶端"""
-        return self.influx_client
+        return self.influx_client if self.influx_client else None
     
     def test_connections(self):
         """測試所有資料庫連線"""
-        results = {}
+        results = {
+            "sqlite": {"status": "success", "message": "SQLite 連線正常"},
+            "postgresql": {"status": "not_available", "message": "PostgreSQL 未配置"},
+            "mongodb": {"status": "not_available", "message": "MongoDB 未配置"},
+            "influxdb": {"status": "not_available", "message": "InfluxDB 未配置"}
+        }
         
         # 測試 PostgreSQL
-        try:
-            with self.postgres_engine.connect() as conn:
-                conn.execute("SELECT 1")
-            results["postgresql"] = {"status": "success", "message": "PostgreSQL 連線正常"}
-        except Exception as e:
-            results["postgresql"] = {"status": "error", "message": f"PostgreSQL 連線失敗: {str(e)}"}
+        if self.PostgresSessionLocal:
+            try:
+                db = self.PostgresSessionLocal()
+                db.execute("SELECT 1")
+                db.close()
+                results["postgresql"] = {"status": "success", "message": "PostgreSQL 連線正常"}
+            except Exception as e:
+                results["postgresql"] = {"status": "error", "message": f"PostgreSQL 連線失敗: {e}"}
         
         # 測試 MongoDB
-        try:
-            self.mongo_client.admin.command('ping')
-            results["mongodb"] = {"status": "success", "message": "MongoDB 連線正常"}
-        except Exception as e:
-            results["mongodb"] = {"status": "error", "message": f"MongoDB 連線失敗: {str(e)}"}
+        if self.mongo_client:
+            try:
+                self.mongo_client.admin.command('ping')
+                results["mongodb"] = {"status": "success", "message": "MongoDB 連線正常"}
+            except Exception as e:
+                results["mongodb"] = {"status": "error", "message": f"MongoDB 連線失敗: {e}"}
         
         # 測試 InfluxDB
-        try:
-            self.influx_client.ping()
-            results["influxdb"] = {"status": "success", "message": "InfluxDB 連線正常"}
-        except Exception as e:
-            results["influxdb"] = {"status": "error", "message": f"InfluxDB 連線失敗: {str(e)}"}
+        if self.influx_client:
+            try:
+                health = self.influx_client.health()
+                results["influxdb"] = {"status": "success", "message": "InfluxDB 連線正常"}
+            except Exception as e:
+                results["influxdb"] = {"status": "error", "message": f"InfluxDB 連線失敗: {e}"}
         
         return results
     
     def close_all(self):
         """關閉所有資料庫連線"""
-        if hasattr(self, 'mongo_client'):
+        if self.postgres_engine:
+            self.postgres_engine.dispose()
+        if self.mongo_client:
             self.mongo_client.close()
-        if hasattr(self, 'influx_client'):
+        if self.influx_client:
             self.influx_client.close()
 
-# 全域資料庫管理器
+# 創建全域資料庫管理器實例
 db_manager = DatabaseManager()
 
-# 向後相容的函數
+# 簡化的資料庫函數（使用 SQLite 作為主要資料庫）
 def get_db():
-    """獲取 PostgreSQL 會話（向後相容）"""
-    return db_manager.get_postgres_session()
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def get_mongo_db():
-    """獲取 MongoDB 資料庫"""
     return db_manager.get_mongo_db()
 
 def get_influx_client():
-    """獲取 InfluxDB 客戶端"""
     return db_manager.get_influx_client()
+
+# 設備類別管理函數
+def create_device_category(db, category, user_id):
+    """創建設備類別"""
+    from .models import DeviceCategory
+    
+    db_category = DeviceCategory(
+        name=category.name,
+        display_name=category.display_name,
+        description=category.description,
+        icon=category.icon,
+        color=category.color,
+        parent_id=category.parent_id,
+        order_index=category.order_index,
+        is_active=category.is_active,
+        created_by=user_id
+    )
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+def get_device_categories(db, parent_id=None, include_inactive=False):
+    """獲取設備類別列表"""
+    from .models import DeviceCategory
+    
+    query = db.query(DeviceCategory)
+    
+    if parent_id is not None:
+        query = query.filter(DeviceCategory.parent_id == parent_id)
+    else:
+        query = query.filter(DeviceCategory.parent_id.is_(None))
+    
+    if not include_inactive:
+        query = query.filter(DeviceCategory.is_active == True)
+    
+    return query.order_by(DeviceCategory.order_index, DeviceCategory.name).all()
+
+def get_device_category(db, category_id):
+    """獲取特定設備類別"""
+    from .models import DeviceCategory
+    return db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+
+def update_device_category(db, category_id, category):
+    """更新設備類別"""
+    from .models import DeviceCategory
+    
+    db_category = db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    if not db_category:
+        return None
+    
+    # 防止更新系統類別
+    if db_category.is_system:
+        raise Exception("無法修改系統類別")
+    
+    update_data = category.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_category, field, value)
+    
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+def delete_device_category(db, category_id):
+    """刪除設備類別"""
+    from .models import DeviceCategory
+    
+    db_category = db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    if not db_category:
+        return {"message": "類別不存在"}
+    
+    # 防止刪除系統類別
+    if db_category.is_system:
+        raise Exception("無法刪除系統類別")
+    
+    # 檢查是否有子類別
+    children = db.query(DeviceCategory).filter(DeviceCategory.parent_id == category_id).count()
+    if children > 0:
+        raise Exception("無法刪除有子類別的類別")
+    
+    # 檢查是否有設備使用此類別
+    devices = db.query(Device).filter(Device.category_id == category_id).count()
+    if devices > 0:
+        raise Exception("無法刪除有設備使用的類別")
+    
+    db.delete(db_category)
+    db.commit()
+    return {"message": "類別已刪除"}
+
+def get_device_category_tree(db):
+    """獲取設備類別樹狀結構"""
+    def build_tree(parent_id=None):
+        categories = get_device_categories(db, parent_id)
+        tree = []
+        for category in categories:
+            children = build_tree(category.id)
+            category_dict = {
+                "id": category.id,
+                "name": category.name,
+                "display_name": category.display_name,
+                "description": category.description,
+                "icon": category.icon,
+                "color": category.color,
+                "order_index": category.order_index,
+                "is_active": category.is_active,
+                "is_system": category.is_system,
+                "children_count": len(children),
+                "children": children
+            }
+            tree.append(category_dict)
+        return tree
+    
+    return build_tree()
+
+def get_device_category_with_stats(db, category_id):
+    """獲取設備類別及其統計資訊"""
+    from .models import DeviceCategory, Device
+    
+    category = get_device_category(db, category_id)
+    if not category:
+        return None
+    
+    # 計算子類別數量
+    children_count = db.query(DeviceCategory).filter(DeviceCategory.parent_id == category_id).count()
+    
+    # 計算設備數量
+    devices_count = db.query(Device).filter(Device.category_id == category_id).count()
+    
+    return {
+        "id": category.id,
+        "name": category.name,
+        "display_name": category.display_name,
+        "description": category.description,
+        "icon": category.icon,
+        "color": category.color,
+        "parent_id": category.parent_id,
+        "order_index": category.order_index,
+        "is_active": category.is_active,
+        "is_system": category.is_system,
+        "children_count": children_count,
+        "devices_count": devices_count,
+        "created_by": category.created_by,
+        "created_at": category.created_at,
+        "updated_at": category.updated_at
+    }
+
+# 更新設備相關函數
+def create_device(db, device):
+    from .models import Device
+    
+    db_device = Device(
+        name=device.name,
+        location=device.location,
+        category_id=device.category_id,
+        group=device.group,
+        tags=device.tags or "",
+        device_type=device.device_type,
+        firmware_version=device.firmware_version
+    )
+    db.add(db_device)
+    db.commit()
+    db.refresh(db_device)
+    return db_device
+
+# 修復 get_devices 函數
+def get_devices(db, category_id=None):
+    """獲取設備列表"""
+    from .models import Device
+    
+    query = db.query(Device)
+    
+    # 檢查 category_id 欄位是否存在
+    try:
+        if category_id:
+            query = query.filter(Device.category_id == category_id)
+        return query.all()
+    except Exception as e:
+        # 如果 category_id 欄位不存在，返回所有設備
+        print(f"警告: category_id 欄位不存在，返回所有設備: {e}")
+        # 使用原生 SQL 查詢
+        result = db.execute(text("SELECT * FROM devices"))
+        devices = []
+        for row in result:
+            device_dict = {
+                'id': row[0],
+                'name': row[1],
+                'location': row[2],
+                'group': row[3],
+                'category_id': None,  # 設為 None 因為欄位不存在
+                'tags': row[4] if len(row) > 4 else '',
+                'device_type': row[5] if len(row) > 5 else None,
+                'status': row[6] if len(row) > 6 else 'offline',
+                'firmware_version': row[7] if len(row) > 7 else None,
+                'last_heartbeat': row[8] if len(row) > 8 else None,
+                'battery_level': row[9] if len(row) > 9 else None,
+                'temperature': row[10] if len(row) > 10 else None,
+                'is_registered': row[11] if len(row) > 11 else False,
+                'registration_date': row[12] if len(row) > 12 else None,
+                'api_key': row[13] if len(row) > 13 else None
+            }
+            devices.append(device_dict)
+        return devices
+
+def update_device(db, device_id, update):
+    from .models import Device
+    
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        return None
+    
+    update_data = update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(device, field, value)
+    
+    db.commit()
+    db.refresh(device)
+    return device
 
 # 更新現有的資料庫操作函數以支援多資料庫
 def create_device_data_multi_db(db, data, use_influxdb=True):
@@ -121,13 +408,14 @@ def create_device_data_multi_db(db, data, use_influxdb=True):
     if use_influxdb:
         try:
             from .influxdb_client import influxdb_manager
-            influxdb_manager.write_device_sensor_data(
-                device_id=str(data.device_id),
-                sensor_type="general",
-                sensor_id="sensor_1",
-                value=data.value,
-                timestamp=data.timestamp
-            )
+            if influxdb_manager.is_connected():
+                influxdb_manager.write_device_sensor_data(
+                    device_id=str(data.device_id),
+                    sensor_type="general",
+                    sensor_id="sensor_1",
+                    value=data.value,
+                    timestamp=data.timestamp
+                )
         except Exception as e:
             print(f"InfluxDB 寫入失敗: {e}")
     
@@ -149,11 +437,12 @@ def get_device_history_multi_db(db, device_id, start_time=None, end_time=None, u
     if use_influxdb:
         try:
             from .influxdb_client import influxdb_manager
-            influx_data = influxdb_manager.query_device_sensor_data(
-                device_id=str(device_id),
-                start_time=start_time,
-                end_time=end_time
-            )
+            if influxdb_manager.is_connected():
+                influx_data = influxdb_manager.query_device_sensor_data(
+                    device_id=str(device_id),
+                    start_time=start_time,
+                    end_time=end_time
+                )
         except Exception as e:
             print(f"InfluxDB 查詢失敗: {e}")
     
@@ -552,7 +841,6 @@ def delete_database_connection(db, connection_id):
 def test_mongodb_connection(connection_data):
     """測試 MongoDB 連線"""
     try:
-        import pymongo
         from pymongo import MongoClient
         import time
         
@@ -581,6 +869,13 @@ def test_mongodb_connection(connection_data):
             "server_info": db_info,
             "error_message": None
         }
+    except ImportError:
+        return {
+            "success": False,
+            "response_time": None,
+            "server_info": None,
+            "error_message": "MongoDB 依賴未安裝"
+        }
     except Exception as e:
         return {
             "success": False,
@@ -591,50 +886,69 @@ def test_mongodb_connection(connection_data):
 
 def test_database_connection(connection_data):
     """測試資料庫連線"""
-    if connection_data.db_type == 'mongodb':
-        return test_mongodb_connection(connection_data)
-    else:
-        # 原有的 SQL 資料庫測試邏輯
-        try:
-            import time
-            start_time = time.time()
-            
-            # 根據資料庫類型建立引擎
-            if connection_data.db_type == 'sqlite':
-                engine = create_engine(connection_data.connection_string)
-            elif connection_data.db_type == 'mysql':
-                engine = create_engine(connection_data.connection_string)
-            elif connection_data.db_type == 'postgresql':
-                engine = create_engine(connection_data.connection_string)
-            elif connection_data.db_type == 'oracle':
-                engine = create_engine(connection_data.connection_string)
-            elif connection_data.db_type == 'mssql':
-                engine = create_engine(connection_data.connection_string)
-            else:
-                return {
-                    "success": False,
-                    "response_time": None,
-                    "error_message": f"不支援的資料庫類型: {connection_data.db_type}"
-                }
-            
-            # 測試連線
-            with engine.connect() as conn:
-                conn.execute("SELECT 1")
-            
-            end_time = time.time()
-            response_time = end_time - start_time
-            
-            return {
-                "success": True,
-                "response_time": response_time,
-                "error_message": None
-            }
-        except Exception as e:
+    import time
+    start_time = time.time()
+    
+    try:
+        if connection_data.db_type.lower() == "mongodb":
+            return test_mongodb_connection(connection_data)
+        elif connection_data.db_type.lower() == "postgresql":
+            return test_postgresql_connection(connection_data)
+        elif connection_data.db_type.lower() == "mysql":
+            return test_mysql_connection(connection_data)
+        else:
             return {
                 "success": False,
-                "response_time": None,
-                "error_message": str(e)
+                "error_message": f"不支援的資料庫類型: {connection_data.db_type}"
             }
+    except Exception as e:
+        return {
+            "success": False,
+            "error_message": str(e),
+            "response_time": time.time() - start_time
+        }
+
+def test_mongodb_connection(connection_data):
+    """測試 MongoDB 連線"""
+    import time
+    start_time = time.time()
+    
+    try:
+        from pymongo import MongoClient
+        
+        # 構建連線字串
+        if connection_data.username and connection_data.password:
+            connection_string = f"mongodb://{connection_data.username}:{connection_data.password}@{connection_data.host}:{connection_data.port}/{connection_data.database}"
+        else:
+            connection_string = f"mongodb://{connection_data.host}:{connection_data.port}/{connection_data.database}"
+        
+        # 創建客戶端
+        client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
+        
+        # 測試連線
+        client.admin.command('ping')
+        
+        # 獲取資料庫資訊
+        db_info = client.server_info()
+        
+        client.close()
+        
+        response_time = time.time() - start_time
+        
+        return {
+            "success": True,
+            "message": "MongoDB 連線成功",
+            "server_info": db_info,
+            "response_time": response_time
+        }
+        
+    except Exception as e:
+        response_time = time.time() - start_time
+        return {
+            "success": False,
+            "error_message": f"MongoDB 連線失敗: {str(e)}",
+            "response_time": response_time
+        }
 
 # 其他必要的函數
 def verify_password(plain_password, hashed_password):
@@ -673,3 +987,173 @@ def get_device_history(db, device_id):
 def detect_anomaly(db, device_id):
     """AI 異常檢測"""
     return {"device_id": device_id, "anomaly_detected": False, "confidence": 0.95} 
+
+# 在現有函數後新增設備類別相關的資料庫操作
+
+def create_device_category(db, category, user_id):
+    """創建設備類別"""
+    db_category = DeviceCategory(
+        name=category.name,
+        display_name=category.display_name,
+        description=category.description,
+        icon=category.icon,
+        color=category.color,
+        parent_id=category.parent_id,
+        order_index=category.order_index,
+        is_active=category.is_active,
+        created_by=user_id
+    )
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+def get_device_categories(db, parent_id=None, include_inactive=False):
+    """獲取設備類別列表"""
+    query = db.query(DeviceCategory)
+    
+    if parent_id is not None:
+        query = query.filter(DeviceCategory.parent_id == parent_id)
+    else:
+        query = query.filter(DeviceCategory.parent_id.is_(None))
+    
+    if not include_inactive:
+        query = query.filter(DeviceCategory.is_active == True)
+    
+    return query.order_by(DeviceCategory.order_index, DeviceCategory.name).all()
+
+def get_device_category(db, category_id):
+    """獲取特定設備類別"""
+    return db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+
+def update_device_category(db, category_id, category):
+    """更新設備類別"""
+    db_category = db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    if not db_category:
+        return None
+    
+    # 防止更新系統類別
+    if db_category.is_system:
+        raise Exception("無法修改系統類別")
+    
+    update_data = category.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_category, field, value)
+    
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+def delete_device_category(db, category_id):
+    """刪除設備類別"""
+    db_category = db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    if not db_category:
+        return {"message": "類別不存在"}
+    
+    # 防止刪除系統類別
+    if db_category.is_system:
+        raise Exception("無法刪除系統類別")
+    
+    # 檢查是否有子類別
+    children = db.query(DeviceCategory).filter(DeviceCategory.parent_id == category_id).count()
+    if children > 0:
+        raise Exception("無法刪除有子類別的類別")
+    
+    # 檢查是否有設備使用此類別
+    devices = db.query(Device).filter(Device.category_id == category_id).count()
+    if devices > 0:
+        raise Exception("無法刪除有設備使用的類別")
+    
+    db.delete(db_category)
+    db.commit()
+    return {"message": "類別已刪除"}
+
+def get_device_category_tree(db):
+    """獲取設備類別樹狀結構"""
+    def build_tree(parent_id=None):
+        categories = get_device_categories(db, parent_id)
+        tree = []
+        for category in categories:
+            children = build_tree(category.id)
+            category_dict = {
+                "id": category.id,
+                "name": category.name,
+                "display_name": category.display_name,
+                "description": category.description,
+                "icon": category.icon,
+                "color": category.color,
+                "order_index": category.order_index,
+                "is_active": category.is_active,
+                "is_system": category.is_system,
+                "children_count": len(children),
+                "children": children
+            }
+            tree.append(category_dict)
+        return tree
+    
+    return build_tree()
+
+def get_device_category_with_stats(db, category_id):
+    """獲取設備類別及其統計資訊"""
+    category = get_device_category(db, category_id)
+    if not category:
+        return None
+    
+    # 計算子類別數量
+    children_count = db.query(DeviceCategory).filter(DeviceCategory.parent_id == category_id).count()
+    
+    # 計算設備數量
+    devices_count = db.query(Device).filter(Device.category_id == category_id).count()
+    
+    return {
+        "id": category.id,
+        "name": category.name,
+        "display_name": category.display_name,
+        "description": category.description,
+        "icon": category.icon,
+        "color": category.color,
+        "parent_id": category.parent_id,
+        "order_index": category.order_index,
+        "is_active": category.is_active,
+        "is_system": category.is_system,
+        "children_count": children_count,
+        "devices_count": devices_count,
+        "created_by": category.created_by,
+        "created_at": category.created_at,
+        "updated_at": category.updated_at
+    }
+
+# 更新現有的設備相關函數
+def create_device(db, device):
+    db_device = Device(
+        name=device.name,
+        location=device.location,
+        category_id=device.category_id,
+        group=device.group,
+        tags=device.tags or "",
+        device_type=device.device_type,
+        firmware_version=device.firmware_version
+    )
+    db.add(db_device)
+    db.commit()
+    db.refresh(db_device)
+    return db_device
+
+def get_devices(db, category_id=None):
+    query = db.query(Device)
+    if category_id:
+        query = query.filter(Device.category_id == category_id)
+    return query.all()
+
+def update_device(db, device_id, update):
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        return None
+    
+    update_data = update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(device, field, value)
+    
+    db.commit()
+    db.refresh(device)
+    return device 

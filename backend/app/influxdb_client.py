@@ -14,19 +14,40 @@ class InfluxDBManager:
         self.org = os.getenv("INFLUX_ORG", "iot_org")
         self.bucket = os.getenv("INFLUX_BUCKET", "iot_platform")
         
-        self.client = InfluxDBClient(
-            url=self.url,
-            token=self.token,
-            org=self.org
-        )
-        self.write_api = self.client.write_api(write_options=SYNCHRONOUS)
-        self.query_api = self.client.query_api()
+        try:
+            self.client = InfluxDBClient(
+                url=self.url,
+                token=self.token,
+                org=self.org
+            )
+            self.write_api = self.client.write_api(write_options=SYNCHRONOUS)
+            self.query_api = self.client.query_api()
+            logger.info("InfluxDB 客戶端初始化成功")
+        except Exception as e:
+            logger.error(f"InfluxDB 客戶端初始化失敗: {e}")
+            self.client = None
+            self.write_api = None
+            self.query_api = None
+    
+    def is_connected(self):
+        """檢查連線狀態"""
+        try:
+            if self.client:
+                self.client.ping()
+                return True
+            return False
+        except:
+            return False
     
     def write_device_sensor_data(self, device_id: str, sensor_type: str, sensor_id: str, 
                                 value: float, unit: str = "", location: str = "", 
                                 quality: str = "good", status: str = "active", 
                                 battery_level: Optional[int] = None, timestamp: Optional[datetime] = None):
         """寫入設備感測器數據"""
+        if not self.is_connected():
+            logger.warning("InfluxDB 未連線，跳過數據寫入")
+            return False
+            
         try:
             point = Point("device_sensors") \
                 .tag("device_id", device_id) \
@@ -56,6 +77,10 @@ class InfluxDBManager:
                            memory_usage: float, disk_usage: float, temperature: float,
                            uptime_seconds: int, network_latency_ms: int, timestamp: Optional[datetime] = None):
         """寫入設備狀態數據"""
+        if not self.is_connected():
+            logger.warning("InfluxDB 未連線，跳過數據寫入")
+            return False
+            
         try:
             point = Point("device_status") \
                 .tag("device_id", device_id) \
@@ -85,6 +110,10 @@ class InfluxDBManager:
                             error_rate: float, active_connections: int, memory_usage_mb: int,
                             cpu_usage_percent: float, timestamp: Optional[datetime] = None):
         """寫入系統效能指標"""
+        if not self.is_connected():
+            logger.warning("InfluxDB 未連線，跳過數據寫入")
+            return False
+            
         try:
             point = Point("system_metrics") \
                 .tag("service", service) \
@@ -113,6 +142,10 @@ class InfluxDBManager:
                          confidence: float, status: str, severity: str, features_used: int,
                          timestamp: Optional[datetime] = None):
         """寫入 AI 分析結果"""
+        if not self.is_connected():
+            logger.warning("InfluxDB 未連線，跳過數據寫入")
+            return False
+            
         try:
             point = Point("ai_analysis") \
                 .tag("device_id", device_id) \
@@ -141,6 +174,10 @@ class InfluxDBManager:
                          actual_value: float, status: str, acknowledged: bool,
                          resolved: bool, timestamp: Optional[datetime] = None):
         """寫入警報事件"""
+        if not self.is_connected():
+            logger.warning("InfluxDB 未連線，跳過數據寫入")
+            return False
+            
         try:
             point = Point("alert_events") \
                 .tag("device_id", device_id) \
@@ -168,6 +205,10 @@ class InfluxDBManager:
                                 start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                 limit: int = 1000) -> List[Dict[str, Any]]:
         """查詢設備感測器數據"""
+        if not self.is_connected():
+            logger.warning("InfluxDB 未連線，無法查詢數據")
+            return []
+            
         try:
             query = f'''
             from(bucket: "{self.bucket}")
@@ -206,6 +247,10 @@ class InfluxDBManager:
     def query_device_status(self, device_id: str, start_time: Optional[datetime] = None,
                            end_time: Optional[datetime] = None, limit: int = 1000) -> List[Dict[str, Any]]:
         """查詢設備狀態數據"""
+        if not self.is_connected():
+            logger.warning("InfluxDB 未連線，無法查詢數據")
+            return []
+            
         try:
             query = f'''
             from(bucket: "{self.bucket}")
