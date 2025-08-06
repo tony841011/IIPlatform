@@ -1,12 +1,14 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 import datetime
 import uuid
 from sqlalchemy import Column, Integer, String, DateTime, Text, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 from urllib.parse import quote_plus
+from datetime import timedelta
+from sqlalchemy import text
 
 # 嘗試導入 dotenv，如果失敗則使用預設值
 try:
@@ -103,7 +105,7 @@ class DatabaseManager:
     def get_mongo_db(self):
         """取得 MongoDB 資料庫"""
         if self.mongo_client:
-            return self.mongo_db
+            return self.mongo_client.iot_platform
         return None
     
     def get_influx_client(self):
@@ -117,12 +119,9 @@ class DatabaseManager:
         if self.influx_client:
             self.influx_client.close()
 
-# 全域資料庫管理器
-db_manager = DatabaseManager()
-
-# 密碼雜湊函數
+# 密碼雜湊相關函數
 def get_password_hash(password: str) -> str:
-    """產生密碼雜湊"""
+    """生成密碼雜湊"""
     import hashlib
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -137,8 +136,9 @@ def test_database_connections():
     
     # 測試 PostgreSQL
     try:
-        with engine.connect() as conn:
-            conn.execute("SELECT 1")
+        db = get_postgres_session()
+        db.execute(text("SELECT 1"))
+        db.close()
         results['PostgreSQL'] = {'status': 'success', 'message': '連線正常'}
     except Exception as e:
         results['PostgreSQL'] = {'status': 'error', 'message': f'連線失敗: {e}'}
@@ -239,4 +239,198 @@ def get_mongo_db():
 # 取得 InfluxDB 客戶端
 def get_influx_client():
     """取得 InfluxDB 客戶端"""
-    return db_manager.get_influx_client() 
+    return db_manager.get_influx_client()
+
+# 用戶認證相關函數
+def get_user_by_username(db: Session, username: str):
+    """根據用戶名獲取用戶"""
+    from .models import User
+    return db.query(User).filter(User.username == username).first()
+
+def authenticate_user(db: Session, username: str, password: str):
+    """驗證用戶"""
+    user = get_user_by_username(db, username)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    """創建訪問令牌"""
+    import jwt
+    from datetime import datetime, timedelta
+    
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, "your-secret-key", algorithm="HS256")
+    return encoded_jwt
+
+def get_current_user(token: str, db: Session, credentials_exception):
+    """獲取當前用戶"""
+    import jwt
+    from .models import User
+    
+    try:
+        payload = jwt.decode(token, "your-secret-key", algorithms=["HS256"])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+    
+    user = get_user_by_username(db, username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+def create_user(db: Session, user):
+    """創建用戶"""
+    from .models import User
+    hashed_password = get_password_hash(user.password)
+    db_user = User(
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_password,
+        display_name=user.display_name,
+        role_id=user.role_id
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+# 設備管理相關函數
+def create_device(db: Session, device):
+    """創建設備"""
+    from .models import Device
+    db_device = Device(**device.dict())
+    db.add(db_device)
+    db.commit()
+    db.refresh(db_device)
+    return db_device
+
+def get_devices(db: Session, category_id: int = None):
+    """獲取設備列表"""
+    from .models import Device
+    query = db.query(Device)
+    if category_id:
+        query = query.filter(Device.category_id == category_id)
+    return query.all()
+
+def update_device(db: Session, device_id: int, update):
+    """更新設備"""
+    from .models import Device
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        return None
+    
+    for key, value in update.dict(exclude_unset=True).items():
+        setattr(device, key, value)
+    
+    db.commit()
+    db.refresh(device)
+    return device
+
+# 設備類別管理相關函數
+def create_device_category(db: Session, category, created_by: int):
+    """創建設備類別"""
+    from .models import DeviceCategory
+    db_category = DeviceCategory(**category.dict(), created_by=created_by)
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+def get_device_categories(db: Session, parent_id: int = None, include_inactive: bool = False):
+    """獲取設備類別列表"""
+    from .models import DeviceCategory
+    query = db.query(DeviceCategory)
+    if parent_id is not None:
+        query = query.filter(DeviceCategory.parent_id == parent_id)
+    if not include_inactive:
+        query = query.filter(DeviceCategory.is_active == True)
+    return query.all()
+
+def get_device_category_tree(db: Session):
+    """獲取設備類別樹狀結構"""
+    from .models import DeviceCategory
+    
+    def build_tree(parent_id=None):
+        categories = db.query(DeviceCategory).filter(
+            DeviceCategory.parent_id == parent_id,
+            DeviceCategory.is_active == True
+        ).all()
+        
+        tree = []
+        for category in categories:
+            node = {
+                "id": category.id,
+                "name": category.name,
+                "display_name": category.display_name,
+                "description": category.description,
+                "icon": category.icon,
+                "color": category.color,
+                "children": build_tree(category.id)
+            }
+            tree.append(node)
+        return tree
+    
+    return build_tree()
+
+def get_device_category(db: Session, category_id: int):
+    """獲取單個設備類別"""
+    from .models import DeviceCategory
+    return db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+
+def update_device_category(db: Session, category_id: int, category):
+    """更新設備類別"""
+    from .models import DeviceCategory
+    db_category = db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    if not db_category:
+        return None
+    
+    for key, value in category.dict(exclude_unset=True).items():
+        setattr(db_category, key, value)
+    
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+def delete_device_category(db: Session, category_id: int):
+    """刪除設備類別"""
+    from .models import DeviceCategory
+    category = db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    if not category:
+        return False
+    
+    # 檢查是否有子類別
+    children = db.query(DeviceCategory).filter(DeviceCategory.parent_id == category_id).count()
+    if children > 0:
+        raise ValueError("無法刪除有子類別的類別")
+    
+    # 檢查是否有設備使用此類別
+    from .models import Device
+    devices = db.query(Device).filter(Device.category_id == category_id).count()
+    if devices > 0:
+        raise ValueError("無法刪除有設備使用的類別")
+    
+    db.delete(category)
+    db.commit()
+    return True
+
+# 警報管理相關函數
+def get_alerts(db: Session, device_id: int = None):
+    """獲取警報列表"""
+    from .models import Alert
+    query = db.query(Alert)
+    if device_id:
+        query = query.filter(Alert.device_id == device_id)
+    return query.all()
+
+# 初始化資料庫管理器
+db_manager = DatabaseManager() 

@@ -43,7 +43,39 @@ class ModbusHandler:
                 if result.isError():
                     logger.error(f"讀取保持寄存器失敗: {result}")
                     return None
-                return result.registers
+                
+                registers = result.registers
+                
+                # 使用數據處理服務處理 Modbus 數據
+                try:
+                    import asyncio
+                    from app.services.data_processing_service import data_processing_service
+                    
+                    # 創建事件循環來執行異步處理
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    
+                    try:
+                        # 處理數據
+                        device_id = f"{self.host}_{self.port}"
+                        result = loop.run_until_complete(
+                            data_processing_service.process_modbus_data(device_id, registers)
+                        )
+                        
+                        if result.success:
+                            # 保存處理結果
+                            data_processing_service.save_processing_result(result)
+                            logger.info(f"Modbus 數據處理成功: {device_id}")
+                        else:
+                            logger.warning(f"Modbus 數據處理失敗: {result.error_message}")
+                        
+                    finally:
+                        loop.close()
+                        
+                except Exception as e:
+                    logger.error(f"數據處理服務調用失敗: {str(e)}")
+                
+                return registers
             else:
                 logger.error("Modbus 客戶端未連線")
                 return None

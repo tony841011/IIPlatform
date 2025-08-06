@@ -1,54 +1,59 @@
 # IIPlatform 工業物聯網平台
 
-## 平台概述
+## 🏭 平台概述
 
-IIPlatform 是一個專為工業環境設計的綜合性物聯網平台，整合了設備管理、數據分析、AI 預測、視頻識別等多項功能。平台採用現代化的微服務架構，提供完整的工業物聯網解決方案。
+IIPlatform 是一個專為工業環境設計的綜合性物聯網平台，整合了設備管理、數據分析、AI 預測、多資料庫架構等多項功能。平台採用現代化的微服務架構，提供完整的工業物聯網解決方案。
 
-## 主要功能特色
+## ✨ 主要功能特色
+
+### 📊 多資料庫架構
+- **PostgreSQL**: 用戶、角色、設備、告警等核心業務數據
+- **MongoDB**: 設備配置、AI模型、日誌、報表等非結構化數據
+- **InfluxDB**: 感測器數據、系統指標、AI分析結果等時序數據
 
 ### 🏭 設備管理
-- 設備註冊、分組、標籤管理
+- 設備註冊、分組、類別管理
 - 遠端設備控制與監控
 - OTA 韌體更新管理
 - 設備狀態即時監控
+- 設備類別自定義管理
 
-###  數據分析
+### 📈 數據分析
 - 即時數據監控與顯示
 - 歷史數據查詢與趨勢分析
 - 多維度數據統計
 - 自定義數據報表
 
-###  AI 智能分析
+### 🤖 AI 智能分析
 - 異常檢測與預測性維護
 - 機器學習模型管理 (MLOps)
 - GPU 資源監控與管理
 - AI 模型訓練與部署
 
-###  視頻識別
-- ONVIF 協議支援
+### 📹 視頻識別
 - 串流視頻處理
 - AI 視頻分析
-- PTZ 攝像機控制
+- 攝像機控制
 
 ### 🔔 警報系統
 - 即時警報通知
-- 多管道通知 (Email, SMS, Teams, 推播)
+- 多管道通知 (Email, SMS, 推播)
 - 警報規則配置
 - 警報歷史記錄
 
-###  安全與權限
+### 🔐 安全與權限
 - 角色基礎存取控制 (RBAC)
 - 用戶權限管理
 - 審計日誌記錄
 - 安全認證機制
 
-###  報表系統
+### 📋 報表系統
 - 自定義報表模板
 - 排程報表生成
 - 多格式匯出 (PDF, Excel)
 - 報表歷史管理
 
-### ️ GIS 地理資訊
+### 🗺️ GIS 地理資訊
 - 設備地理分佈顯示
 - 地理區域管理
 - 地理警報設定
@@ -60,17 +65,11 @@ IIPlatform 是一個專為工業環境設計的綜合性物聯網平台，整合
 - 事件觸發機制
 - 流程監控與管理
 
-###  ETL 數據處理
-- 數據提取、轉換、載入
-- 數據品質檢查
-- 數據映射與轉換
-- 工作流程設計
-
-###  通訊協定支援
+### 📡 通訊協定支援
 - MQTT 協議
-- RESTful API
 - Modbus TCP
 - OPC UA
+- RESTful API
 
 ### 📱 通知管理
 - 個人化通知偏好
@@ -84,7 +83,7 @@ IIPlatform 是一個專為工業環境設計的綜合性物聯網平台，整合
 - 雲端邊緣同步
 - 斷線緩存機制
 
-### 使用者行為分析
+### 📊 使用者行為分析
 - 儀表板模組點擊率
 - 使用時長分析
 - 路徑分析
@@ -97,14 +96,13 @@ IIPlatform 是一個專為工業環境設計的綜合性物聯網平台，整合
 - Webhook 測試/歷史
 - SDK 提供 (Python/JS/Go)
 
-## 技術架構
+## 🛠️ 技術架構
 
 ### 後端技術棧
 - **框架**: FastAPI (Python)
-- **資料庫**: SQLite (開發) / PostgreSQL (生產)
+- **資料庫**: PostgreSQL + MongoDB + InfluxDB
 - **ORM**: SQLAlchemy
-- **認證**: JWT + OAuth2
-- **任務佇列**: Celery
+- **認證**: JWT
 - **AI/ML**: scikit-learn, pandas, numpy
 - **通訊**: MQTT, Modbus, OPC UA
 
@@ -114,13 +112,16 @@ IIPlatform 是一個專為工業環境設計的綜合性物聯網平台，整合
 - **圖表**: ECharts
 - **路由**: React Router DOM
 - **HTTP 客戶端**: Axios
+- **日期處理**: dayjs
 
-## 快速開始
+## 🚀 快速開始
 
 ### 環境需求
 - Python 3.8+
 - Node.js 16+
-- SQLite (開發環境)
+- PostgreSQL
+- MongoDB
+- InfluxDB
 
 ### 安裝步驟
 
@@ -130,20 +131,23 @@ git clone https://github.com/your-org/iiplatform.git
 cd iiplatform
 ```
 
-2. **後端設置**
+2. **設定資料庫**
 ```bash
+# 啟動資料庫服務
+sudo systemctl start postgresql mongod influxdb
+
+# 初始化資料庫
 cd backend
-pip install -r requirements.txt
-python init_db.py
-python generate_test_data.py
-uvicorn app.main:app --reload
+python init_all_databases.py
 ```
 
-3. **前端設置**
+3. **啟動平台**
 ```bash
-cd frontend
-npm install
-npm start
+# Linux/Mac
+./start_platform.sh
+
+# Windows
+start_platform.bat
 ```
 
 4. **訪問平台**
@@ -151,7 +155,11 @@ npm start
 - 後端 API: http://localhost:8000
 - API 文檔: http://localhost:8000/docs
 
-## 功能模組
+### 🔑 預設帳號
+- **用戶名**: admin
+- **密碼**: admin123
+
+## 📋 功能模組
 
 ### 平台簡介
 - 平台概述與架構圖
@@ -172,7 +180,6 @@ npm start
 
 ### 數據處理
 - 通訊協定管理
-- 資料庫連線管理
 - 資料表結構管理
 
 ### AI 應用
@@ -182,7 +189,7 @@ npm start
 
 ### 設備管理
 - 設備管理
-- 設備控制
+- 設備類別管理
 - OTA 更新
 - 邊緣閘道
 - 地理資訊
@@ -202,7 +209,30 @@ npm start
 - 使用者行為分析
 - 開發者平台
 
-## 開發指南
+## 🗄️ 資料庫架構
+
+### PostgreSQL (結構化數據)
+- **用戶管理**: users, roles, permissions, role_permissions
+- **設備管理**: devices, device_categories, device_groups, device_group_members
+- **告警系統**: alerts, notifications
+- **系統設定**: database_connections, communication_protocols, system_settings
+
+### MongoDB (非結構化數據)
+- **設備配置**: device_configs
+- **AI 模型**: ai_models
+- **系統日誌**: system_logs
+- **報表系統**: reports
+- **API 文檔**: api_documentation
+- **開發者平台**: sdk_downloads, webhook_deliveries, user_behaviors, user_sessions, feature_usage, api_tokens, webhooks, api_usage
+
+### InfluxDB (時序數據)
+- **設備感測器數據**: device_sensor_data
+- **設備狀態**: device_status
+- **系統指標**: system_metrics
+- **AI 分析結果**: ai_analysis_results
+- **告警事件**: alert_events
+
+## 🔧 開發指南
 
 ### 新增功能模組
 1. 在 `backend/app/models.py` 中定義資料模型
@@ -212,46 +242,64 @@ npm start
 5. 在 `frontend/src/components/` 中建立 React 組件
 6. 在 `frontend/src/App.js` 中新增路由
 
-### 資料庫遷移
+### 資料庫初始化
 ```bash
-# 重新初始化資料庫
-python init_db.py
-
-# 生成測試資料
-python generate_test_data.py
+# 初始化所有資料庫
+cd backend
+python init_all_databases.py
 ```
 
-## 部署指南
+## 📦 部署指南
 
 ### 生產環境部署
-1. 使用 PostgreSQL 替代 SQLite
-2. 配置環境變數
+1. 配置 PostgreSQL、MongoDB、InfluxDB
+2. 設定環境變數
 3. 設置反向代理 (Nginx)
 4. 配置 SSL 憑證
 5. 設置監控與日誌
 
-### Docker 部署
+### 環境變數設定
 ```bash
-# 建立 Docker 映像
-docker build -t iiplatform .
+# PostgreSQL
+POSTGRES_USER=iot_user
+POSTGRES_PASSWORD=your_password
+POSTGRES_HOST=your_host
+POSTGRES_PORT=5432
+POSTGRES_DB=iot_platform
 
-# 執行容器
-docker run -p 8000:8000 iiplatform
+# MongoDB
+MONGO_HOST=your_host
+MONGO_PORT=27017
+MONGO_DB=iot_platform
+
+# InfluxDB
+INFLUXDB_URL=http://your_host:8086
+INFLUXDB_TOKEN=your_token
+INFLUXDB_ORG=IIPlatform
+INFLUXDB_BUCKET=iot_platform
 ```
 
-## 貢獻指南
+## 🤝 貢獻指南
 
 1. Fork 專案
 2. 建立功能分支
 3. 提交變更
 4. 發起 Pull Request
 
-## 授權
+## 📄 授權
 
 本專案採用 MIT 授權條款。
 
-## 聯絡資訊
+## 📞 聯絡資訊
 
 - 專案維護者: [Your Name]
 - Email: [your.email@example.com]
 - 專案網站: [https://github.com/your-org/iiplatform]
+
+## 📚 相關文檔
+
+- [平台建置指南](PLATFORM_SETUP.md)
+- [資料庫設計文檔](Database_Design.md)
+- [用戶手冊](USER_MANUAL.md)
+- [功能說明](FEATURES.md)
+- [清理總結](CLEANUP_SUMMARY.md)

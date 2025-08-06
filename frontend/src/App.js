@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Layout, Menu, theme, Dropdown, Space, Avatar, Button, Modal, Form, Input, Select, message } from 'antd';
+import { Layout, Menu, theme, Dropdown, Space, Avatar, Button, Modal, Form, Input, Select, message, Badge } from 'antd';
 import {
   DashboardOutlined,
   DesktopOutlined,
@@ -98,7 +98,8 @@ import {
   FileGifOutlined,
   FileBmpOutlined,
   FileTiffOutlined,
-  TagOutlined
+  TagOutlined,
+  DatabaseOutlined as DatabaseIcon
 } from '@ant-design/icons';
 
 // 導入組件
@@ -110,6 +111,15 @@ import RoleManagement from './components/RoleManagement';
 import DatabaseConnectionManagement from './components/DatabaseConnectionManagement';
 import SystemSupport from './components/SystemSupport';
 import UsageAnalytics from './components/UsageAnalytics';
+import Dashboard from './components/Dashboard';
+import AlertCenter from './components/AlertCenter';
+import HistoricalAnalysis from './components/HistoricalAnalysis';
+import AIAnalysis from './components/AIAnalysis';
+import CommunicationProtocols from './components/CommunicationProtocols';
+import TableSchema from './components/TableSchema';
+import DataProcessing from './components/DataProcessing';
+import DataTransformation from './components/DataTransformation';
+import Login from './components/Login';
 
 const { Header, Content, Sider } = Layout;
 
@@ -119,30 +129,257 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [roleSwitchModalVisible, setRoleSwitchModalVisible] = useState(false);
+  const [databaseStatus, setDatabaseStatus] = useState({});
 
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const handleLogin = (values) => {
-    // 模擬登入驗證
-    if (values.username === 'admin' && values.password === 'admin123') {
-      setIsLoggedIn(true);
-      setCurrentUser({
-        username: 'admin',
-        displayName: '系統管理員',
-        role: 'admin'
-      });
-      setLoginModalVisible(false);
-      message.success('登入成功！');
-    } else {
-      message.error('用戶名或密碼錯誤！');
+  // 檢查用戶權限
+  const hasPermission = (permission) => {
+    if (!currentUser || !currentUser.permissions) return false;
+    return currentUser.permissions.includes('all') || currentUser.permissions.includes(permission);
+  };
+
+  // 根據權限過濾選單項目
+  const getFilteredMenuItems = () => {
+    const allMenuItems = [
+      {
+        key: 'platform-intro',
+        icon: <InfoCircleOutlined />,
+        label: <Link to="/platform-intro">平台簡介</Link>,
+      },
+      {
+        key: 'dashboard',
+        icon: <DashboardOutlined />,
+        label: <Link to="/dashboard">總覽儀表板</Link>,
+      },
+      {
+        key: 'monitoring',
+        icon: <MonitorOutlined />,
+        label: '監控分析',
+        children: [
+          {
+            key: 'historical-analysis',
+            icon: <HistoryOutlined />,
+            label: <Link to="/historical-analysis">歷史分析</Link>,
+          },
+          {
+            key: 'ai-analysis',
+            icon: <RobotOutlined />,
+            label: <Link to="/ai-analysis">AI 分析</Link>,
+          },
+          {
+            key: 'alert-center',
+            icon: <AlertOutlined />,
+            label: <Link to="/alert-center">告警中心</Link>,
+          },
+        ],
+      },
+      {
+        key: 'data-processing',
+        icon: <DatabaseOutlined />,
+        label: '數據處理',
+        children: [
+          {
+            key: 'communication-protocols',
+            icon: <ApiOutlined />,
+            label: <Link to="/communication-protocols">通訊協定</Link>,
+          },
+          {
+            key: 'table-schema',
+            icon: <TableOutlined />,
+            label: <Link to="/table-schema">資料表結構</Link>,
+          },
+          {
+            key: 'data-processing',
+            icon: <DatabaseOutlined />,
+            label: <Link to="/data-processing">數據處理</Link>,
+          },
+          {
+            key: 'data-transformation',
+            icon: <SyncOutlined />,
+            label: <Link to="/data-transformation">數據轉換</Link>,
+          },
+        ],
+      },
+      {
+        key: 'ai-applications',
+        icon: <RobotOutlined />,
+        label: 'AI 應用',
+        children: [
+          {
+            key: 'ai-anomaly-detection',
+            icon: <BugOutlined />,
+            label: <Link to="/ai-anomaly-detection">AI 異常偵測系統</Link>,
+          },
+          {
+            key: 'stream-video-recognition',
+            icon: <VideoCameraOutlined />,
+            label: <Link to="/stream-video-recognition">串流影像辨識</Link>,
+          },
+          {
+            key: 'mlops',
+            icon: <ExperimentOutlined />,
+            label: <Link to="/mlops">MLOPs</Link>,
+          },
+        ],
+      },
+      {
+        key: 'device-management',
+        icon: <DesktopOutlined />,
+        label: '設備管理',
+        children: [
+          {
+            key: 'device-management',
+            icon: <DesktopOutlined />,
+            label: <Link to="/device-management">設備管理</Link>,
+          },
+          {
+            key: 'device-categories',
+            icon: <TagOutlined />,
+            label: <Link to="/device-categories">設備類別管理</Link>,
+          },
+          {
+            key: 'ota-update',
+            icon: <CloudUploadOutlined />,
+            label: <Link to="/ota-update">OTA更新</Link>,
+          },
+          {
+            key: 'edge-gateway',
+            icon: <GatewayOutlined />,
+            label: <Link to="/edge-gateway">邊緣閘道</Link>,
+          },
+          {
+            key: 'gis-integration',
+            icon: <GlobalOutlined />,
+            label: <Link to="/gis-integration">地理資訊</Link>,
+          },
+        ],
+      },
+      {
+        key: 'automation-workflow',
+        icon: <PartitionOutlined />,
+        label: '自動化工作流',
+        children: [
+          {
+            key: 'rule-engine',
+            icon: <ToolOutlined />,
+            label: <Link to="/rule-engine">規則引擎</Link>,
+          },
+          {
+            key: 'workflow',
+            icon: <BranchesOutlined />,
+            label: <Link to="/workflow">工作流程</Link>,
+          },
+          {
+            key: 'audit-logs',
+            icon: <AuditOutlined />,
+            label: <Link to="/audit-logs">審計日誌</Link>,
+          },
+          {
+            key: 'report-system',
+            icon: <FileTextOutlined />,
+            label: <Link to="/report-system">報表系統</Link>,
+          },
+        ],
+      },
+      {
+        key: 'system-management',
+        icon: <SettingOutlined />,
+        label: '系統管理',
+        children: [
+          {
+            key: 'system-settings',
+            icon: <SettingOutlined />,
+            label: <Link to="/system-settings">系統設定</Link>,
+          },
+          {
+            key: 'notification-preferences',
+            icon: <BellOutlined />,
+            label: <Link to="/notification-preferences">通知偏好</Link>,
+          },
+          {
+            key: 'role-management',
+            icon: <SafetyCertificateOutlined />,
+            label: <Link to="/role-management">角色管理</Link>,
+          },
+          {
+            key: 'user-management',
+            icon: <UserOutlined />,
+            label: <Link to="/user-management">用戶管理</Link>,
+          },
+          {
+            key: 'database-connections',
+            icon: <DatabaseOutlined />,
+            label: <Link to="/database-connections">資料庫連線</Link>,
+          },
+          {
+            key: 'system-support',
+            icon: <PhoneOutlined />,
+            label: <Link to="/system-support">系統維護聯絡</Link>,
+          },
+          {
+            key: 'usage-analytics',
+            icon: <BarChartOutlined />,
+            label: <Link to="/usage-analytics">使用者行為分析</Link>,
+          },
+          {
+            key: 'developer-portal',
+            icon: <ApiOutlined />,
+            label: <Link to="/developer-portal">開發者平台</Link>,
+          },
+        ],
+      },
+    ];
+
+    // 根據權限過濾選單
+    return allMenuItems.filter(item => {
+      if (item.children) {
+        item.children = item.children.filter(child => {
+          const permission = getPermissionByKey(child.key);
+          return hasPermission(permission);
+        });
+        return item.children.length > 0;
+      } else {
+        const permission = getPermissionByKey(item.key);
+        return hasPermission(permission);
+      }
+    });
+  };
+
+  // 根據選單鍵值獲取對應權限
+  const getPermissionByKey = (key) => {
+    const permissionMap = {
+      'platform-intro': 'platform_view',
+      'dashboard': 'dashboard_view',
+      'device-management': 'device_management',
+      'device-categories': 'device_management',
+      'notification-preferences': 'notification_management',
+      'role-management': 'user_management',
+      'database-connections': 'system_management',
+      'system-support': 'system_management',
+      'usage-analytics': 'analytics_view',
+      'developer-portal': 'developer_access'
+    };
+    return permissionMap[key] || 'data_view';
+  };
+
+  const handleLoginSuccess = (userData) => {
+    setIsLoggedIn(true);
+    setCurrentUser(userData);
+    setLoginModalVisible(false);
+    
+    // 更新資料庫狀態
+    if (userData.selectedDatabases) {
+      setDatabaseStatus(userData.selectedDatabases);
     }
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
+    setDatabaseStatus({});
     message.success('已登出！');
   };
 
@@ -156,10 +393,20 @@ const App = () => {
     setCurrentUser({
       ...currentUser,
       role: values.role,
-      displayName: roleNames[values.role]
+      displayName: roleNames[values.role],
+      permissions: getPermissionsByRole(values.role)
     });
     setRoleSwitchModalVisible(false);
     message.success(`已切換到 ${roleNames[values.role]} 角色！`);
+  };
+
+  const getPermissionsByRole = (role) => {
+    const permissions = {
+      admin: ['all'],
+      operator: ['device_management', 'data_view', 'alert_management', 'dashboard_view'],
+      viewer: ['data_view', 'report_view', 'dashboard_view']
+    };
+    return permissions[role] || permissions.viewer;
   };
 
   const userMenuItems = [
@@ -182,185 +429,10 @@ const App = () => {
     },
   ];
 
-  const menuItems = [
-    {
-      key: 'platform-intro',
-      icon: <InfoCircleOutlined />,
-      label: <Link to="/platform-intro">平台簡介</Link>,
-    },
-    {
-      key: 'dashboard',
-      icon: <DashboardOutlined />,
-      label: <Link to="/dashboard">總覽儀表板</Link>,
-    },
-    {
-      key: 'monitoring',
-      icon: <MonitorOutlined />,
-      label: '監控分析',
-      children: [
-        {
-          key: 'historical-analysis',
-          icon: <HistoryOutlined />,
-          label: <Link to="/historical-analysis">歷史分析</Link>,
-        },
-        {
-          key: 'ai-analysis',
-          icon: <RobotOutlined />,
-          label: <Link to="/ai-analysis">AI 分析</Link>,
-        },
-        {
-          key: 'alert-center',
-          icon: <AlertOutlined />,
-          label: <Link to="/alert-center">告警中心</Link>,
-        },
-      ],
-    },
-    {
-      key: 'data-processing',
-      icon: <DatabaseOutlined />,
-      label: '數據處理',
-      children: [
-        {
-          key: 'communication-protocols',
-          icon: <ApiOutlined />,
-          label: <Link to="/communication-protocols">通訊協定</Link>,
-        },
-        {
-          key: 'table-schema',
-          icon: <TableOutlined />,
-          label: <Link to="/table-schema">資料表結構</Link>,
-        },
-      ],
-    },
-    {
-      key: 'ai-applications',
-      icon: <RobotOutlined />,
-      label: 'AI 應用',
-      children: [
-        {
-          key: 'ai-anomaly-detection',
-          icon: <BugOutlined />,
-          label: <Link to="/ai-anomaly-detection">AI 異常偵測系統</Link>,
-        },
-        {
-          key: 'stream-video-recognition',
-          icon: <VideoCameraOutlined />,
-          label: <Link to="/stream-video-recognition">串流影像辨識</Link>,
-        },
-        {
-          key: 'mlops',
-          icon: <ExperimentOutlined />,
-          label: <Link to="/mlops">MLOPs</Link>,
-        },
-      ],
-    },
-    {
-      key: 'device-management',
-      icon: <DesktopOutlined />,
-      label: '設備管理',
-      children: [
-        {
-          key: 'device-management',
-          icon: <DesktopOutlined />,
-          label: <Link to="/device-management">設備管理</Link>,
-        },
-        {
-          key: 'device-categories',
-          icon: <TagOutlined />,
-          label: <Link to="/device-categories">設備類別管理</Link>,
-        },
-        {
-          key: 'ota-update',
-          icon: <CloudUploadOutlined />,
-          label: <Link to="/ota-update">OTA更新</Link>,
-        },
-        {
-          key: 'edge-gateway',
-          icon: <GatewayOutlined />,
-          label: <Link to="/edge-gateway">邊緣閘道</Link>,
-        },
-        {
-          key: 'gis-integration',
-          icon: <GlobalOutlined />,
-          label: <Link to="/gis-integration">地理資訊</Link>,
-        },
-      ],
-    },
-    {
-      key: 'automation-workflow',
-      icon: <PartitionOutlined />,
-      label: '自動化工作流',
-      children: [
-        {
-          key: 'rule-engine',
-          icon: <ToolOutlined />,
-          label: <Link to="/rule-engine">規則引擎</Link>,
-        },
-        {
-          key: 'workflow',
-          icon: <BranchesOutlined />,
-          label: <Link to="/workflow">工作流程</Link>,
-        },
-        {
-          key: 'audit-logs',
-          icon: <AuditOutlined />,
-          label: <Link to="/audit-logs">審計日誌</Link>,
-        },
-        {
-          key: 'report-system',
-          icon: <FileTextOutlined />,
-          label: <Link to="/report-system">報表系統</Link>,
-        },
-      ],
-    },
-    {
-      key: 'system-management',
-      icon: <SettingOutlined />,
-      label: '系統管理',
-      children: [
-        {
-          key: 'system-settings',
-          icon: <SettingOutlined />,
-          label: <Link to="/system-settings">系統設定</Link>,
-        },
-        {
-          key: 'notification-preferences',
-          icon: <BellOutlined />,
-          label: <Link to="/notification-preferences">通知偏好</Link>,
-        },
-        {
-          key: 'role-management',
-          icon: <SafetyCertificateOutlined />,
-          label: <Link to="/role-management">角色管理</Link>,
-        },
-        {
-          key: 'user-management',
-          icon: <UserOutlined />,
-          label: <Link to="/user-management">用戶管理</Link>,
-        },
-        {
-          key: 'database-connections',
-          icon: <DatabaseOutlined />,
-          label: <Link to="/database-connections">資料庫連線</Link>,
-        },
-        {
-          key: 'system-support',
-          icon: <PhoneOutlined />,
-          label: <Link to="/system-support">系統維護聯絡</Link>,
-        },
-        {
-          key: 'usage-analytics',
-          icon: <BarChartOutlined />,
-          label: <Link to="/usage-analytics">使用者行為分析</Link>,
-        },
-        {
-          key: 'developer-portal',
-          icon: <ApiOutlined />,
-          label: <Link to="/developer-portal">開發者平台</Link>,
-        },
-      ],
-    },
-  ];
+  // 如果未登入，顯示登入頁面
+  if (!isLoggedIn) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
     <Router>
@@ -384,7 +456,7 @@ const App = () => {
             theme="dark"
             defaultSelectedKeys={['dashboard']}
             mode="inline"
-            items={menuItems}
+            items={getFilteredMenuItems()}
           />
         </Sider>
         <Layout>
@@ -399,24 +471,29 @@ const App = () => {
                 工業物聯網平台
               </div>
               <Space>
-                {isLoggedIn ? (
-                  <Dropdown
-                    menu={{ items: userMenuItems }}
-                    placement="bottomRight"
-                  >
-                    <Button type="text" icon={<UserOutlined />}>
-                      {currentUser?.displayName || currentUser?.username}
-                    </Button>
-                  </Dropdown>
-                ) : (
-                  <Button 
-                    type="primary" 
-                    icon={<LoginOutlined />}
-                    onClick={() => setLoginModalVisible(true)}
-                  >
-                    登入
+                {/* 資料庫狀態指示器 */}
+                <Space>
+                  {Object.entries(databaseStatus).map(([db, status]) => (
+                    <Badge
+                      key={db}
+                      status={status ? 'success' : 'error'}
+                      text={
+                        <span style={{ fontSize: '12px' }}>
+                          {db.toUpperCase()}
+                        </span>
+                      }
+                    />
+                  ))}
+                </Space>
+                
+                <Dropdown
+                  menu={{ items: userMenuItems }}
+                  placement="bottomRight"
+                >
+                  <Button type="text" icon={<UserOutlined />}>
+                    {currentUser?.displayName || currentUser?.username}
                   </Button>
-                )}
+                </Dropdown>
               </Space>
             </div>
           </Header>
@@ -428,9 +505,9 @@ const App = () => {
               borderRadius: borderRadiusLG,
             }}>
               <Routes>
-                <Route path="/" element={<div>總覽儀表板</div>} />
+                <Route path="/" element={<Dashboard />} />
                 <Route path="/platform-intro" element={<PlatformIntro />} />
-                <Route path="/dashboard" element={<div>總覽儀表板</div>} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/device-management" element={<DeviceManagement />} />
                 <Route path="/device-categories" element={<DeviceCategories />} />
                 <Route path="/notification-preferences" element={<NotificationPreferences />} />
@@ -439,11 +516,13 @@ const App = () => {
                 <Route path="/system-support" element={<SystemSupport />} />
                 <Route path="/usage-analytics" element={<UsageAnalytics />} />
                 <Route path="/developer-portal" element={<div>開發者平台</div>} />
-                <Route path="/historical-analysis" element={<div>歷史分析</div>} />
-                <Route path="/ai-analysis" element={<div>AI 分析</div>} />
-                <Route path="/alert-center" element={<div>告警中心</div>} />
-                <Route path="/communication-protocols" element={<div>通訊協定</div>} />
-                <Route path="/table-schema" element={<div>資料表結構</div>} />
+                <Route path="/historical-analysis" element={<HistoricalAnalysis />} />
+                <Route path="/ai-analysis" element={<AIAnalysis />} />
+                <Route path="/alert-center" element={<AlertCenter />} />
+                <Route path="/communication-protocols" element={<CommunicationProtocols />} />
+                <Route path="/table-schema" element={<TableSchema />} />
+                <Route path="/data-processing" element={<DataProcessing />} />
+                <Route path="/data-transformation" element={<DataTransformation />} />
                 <Route path="/ai-anomaly-detection" element={<div>AI 異常偵測系統</div>} />
                 <Route path="/stream-video-recognition" element={<div>串流影像辨識</div>} />
                 <Route path="/mlops" element={<div>MLOPs</div>} />
@@ -461,37 +540,6 @@ const App = () => {
           </Content>
         </Layout>
       </Layout>
-
-      {/* 登入模態框 */}
-      <Modal
-        title="用戶登入"
-        open={loginModalVisible}
-        onCancel={() => setLoginModalVisible(false)}
-        footer={null}
-      >
-        <Form onFinish={handleLogin}>
-          <Form.Item
-            name="username"
-            rules={[{ required: true, message: '請輸入用戶名！' }]}
-          >
-            <Input placeholder="用戶名" />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            rules={[{ required: true, message: '請輸入密碼！' }]}
-          >
-            <Input.Password placeholder="密碼" />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block>
-              登入
-            </Button>
-          </Form.Item>
-          <div style={{ textAlign: 'center', color: '#666' }}>
-            預設帳號：admin / admin123
-          </div>
-        </Form>
-      </Modal>
 
       {/* 角色切換模態框 */}
       <Modal
