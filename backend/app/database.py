@@ -1,15 +1,15 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-import datetime
+from datetime import datetime, timedelta
 import uuid
 from sqlalchemy import Column, Integer, String, DateTime, Text, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 from urllib.parse import quote_plus
-from datetime import timedelta
 from sqlalchemy import text
 from . import schemas
+from . import models
 
 # 嘗試導入 dotenv，如果失敗則使用預設值
 try:
@@ -170,12 +170,11 @@ def test_database_connections():
 def create_device_data(device_id: str, data: dict):
     """創建設備數據"""
     # 儲存到 PostgreSQL
-    from .models import Device
     db = get_postgres_session()
     try:
-        device = db.query(Device).filter(Device.device_id == device_id).first()
+        device = db.query(models.Device).filter(models.Device.device_id == device_id).first()
         if device:
-            device.last_seen = datetime.datetime.utcnow()
+            device.last_seen = datetime.utcnow()
             db.commit()
     except Exception as e:
         print(f"PostgreSQL 設備數據更新失敗: {e}")
@@ -206,7 +205,6 @@ def get_device_history(device_id: str, hours: int = 24):
     """取得設備歷史數據"""
     if INFLUXDB_AVAILABLE and db_manager.influx_client:
         try:
-            from datetime import datetime, timedelta
             
             bucket = os.getenv('INFLUXDB_BUCKET', 'iot_platform')
             query_api = db_manager.influx_client.query_api()
@@ -245,8 +243,7 @@ def get_influx_client():
 # 用戶認證相關函數
 def get_user_by_username(db: Session, username: str):
     """根據用戶名獲取用戶"""
-    from .models import User
-    return db.query(User).filter(User.username == username).first()
+    return db.query(models.User).filter(models.User.username == username).first()
 
 def authenticate_user(db: Session, username: str, password: str):
     """驗證用戶"""
@@ -260,7 +257,6 @@ def authenticate_user(db: Session, username: str, password: str):
 def create_access_token(data: dict, expires_delta: timedelta = None):
     """創建訪問令牌"""
     import jwt
-    from datetime import datetime, timedelta
     
     to_encode = data.copy()
     if expires_delta:
@@ -274,7 +270,6 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 def get_current_user(token: str, db: Session, credentials_exception):
     """獲取當前用戶"""
     import jwt
-    from .models import User
     
     try:
         payload = jwt.decode(token, "your-secret-key", algorithms=["HS256"])
@@ -291,9 +286,8 @@ def get_current_user(token: str, db: Session, credentials_exception):
 
 def create_user(db: Session, user):
     """創建用戶"""
-    from .models import User
     hashed_password = get_password_hash(user.password)
-    db_user = User(
+    db_user = models.User(
         username=user.username,
         email=user.email,
         hashed_password=hashed_password,
@@ -308,8 +302,7 @@ def create_user(db: Session, user):
 # 設備管理相關函數
 def create_device(db: Session, device):
     """創建設備"""
-    from .models import Device
-    db_device = Device(**device.dict())
+    db_device = models.Device(**device.dict())
     db.add(db_device)
     db.commit()
     db.refresh(db_device)
@@ -317,16 +310,14 @@ def create_device(db: Session, device):
 
 def get_devices(db: Session, category_id: int = None):
     """獲取設備列表"""
-    from .models import Device
-    query = db.query(Device)
+    query = db.query(models.Device)
     if category_id:
-        query = query.filter(Device.category_id == category_id)
+        query = query.filter(models.Device.category_id == category_id)
     return query.all()
 
 def update_device(db: Session, device_id: int, update):
     """更新設備"""
-    from .models import Device
-    device = db.query(Device).filter(Device.id == device_id).first()
+    device = db.query(models.Device).filter(models.Device.id == device_id).first()
     if not device:
         return None
     
@@ -340,8 +331,7 @@ def update_device(db: Session, device_id: int, update):
 # 設備類別管理相關函數
 def create_device_category(db: Session, category, created_by: int):
     """創建設備類別"""
-    from .models import DeviceCategory
-    db_category = DeviceCategory(**category.dict(), created_by=created_by)
+    db_category = models.DeviceCategory(**category.dict(), created_by=created_by)
     db.add(db_category)
     db.commit()
     db.refresh(db_category)
@@ -349,22 +339,20 @@ def create_device_category(db: Session, category, created_by: int):
 
 def get_device_categories(db: Session, parent_id: int = None, include_inactive: bool = False):
     """獲取設備類別列表"""
-    from .models import DeviceCategory
-    query = db.query(DeviceCategory)
+    query = db.query(models.DeviceCategory)
     if parent_id is not None:
-        query = query.filter(DeviceCategory.parent_id == parent_id)
+        query = query.filter(models.DeviceCategory.parent_id == parent_id)
     if not include_inactive:
-        query = query.filter(DeviceCategory.is_active == True)
+        query = query.filter(models.DeviceCategory.is_active == True)
     return query.all()
 
 def get_device_category_tree(db: Session):
     """獲取設備類別樹狀結構"""
-    from .models import DeviceCategory
     
     def build_tree(parent_id=None):
-        categories = db.query(DeviceCategory).filter(
-            DeviceCategory.parent_id == parent_id,
-            DeviceCategory.is_active == True
+        categories = db.query(models.DeviceCategory).filter(
+            models.DeviceCategory.parent_id == parent_id,
+            models.DeviceCategory.is_active == True
         ).all()
         
         tree = []
@@ -385,13 +373,11 @@ def get_device_category_tree(db: Session):
 
 def get_device_category(db: Session, category_id: int):
     """獲取單個設備類別"""
-    from .models import DeviceCategory
-    return db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    return db.query(models.DeviceCategory).filter(models.DeviceCategory.id == category_id).first()
 
 def update_device_category(db: Session, category_id: int, category):
     """更新設備類別"""
-    from .models import DeviceCategory
-    db_category = db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    db_category = db.query(models.DeviceCategory).filter(models.DeviceCategory.id == category_id).first()
     if not db_category:
         return None
     
@@ -404,19 +390,17 @@ def update_device_category(db: Session, category_id: int, category):
 
 def delete_device_category(db: Session, category_id: int):
     """刪除設備類別"""
-    from .models import DeviceCategory
-    category = db.query(DeviceCategory).filter(DeviceCategory.id == category_id).first()
+    category = db.query(models.DeviceCategory).filter(models.DeviceCategory.id == category_id).first()
     if not category:
         return False
     
     # 檢查是否有子類別
-    children = db.query(DeviceCategory).filter(DeviceCategory.parent_id == category_id).count()
+    children = db.query(models.DeviceCategory).filter(models.DeviceCategory.parent_id == category_id).count()
     if children > 0:
         raise ValueError("無法刪除有子類別的類別")
     
     # 檢查是否有設備使用此類別
-    from .models import Device
-    devices = db.query(Device).filter(Device.category_id == category_id).count()
+    devices = db.query(models.Device).filter(models.Device.category_id == category_id).count()
     if devices > 0:
         raise ValueError("無法刪除有設備使用的類別")
     
@@ -427,10 +411,9 @@ def delete_device_category(db: Session, category_id: int):
 # 警報管理相關函數
 def get_alerts(db: Session, device_id: int = None):
     """獲取警報列表"""
-    from .models import Alert
-    query = db.query(Alert)
+    query = db.query(models.Alert)
     if device_id:
-        query = query.filter(Alert.device_id == device_id)
+        query = query.filter(models.Alert.device_id == device_id)
     return query.all()
 
 # 資料庫連線設定管理
@@ -763,3 +746,179 @@ def get_platform_images_by_category(db: Session):
 
 # 初始化資料庫管理器
 db_manager = DatabaseManager() 
+
+# 在 DatabaseManager 類別後添加新的動態連線管理器
+class DynamicDatabaseManager:
+    """動態資料庫連線管理器"""
+    
+    def __init__(self):
+        self.connections = {}  # 快取連線
+        self.settings_cache = {}  # 快取設定
+    
+    def get_connection_by_type(self, db_type: str, db_session: Session):
+        """根據類型獲取資料庫連線"""
+        try:
+            # 從資料庫獲取設定
+            setting = database.get_database_connection_setting_by_type(db_session, db_type)
+            if not setting or not setting.is_active:
+                return None
+            
+            # 檢查快取
+            cache_key = f"{db_type}_{setting.id}"
+            if cache_key in self.connections:
+                return self.connections[cache_key]
+            
+            # 建立新連線
+            connection = self._create_connection(setting)
+            if connection:
+                self.connections[cache_key] = connection
+                self.settings_cache[cache_key] = setting
+            
+            return connection
+            
+        except Exception as e:
+            print(f"❌ 建立 {db_type} 連線失敗: {e}")
+            return None
+    
+    def _create_connection(self, setting):
+        """建立資料庫連線"""
+        try:
+            if setting.db_type == "postgresql":
+                return self._create_postgresql_connection(setting)
+            elif setting.db_type == "mongodb":
+                return self._create_mongodb_connection(setting)
+            elif setting.db_type == "influxdb":
+                return self._create_influxdb_connection(setting)
+            else:
+                print(f"❌ 不支援的資料庫類型: {setting.db_type}")
+                return None
+        except Exception as e:
+            print(f"❌ 建立 {setting.db_type} 連線失敗: {e}")
+            return None
+    
+    def _create_postgresql_connection(self, setting):
+        """建立 PostgreSQL 連線"""
+        from sqlalchemy import create_engine
+        
+        # 建立連線字串
+        if setting.username and setting.password:
+            connection_string = f"postgresql://{setting.username}:{setting.password}@{setting.host}:{setting.port}/{setting.database}"
+        else:
+            connection_string = f"postgresql://{setting.host}:{setting.port}/{setting.database}"
+        
+        # 建立引擎
+        engine = create_engine(connection_string)
+        
+        # 測試連線
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        
+        return engine
+    
+    def _create_mongodb_connection(self, setting):
+        """建立 MongoDB 連線"""
+        if not MONGODB_AVAILABLE:
+            return None
+        
+        try:
+            # 建立連線字串
+            if setting.username and setting.password:
+                connection_string = f"mongodb://{setting.username}:{setting.password}@{setting.host}:{setting.port}/{setting.database}"
+            else:
+                connection_string = f"mongodb://{setting.host}:{setting.port}/{setting.database}"
+            
+            # 建立客戶端
+            client = MongoClient(connection_string)
+            
+            # 測試連線
+            client.admin.command('ping')
+            
+            return client
+            
+        except Exception as e:
+            print(f"❌ MongoDB 連線失敗: {e}")
+            return None
+    
+    def _create_influxdb_connection(self, setting):
+        """建立 InfluxDB 連線"""
+        if not INFLUXDB_AVAILABLE:
+            return None
+        
+        try:
+            # 從設定中獲取 token 和 org
+            token = getattr(setting, 'token', '')
+            org = getattr(setting, 'org', 'IIPlatform')
+            
+            # 建立客戶端
+            client = InfluxDBClient(
+                url=f"http://{setting.host}:{setting.port}",
+                token=token,
+                org=org
+            )
+            
+            # 測試連線
+            health = client.health()
+            
+            return client
+            
+        except Exception as e:
+            print(f"❌ InfluxDB 連線失敗: {e}")
+            return None
+    
+    def refresh_connections(self, db_session: Session):
+        """重新整理所有連線"""
+        try:
+            # 獲取所有活躍設定
+            active_settings = database.get_active_database_connection_settings(db_session)
+            
+            # 清除舊連線
+            self.connections.clear()
+            self.settings_cache.clear()
+            
+            # 建立新連線
+            for setting in active_settings:
+                if setting.is_active:
+                    connection = self._create_connection(setting)
+                    if connection:
+                        cache_key = f"{setting.db_type}_{setting.id}"
+                        self.connections[cache_key] = connection
+                        self.settings_cache[cache_key] = setting
+            
+            print(f"✅ 已重新整理 {len(self.connections)} 個資料庫連線")
+            
+        except Exception as e:
+            print(f"❌ 重新整理連線失敗: {e}")
+    
+    def close_all_connections(self):
+        """關閉所有連線"""
+        for connection in self.connections.values():
+            try:
+                if hasattr(connection, 'close'):
+                    connection.close()
+            except Exception as e:
+                print(f"⚠️ 關閉連線時發生錯誤: {e}")
+        
+        self.connections.clear()
+        self.settings_cache.clear()
+
+# 建立全域動態連線管理器實例
+dynamic_db_manager = DynamicDatabaseManager()
+
+# 修改現有的函數以使用動態連線管理器
+def get_dynamic_postgres_session(db_session: Session):
+    """動態獲取 PostgreSQL 會話"""
+    engine = dynamic_db_manager.get_connection_by_type("postgresql", db_session)
+    if engine:
+        return sessionmaker(autocommit=False, autoflush=False, bind=engine)()
+    return None
+
+def get_dynamic_mongo_db(db_session: Session):
+    """動態獲取 MongoDB 資料庫"""
+    client = dynamic_db_manager.get_connection_by_type("mongodb", db_session)
+    if client:
+        return client.iot_platform
+    return None
+
+def get_dynamic_influx_client(db_session: Session):
+    """動態獲取 InfluxDB 客戶端"""
+    return dynamic_db_manager.get_connection_by_type("influxdb", db_session) 

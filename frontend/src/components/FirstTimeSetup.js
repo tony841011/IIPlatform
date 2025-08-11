@@ -70,7 +70,7 @@ const FirstTimeSetup = ({ onSetupComplete }) => {
           db_type: 'postgresql',
           name: values.postgresql_name || 'PostgreSQL 主資料庫',
           host: values.postgresql_host,
-          port: values.postgresql_port,
+          port: parseInt(values.postgresql_port) || 5432,  // 確保是數字
           database: values.postgresql_database,
           username: values.postgresql_username,
           password: values.postgresql_password,
@@ -81,7 +81,7 @@ const FirstTimeSetup = ({ onSetupComplete }) => {
           db_type: 'mongodb',
           name: values.mongodb_name || 'MongoDB 文檔資料庫',
           host: values.mongodb_host,
-          port: values.mongodb_port,
+          port: parseInt(values.mongodb_port) || 27017,  // 確保是數字
           database: values.mongodb_database,
           username: values.mongodb_username,
           password: values.mongodb_password,
@@ -92,13 +92,15 @@ const FirstTimeSetup = ({ onSetupComplete }) => {
           db_type: 'influxdb',
           name: values.influxdb_name || 'InfluxDB 時序資料庫',
           host: values.influxdb_host,
-          port: values.influxdb_port,
+          port: parseInt(values.influxdb_port) || 8086,  // 確保是數字
           database: values.influxdb_database,
           username: values.influxdb_username,
           password: values.influxdb_password,
           description: '時序資料庫，用於存儲感測器數據'
         };
       }
+
+      console.log('發送的連線數據:', connectionData);  // 調試用
 
       const response = await axios.post(
         `http://localhost:8000/api/v1/database-connections/${dbType}/test`,
@@ -119,6 +121,7 @@ const FirstTimeSetup = ({ onSetupComplete }) => {
         message.error(`${dbType.toUpperCase()} 連線測試失敗`);
       }
     } catch (error) {
+      console.error('連線測試錯誤:', error);  // 調試用
       setTestResults(prev => ({
         ...prev,
         [dbType]: { status: 'error', message: error.message }

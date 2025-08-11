@@ -14,6 +14,20 @@ from . import schemas
 from . import database
 from .services.data_processing_service import data_processing_service, ProcessingResult
 
+# 在文件頂部添加 Pydantic 模型
+from pydantic import BaseModel
+from typing import Optional
+
+class DatabaseConnectionTest(BaseModel):
+    db_type: Optional[str] = None
+    name: Optional[str] = None
+    host: Optional[str] = None
+    port: Optional[int] = None
+    database: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    description: Optional[str] = None
+
 app = FastAPI(title="工業物聯網平台 API", version="1.0.0")
 
 # 添加 CORS 中間件
@@ -247,7 +261,6 @@ async def login(credentials: dict, db: Session = Depends(get_db)):
     try:
         username = credentials.get("username")
         password = credentials.get("password")
-        selected_databases = credentials.get("selected_databases", {})
         role = credentials.get("role", "admin")
         
         # 驗證用戶名和密碼
@@ -255,8 +268,21 @@ async def login(credentials: dict, db: Session = Depends(get_db)):
             # 獲取用戶權限
             permissions = get_permissions_by_role(role)
             
+            # 自動初始化資料庫表格（如果不存在）
+            try:
+                from .models import Base
+                from .database import engine
+                Base.metadata.create_all(bind=engine)
+                print("✅ 資料庫表格初始化完成")
+            except Exception as e:
+                print(f"⚠️ 資料庫表格初始化警告: {str(e)}")
+            
             # 檢查是否為首次登入
-            is_first_time = database.check_first_time_setup(db)
+            try:
+                is_first_time = database.check_first_time_setup(db)
+            except Exception as e:
+                print(f"⚠️ 首次登入檢查失敗，假設為首次登入: {str(e)}")
+                is_first_time = True
             
             if is_first_time:
                 # 首次登入，返回設定狀態
@@ -272,38 +298,7 @@ async def login(credentials: dict, db: Session = Depends(get_db)):
                     "message": "首次登入，請設定資料庫連線"
                 }
             else:
-                # 非首次登入，使用已保存的設定
-                active_settings = database.get_active_database_connection_settings(db)
-                database_status = {}
-                
-                # 測試所有活躍的資料庫連線
-                for setting in active_settings:
-                    try:
-                        if setting.db_type == "postgresql":
-                            # 測試 PostgreSQL 連線
-                            db_test = database.get_postgres_session()
-                            db_test.execute(text("SELECT 1"))
-                            db_test.close()
-                            database_status[setting.db_type] = {'status': 'success', 'message': f'{setting.name} 連線正常'}
-                        elif setting.db_type == "mongodb":
-                            # 測試 MongoDB 連線
-                            mongo_db = database.get_mongo_db()
-                            if mongo_db:
-                                mongo_db.command('ping')
-                                database_status[setting.db_type] = {'status': 'success', 'message': f'{setting.name} 連線正常'}
-                            else:
-                                database_status[setting.db_type] = {'status': 'error', 'message': f'{setting.name} 連線失敗'}
-                        elif setting.db_type == "influxdb":
-                            # 測試 InfluxDB 連線
-                            influx_client = database.get_influx_client()
-                            if influx_client:
-                                health = influx_client.health()
-                                database_status[setting.db_type] = {'status': 'success', 'message': f'{setting.name} 連線正常'}
-                            else:
-                                database_status[setting.db_type] = {'status': 'error', 'message': f'{setting.name} 連線失敗'}
-                    except Exception as e:
-                        database_status[setting.db_type] = {'status': 'error', 'message': f'{setting.name} 連線失敗: {str(e)}'}
-                
+                # 非首次登入，返回成功狀態
                 return {
                     "success": True,
                     "is_first_time": False,
@@ -311,8 +306,7 @@ async def login(credentials: dict, db: Session = Depends(get_db)):
                         "username": username,
                         "display_name": "系統管理員",
                         "role": role,
-                        "permissions": permissions,
-                        "database_status": database_status
+                        "permissions": permissions
                     },
                     "message": "登入成功"
                 }
@@ -412,11 +406,10 @@ async def create_database_connection(connection: dict):
         
         # 儲存到資料庫
         from .database import get_postgres_session
-        from .models import DatabaseConnection
         
         db = get_postgres_session()
         try:
-            db_connection = DatabaseConnection(**connection)
+            db_connection = models.DatabaseConnection(**connection)
             db.add(db_connection)
             db.commit()
             db.refresh(db_connection)
@@ -449,11 +442,10 @@ async def update_database_connection(connection_id: int, connection: dict):
     """更新資料庫連線"""
     try:
         from .database import get_postgres_session
-        from .models import DatabaseConnection
         
         db = get_postgres_session()
         try:
-            db_connection = db.query(DatabaseConnection).filter(DatabaseConnection.id == connection_id).first()
+            db_connection = db.query(models.DatabaseConnection).filter(models.DatabaseConnection.id == connection_id).first()
             if not db_connection:
                 return {"success": False, "message": "連線不存在"}
             
@@ -496,11 +488,10 @@ async def delete_database_connection(connection_id: int):
     """刪除資料庫連線"""
     try:
         from .database import get_postgres_session
-        from .models import DatabaseConnection
         
         db = get_postgres_session()
         try:
-            db_connection = db.query(DatabaseConnection).filter(DatabaseConnection.id == connection_id).first()
+            db_connection = db.query(models.DatabaseConnection).filter(models.DatabaseConnection.id == connection_id).first()
             if not db_connection:
                 return {"success": False, "message": "連線不存在"}
             
@@ -517,46 +508,7 @@ async def delete_database_connection(connection_id: int):
     except Exception as e:
         return {"success": False, "message": f"刪除連線失敗: {str(e)}"}
 
-@app.post("/api/v1/database-connections/{connection_id}/test")
-async def test_database_connection(connection_id: int):
-    """測試資料庫連線"""
-    try:
-        from .database import get_postgres_session
-        from .models import DatabaseConnection
-        
-        db = get_postgres_session()
-        try:
-            db_connection = db.query(DatabaseConnection).filter(DatabaseConnection.id == connection_id).first()
-            if not db_connection:
-                return {"success": False, "message": "連線不存在"}
-            
-            # 測試連線
-            test_result = await test_remote_connection(db_connection)
-            
-            # 更新測試結果
-            db_connection.last_test_time = datetime.utcnow()
-            db_connection.last_test_result = "success" if test_result["success"] else "failed"
-            db_connection.last_test_error = test_result.get("error", "")
-            db_connection.response_time = test_result.get("response_time", 0)
-            
-            db.commit()
-            
-            return {
-                "success": test_result["success"],
-                "message": test_result["message"],
-                "data": {
-                    "response_time": test_result.get("response_time", 0),
-                    "error": test_result.get("error", "")
-                }
-            }
-        except Exception as e:
-            db.rollback()
-            return {"success": False, "message": f"測試連線失敗: {str(e)}"}
-        finally:
-            db.close()
-            
-    except Exception as e:
-        return {"success": False, "message": f"測試連線失敗: {str(e)}"}
+# 已刪除衝突的端點
 
 @app.post("/api/v1/database-connections/initialize")
 async def initialize_databases(selected_databases: dict):
@@ -935,8 +887,7 @@ async def initialize_database_by_type(db_type):
         if db_type == "postgresql":
             # 初始化 PostgreSQL
             from .database import engine
-            from .models import Base
-            Base.metadata.create_all(bind=engine)
+            models.Base.metadata.create_all(bind=engine)
             return {"success": True, "message": "PostgreSQL 初始化成功"}
         
         elif db_type == "mongodb":
@@ -1143,10 +1094,10 @@ async def get_ai_models(
 ):
     """獲取 AI Model 列表"""
     try:
-        models = database.get_ai_models(db, skip, limit, type_filter)
+        ai_models = database.get_ai_models(db, skip, limit, type_filter)
         return {
             "success": True,
-            "models": [schemas.AIModelOut.from_orm(m) for m in models]
+            "models": [schemas.AIModelOut.from_orm(m) for m in ai_models]
         }
     except Exception as e:
         return {
@@ -1671,3 +1622,326 @@ async def serve_image(category: str, filename: str):
         
     except Exception as e:
         raise HTTPException(status_code=404, detail="圖片不存在") 
+
+# 在現有的測試端點後添加新的端點
+@app.post("/api/v1/database-connections/{db_type}/test")
+async def test_database_connection_by_type(db_type: str, connection_data: dict):
+    """根據資料庫類型測試連線"""
+    try:
+        import time
+        start_time = time.time()
+        
+        print(f"收到的連線數據: {connection_data}")  # 調試用
+        print(f"數據類型: {type(connection_data)}")  # 調試用
+        print(f"數據鍵值: {list(connection_data.keys())}")  # 調試用
+        
+        # 驗證資料庫類型
+        valid_types = ["postgresql", "mongodb", "influxdb", "mysql", "oracle", "sqlserver"]
+        if db_type not in valid_types:
+            return {"success": False, "message": f"不支援的資料庫類型: {db_type}"}
+        
+        # 設置資料庫類型
+        connection_data["db_type"] = db_type
+        
+        # 確保必要欄位存在並轉換類型
+        required_fields = ["host", "port", "database"]
+        for field in required_fields:
+            if not connection_data.get(field):
+                return {
+                    "success": False, 
+                    "message": f"缺少必要欄位: {field}",
+                    "data": {"error": f"缺少必要欄位: {field}"}
+                }
+        
+        # 確保 port 是整數
+        try:
+            connection_data["port"] = int(connection_data["port"])
+        except (ValueError, TypeError):
+            return {
+                "success": False,
+                "message": "埠號必須是有效的數字",
+                "data": {"error": "埠號必須是有效的數字"}
+            }
+        
+        # 設置預設值
+        connection_data.setdefault("username", "")
+        connection_data.setdefault("password", "")
+        
+        # 生成連線字串
+        connection_string = generate_connection_string(connection_data)
+        print(f"生成的連線字串: {connection_string}")  # 調試用
+        
+        # 根據資料庫類型進行測試
+        if db_type == "postgresql":
+            try:
+                import psycopg2
+                from psycopg2 import OperationalError
+                
+                conn = psycopg2.connect(connection_string)
+                conn.close()
+                response_time = (time.time() - start_time) * 1000
+                
+                return {
+                    "success": True,
+                    "message": "PostgreSQL 連線成功",
+                    "data": {
+                        "response_time": response_time,
+                        "error": ""
+                    }
+                }
+            except OperationalError as e:
+                return {
+                    "success": False,
+                    "message": "PostgreSQL 連線失敗",
+                    "data": {
+                        "response_time": 0,
+                        "error": str(e)
+                    }
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "message": f"PostgreSQL 連線測試失敗: {str(e)}",
+                    "data": {
+                        "response_time": 0,
+                        "error": str(e)
+                    }
+                }
+        
+        elif db_type == "mongodb":
+            try:
+                from pymongo import MongoClient
+                from pymongo.errors import ConnectionFailure
+                
+                client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
+                client.admin.command('ping')
+                client.close()
+                
+                response_time = (time.time() - start_time) * 1000
+                return {
+                    "success": True,
+                    "message": "MongoDB 連線成功",
+                    "data": {
+                        "response_time": response_time,
+                        "error": ""
+                    }
+                }
+            except ConnectionFailure as e:
+                return {
+                    "success": False,
+                    "message": "MongoDB 連線失敗",
+                    "data": {
+                        "response_time": 0,
+                        "error": str(e)
+                    }
+                }
+        
+        elif db_type == "influxdb":
+            try:
+                from influxdb_client import InfluxDBClient
+                
+                url = f"http://{connection_data.get('host')}:{connection_data.get('port')}"
+                token = connection_data.get('token', '')
+                org = connection_data.get('org', 'IIPlatform')
+                
+                client = InfluxDBClient(url=url, token=token, org=org, timeout=5000)
+                health = client.health()
+                client.close()
+                
+                response_time = (time.time() - start_time) * 1000
+                return {
+                    "success": True,
+                    "message": "InfluxDB 連線成功",
+                    "data": {
+                        "response_time": response_time,
+                        "error": ""
+                    }
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "message": "InfluxDB 連線失敗",
+                    "data": {
+                        "response_time": 0,
+                        "error": str(e)
+                    }
+                }
+        
+        else:
+            return {
+                "success": False,
+                "message": f"不支援的資料庫類型: {db_type}",
+                "data": {
+                    "response_time": 0,
+                    "error": f"不支援的資料庫類型: {db_type}"
+                }
+            }
+        
+    except Exception as e:
+        print(f"測試連線時發生錯誤: {str(e)}")  # 調試用
+        return {
+            "success": False,
+            "message": f"測試連線失敗: {str(e)}",
+            "data": {
+                "response_time": 0,
+                "error": str(e)
+            }
+        }
+
+@app.post("/api/v1/database-connections/{db_type}/create")
+async def create_database_connection_by_type(db_type: str, connection_data: dict):
+    """根據資料庫類型創建連線"""
+    try:
+        # 驗證資料庫類型
+        valid_types = ["postgresql", "mongodb", "influxdb", "mysql", "oracle", "sqlserver"]
+        if db_type not in valid_types:
+            return {"success": False, "message": f"不支援的資料庫類型: {db_type}"}
+        
+        # 設置資料庫類型
+        connection_data["db_type"] = db_type
+        
+        # 生成連線字串
+        connection_string = generate_connection_string(connection_data)
+        connection_data["connection_string"] = connection_string
+        
+        # 儲存到資料庫
+        from .database import get_postgres_session
+        
+        db = get_postgres_session()
+        try:
+            db_connection = models.DatabaseConnection(**connection_data)
+            db.add(db_connection)
+            db.commit()
+            db.refresh(db_connection)
+            
+            return {
+                "success": True,
+                "message": f"{db_type} 連線創建成功",
+                "data": {
+                    "id": db_connection.id,
+                    "name": db_connection.name,
+                    "db_type": db_connection.db_type,
+                    "host": db_connection.host,
+                    "port": db_connection.port,
+                    "database": db_connection.database,
+                    "is_active": db_connection.is_active,
+                    "is_default": db_connection.is_default
+                }
+            }
+        except Exception as e:
+            db.rollback()
+            return {"success": False, "message": f"創建連線失敗: {str(e)}"}
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return {"success": False, "message": f"創建連線失敗: {str(e)}"} 
+
+# 在現有的 database-connections 端點後添加 GET 端點
+@app.get("/api/v1/database-connections/")
+async def list_database_connections_api():
+    """獲取資料庫連線列表"""
+    try:
+        from .database import get_postgres_session
+        
+        db = get_postgres_session()
+        try:
+            connections = db.query(models.DatabaseConnection).all()
+            
+            return {
+                "success": True,
+                "data": [
+                    {
+                        "id": conn.id,
+                        "name": conn.name,
+                        "db_type": conn.db_type,
+                        "host": conn.host,
+                        "port": conn.port,
+                        "database": conn.database,
+                        "username": conn.username,
+                        "is_active": conn.is_active,
+                        "is_default": conn.is_default,
+                        "description": conn.description,
+                        "last_test_time": conn.last_test_time,
+                        "last_test_result": conn.last_test_result,
+                        "last_test_error": conn.last_test_error,
+                        "response_time": conn.response_time,
+                        # MongoDB 特定欄位
+                        "auth_source": conn.auth_source,
+                        "auth_mechanism": conn.auth_mechanism,
+                        "replica_set": conn.replica_set,
+                        "ssl_enabled": conn.ssl_enabled,
+                        # InfluxDB 特定欄位
+                        "token": conn.token,
+                        "org": conn.org,
+                        "bucket": conn.bucket,
+                        # 連線設定
+                        "timeout": conn.timeout,
+                        "retry_attempts": conn.retry_attempts,
+                        "connection_pool_size": conn.connection_pool_size
+                    }
+                    for conn in connections
+                ]
+            }
+        except Exception as e:
+            return {"success": False, "message": f"獲取連線列表失敗: {str(e)}"}
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return {"success": False, "message": f"獲取連線列表失敗: {str(e)}"}
+
+@app.get("/api/v1/database-connections/{connection_id}")
+async def get_database_connection_api(connection_id: int):
+    """獲取特定資料庫連線"""
+    try:
+        from .database import get_postgres_session
+        
+        db = get_postgres_session()
+        try:
+            connection = db.query(models.DatabaseConnection).filter(
+                models.DatabaseConnection.id == connection_id
+            ).first()
+            
+            if not connection:
+                return {"success": False, "message": "連線不存在"}
+            
+            return {
+                "success": True,
+                "data": {
+                    "id": connection.id,
+                    "name": connection.name,
+                    "db_type": connection.db_type,
+                    "host": connection.host,
+                    "port": connection.port,
+                    "database": connection.database,
+                    "username": connection.username,
+                    "is_active": connection.is_active,
+                    "is_default": connection.is_default,
+                    "description": connection.description,
+                    "last_test_time": connection.last_test_time,
+                    "last_test_result": connection.last_test_result,
+                    "last_test_error": connection.last_test_error,
+                    "response_time": connection.response_time,
+                    # MongoDB 特定欄位
+                    "auth_source": connection.auth_source,
+                    "auth_mechanism": connection.auth_mechanism,
+                    "replica_set": connection.replica_set,
+                    "ssl_enabled": connection.ssl_enabled,
+                    # InfluxDB 特定欄位
+                    "token": connection.token,
+                    "org": connection.org,
+                    "bucket": connection.bucket,
+                    # 連線設定
+                    "timeout": connection.timeout,
+                    "retry_attempts": connection.retry_attempts,
+                    "connection_pool_size": connection.connection_pool_size
+                }
+            }
+        except Exception as e:
+            return {"success": False, "message": f"獲取連線失敗: {str(e)}"}
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return {"success": False, "message": f"獲取連線失敗: {str(e)}"} 
