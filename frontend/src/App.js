@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Layout, Menu, theme, Dropdown, Space, Avatar, Button, Modal, Form, Input, Select, message, Badge } from 'antd';
 import {
   DashboardOutlined,
@@ -132,13 +132,30 @@ import OTAUpdate from './components/OTAUpdate';
 import CustomDashboard from './components/CustomDashboard';
 import AIModelManagement from './components/AIModelManagement';
 import Login from './components/Login';
+import TestDataTable from './components/TestDataTable';
+import TableErrorTest from './components/TableErrorTest';
+import RawDataErrorTest from './components/RawDataErrorTest';
+import DatabaseConnectionTest from './components/DatabaseConnectionTest';
+
+// 導入錯誤邊界
+import ErrorBoundary from './components/ErrorBoundary';
+import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+
+// 導入工具
+import { getAuthToken, removeAuthToken } from './utils/authUtils';
+import { handleButtonClick } from './utils/buttonHandlers';
 
 const { Header, Content, Sider } = Layout;
 
 const App = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState({
+    username: 'admin',
+    displayName: '系統管理員',
+    role: 'admin',
+    permissions: ['all']
+  });
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [roleSwitchModalVisible, setRoleSwitchModalVisible] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState({});
@@ -147,10 +164,10 @@ const App = () => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  // 檢查用戶權限
+  // 檢查用戶權限 - 暫時繞過登入檢查
   const hasPermission = (permission) => {
-    if (!currentUser || !currentUser.permissions) return false;
-    return currentUser.permissions.includes('all') || currentUser.permissions.includes(permission);
+    // 暫時返回 true，繞過權限檢查
+    return true;
   };
 
   // 根據權限過濾選單項目
@@ -447,145 +464,154 @@ const App = () => {
   ];
 
   // 如果未登入，顯示登入頁面
-  if (!isLoggedIn) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
+  // 暫時繞過登入檢查，直接進入系統
+  // if (!isLoggedIn) {
+  //   return <Login onLoginSuccess={handleLoginSuccess} />;
+  // }
 
   return (
-    <Router>
-      <Layout style={{ minHeight: '100vh' }}>
-        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
-          <div style={{ 
-            height: 32, 
-            margin: 16, 
-            background: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: borderRadiusLG,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '16px',
-            fontWeight: 'bold'
-          }}>
-            {collapsed ? 'IIP' : 'IIPlatform'}
-          </div>
-          <Menu
-            theme="dark"
-            defaultSelectedKeys={['dashboard']}
-            mode="inline"
-            items={getFilteredMenuItems()}
-          />
-        </Sider>
-        <Layout>
-          <Header style={{ padding: 0, background: colorBgContainer }}>
+    <GlobalErrorBoundary>
+      <Router>
+        <Layout style={{ minHeight: '100vh' }}>
+          <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
             <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              padding: '0 24px'
-            }}>
-              <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                工業物聯網平台
-              </div>
-              <Space>
-                {/* 資料庫狀態指示器 */}
-                <Space>
-                  {Object.entries(databaseStatus).map(([db, status]) => (
-                    <Badge
-                      key={db}
-                      status={status ? 'success' : 'error'}
-                      text={
-                        <span style={{ fontSize: '12px' }}>
-                          {db.toUpperCase()}
-                        </span>
-                      }
-                    />
-                  ))}
-                </Space>
-                
-                <Dropdown
-                  menu={{ items: userMenuItems }}
-                  placement="bottomRight"
-                >
-                  <Button type="text" icon={<UserOutlined />}>
-                    {currentUser?.displayName || currentUser?.username}
-                  </Button>
-                </Dropdown>
-              </Space>
-            </div>
-          </Header>
-          <Content style={{ margin: '0 16px' }}>
-            <div style={{
-              padding: 24,
-              minHeight: 360,
-              background: colorBgContainer,
+              height: 32, 
+              margin: 16, 
+              background: 'rgba(255, 255, 255, 0.2)',
               borderRadius: borderRadiusLG,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold'
             }}>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/platform-intro" element={<PlatformIntro />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/custom-dashboard" element={<CustomDashboard />} />
-                <Route path="/ai-model-management" element={<AIModelManagement />} />
-                <Route path="/device-management" element={<DeviceManagement />} />
-                <Route path="/device-categories" element={<DeviceCategories />} />
-                <Route path="/notification-preferences" element={<NotificationPreferences />} />
-                <Route path="/role-management" element={<RoleManagement />} />
-                <Route path="/database-connections" element={<DatabaseConnectionManagement />} />
-                <Route path="/system-support" element={<SystemSupport />} />
-                <Route path="/usage-analytics" element={<UsageAnalytics />} />
-                <Route path="/developer-portal" element={<div>開發者平台</div>} />
-                <Route path="/historical-analysis" element={<HistoricalAnalysis />} />
-                <Route path="/ai-analysis" element={<AIAnalysis />} />
-                <Route path="/alert-center" element={<AlertCenter />} />
-                <Route path="/communication-protocols" element={<CommunicationProtocols />} />
-                <Route path="/table-schema" element={<TableSchema />} />
-                <Route path="/data-processing" element={<DataProcessing />} />
-                <Route path="/data-transformation" element={<DataTransformation />} />
-                <Route path="/ai-anomaly-detection" element={<GPUMonitoring />} />
-                <Route path="/stream-video-recognition" element={<VideoRecognition />} />
-                <Route path="/mlops" element={<MLOps />} />
-                <Route path="/ota-update" element={<OTAUpdate />} />
-                <Route path="/edge-gateway" element={<EdgeGateway />} />
-                <Route path="/gis-integration" element={<GISIntegration />} />
-                <Route path="/rule-engine" element={<RuleEngine />} />
-                <Route path="/workflow" element={<WorkflowAutomation />} />
-                <Route path="/audit-logs" element={<AuditTrail />} />
-                <Route path="/report-system" element={<ReportingSystem />} />
-                <Route path="/system-settings" element={<div>系統設定</div>} />
-                <Route path="/user-management" element={<div>用戶管理</div>} />
-              </Routes>
+              {collapsed ? 'IIP' : 'IIPlatform'}
             </div>
-          </Content>
+            <Menu
+              theme="dark"
+              defaultSelectedKeys={['dashboard']}
+              mode="inline"
+              items={getFilteredMenuItems()}
+            />
+          </Sider>
+          <Layout>
+            <Header style={{ padding: 0, background: colorBgContainer }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                padding: '0 24px'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                  工業物聯網平台
+                </div>
+                <Space>
+                  {/* 資料庫狀態指示器 */}
+                  <Space>
+                    {Object.entries(databaseStatus).map(([db, status]) => (
+                      <Badge
+                        key={db}
+                        status={status ? 'success' : 'error'}
+                        text={
+                          <span style={{ fontSize: '12px' }}>
+                            {db.toUpperCase()}
+                          </span>
+                        }
+                      />
+                    ))}
+                  </Space>
+                  
+                  <Dropdown
+                    menu={{ items: userMenuItems }}
+                    placement="bottomRight"
+                  >
+                    <Button type="text" icon={<UserOutlined />}>
+                      {currentUser?.displayName || currentUser?.username}
+                    </Button>
+                  </Dropdown>
+                </Space>
+              </div>
+            </Header>
+            <Content style={{ margin: '0 16px' }}>
+              <div style={{
+                padding: 24,
+                minHeight: 360,
+                background: colorBgContainer,
+                borderRadius: borderRadiusLG,
+              }}>
+                <ErrorBoundary>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/platform-intro" element={<PlatformIntro />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/custom-dashboard" element={<CustomDashboard />} />
+                    <Route path="/ai-model-management" element={<AIModelManagement />} />
+                    <Route path="/device-management" element={<DeviceManagement />} />
+                    <Route path="/device-categories" element={<DeviceCategories />} />
+                    <Route path="/notification-preferences" element={<NotificationPreferences />} />
+                    <Route path="/role-management" element={<RoleManagement />} />
+                    <Route path="/database-connections" element={<DatabaseConnectionManagement />} />
+                    <Route path="/system-support" element={<SystemSupport />} />
+                    <Route path="/usage-analytics" element={<UsageAnalytics />} />
+                    <Route path="/developer-portal" element={<div>開發者平台</div>} />
+                    <Route path="/historical-analysis" element={<HistoricalAnalysis />} />
+                    <Route path="/ai-analysis" element={<AIAnalysis />} />
+                    <Route path="/alert-center" element={<AlertCenter />} />
+                    <Route path="/communication-protocols" element={<CommunicationProtocols />} />
+                    <Route path="/table-schema" element={<TableSchema />} />
+                    <Route path="/data-processing" element={<DataProcessing />} />
+                    <Route path="/data-transformation" element={<DataTransformation />} />
+                    <Route path="/ai-anomaly-detection" element={<GPUMonitoring />} />
+                    <Route path="/stream-video-recognition" element={<VideoRecognition />} />
+                    <Route path="/mlops" element={<MLOps />} />
+                    <Route path="/ota-update" element={<OTAUpdate />} />
+                    <Route path="/edge-gateway" element={<EdgeGateway />} />
+                    <Route path="/gis-integration" element={<GISIntegration />} />
+                    <Route path="/rule-engine" element={<RuleEngine />} />
+                    <Route path="/workflow" element={<WorkflowAutomation />} />
+                    <Route path="/audit-logs" element={<AuditTrail />} />
+                    <Route path="/report-system" element={<ReportingSystem />} />
+                    <Route path="/system-settings" element={<div>系統設定</div>} />
+                    <Route path="/user-management" element={<div>用戶管理</div>} />
+                    <Route path="/test-data-table" element={<TestDataTable />} />
+                    <Route path="/table-error-test" element={<TableErrorTest />} />
+                    <Route path="/rawdata-error-test" element={<RawDataErrorTest />} />
+                    <Route path="/database-connection-test" element={<DatabaseConnectionTest />} />
+                  </Routes>
+                </ErrorBoundary>
+              </div>
+            </Content>
+          </Layout>
         </Layout>
-      </Layout>
 
-      {/* 角色切換模態框 */}
-      <Modal
-        title="切換角色"
-        open={roleSwitchModalVisible}
-        onCancel={() => setRoleSwitchModalVisible(false)}
-        footer={null}
-      >
-        <Form onFinish={handleRoleSwitch}>
-          <Form.Item
-            name="role"
-            rules={[{ required: true, message: '請選擇角色！' }]}
-          >
-            <Select placeholder="選擇角色">
-              <Select.Option value="admin">系統管理員</Select.Option>
-              <Select.Option value="operator">操作員</Select.Option>
-              <Select.Option value="viewer">檢視者</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block>
-              切換
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </Router>
+        {/* 角色切換模態框 */}
+        <Modal
+          title="切換角色"
+          open={roleSwitchModalVisible}
+          onCancel={() => setRoleSwitchModalVisible(false)}
+          footer={null}
+        >
+          <Form onFinish={handleRoleSwitch}>
+            <Form.Item
+              name="role"
+              rules={[{ required: true, message: '請選擇角色！' }]}
+            >
+              <Select placeholder="選擇角色">
+                <Select.Option value="admin">系統管理員</Select.Option>
+                <Select.Option value="operator">操作員</Select.Option>
+                <Select.Option value="viewer">檢視者</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" block>
+                切換
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Router>
+    </GlobalErrorBoundary>
   );
 };
 

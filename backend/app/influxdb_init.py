@@ -16,7 +16,7 @@ def init_influxdb_measurements():
     url = os.getenv('INFLUXDB_URL', 'http://localhost:8086')
     token = os.getenv('INFLUXDB_TOKEN', '')
     org = os.getenv('INFLUXDB_ORG', 'IIPlatform')
-    bucket = os.getenv('INFLUXDB_BUCKET', 'iot_platform')
+    bucket = os.getenv('INFLUXDB_BUCKET', 'iiplatform')
     
     client = InfluxDBClient(url=url, token=token, org=org)
     write_api = client.write_api(write_options=SYNCHRONOUS)

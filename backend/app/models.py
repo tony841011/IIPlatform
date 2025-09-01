@@ -217,7 +217,7 @@ class DatabaseConnection(Base):
     
     # MySQL 特定欄位
     charset = Column(String(20), default='utf8mb4')  # MySQL 字符集
-    collation = Column(String(50), default='utf8mb4_unicode_ci')  # MySQL 排序規則
+    mysql_collation = Column(String(50), default='utf8mb4_unicode_ci')  # MySQL 排序規則
     autocommit = Column(Boolean, default=True)  # MySQL 自動提交
     sql_mode = Column(String(200), nullable=True)  # MySQL SQL 模式
     

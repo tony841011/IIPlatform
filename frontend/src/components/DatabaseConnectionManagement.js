@@ -62,10 +62,14 @@ const DatabaseConnectionManagement = () => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:8000/api/v1/database-connections/');
-      setConnections(response.data);
+      // 確保 response.data 是陣列
+      const data = Array.isArray(response.data) ? response.data : [];
+      setConnections(data);
     } catch (error) {
       console.error('獲取資料庫連線失敗:', error);
       message.error('獲取資料庫連線失敗');
+      // 錯誤時設置為空陣列而不是 undefined
+      setConnections([]);
     } finally {
       setLoading(false);
     }
@@ -317,6 +321,35 @@ const DatabaseConnectionManagement = () => {
     },
   ];
 
+  // 安全的資料處理
+  const safeConnections = Array.isArray(connections) ? connections : [];
+  const safeColumns = Array.isArray(columns) ? columns : [];
+
+  // 檢查資料有效性
+  useEffect(() => {
+    if (connections && !Array.isArray(connections)) {
+      console.warn('connections 不是陣列:', connections);
+      setConnections([]);
+    }
+  }, [connections]);
+
+  // 安全的表格配置
+  const tableConfig = {
+    columns: safeColumns,
+    dataSource: safeConnections,
+    rowKey: (record) => record?.id || record?.key || Math.random().toString(),
+    loading: loading,
+    pagination: {
+      pageSize: 10,
+      showSizeChanger: true,
+      showQuickJumper: true,
+      showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
+    },
+    scroll: { x: 'max-content' },
+    size: 'small',
+    bordered: true
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       <Title level={2}>
@@ -344,12 +377,7 @@ const DatabaseConnectionManagement = () => {
           </Button>
         }
       >
-        <Table
-          columns={columns}
-          dataSource={connections}
-          rowKey="id"
-          loading={loading}
-        />
+        <Table {...tableConfig} />
       </Card>
 
       <Modal

@@ -1,73 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Table, Empty, Input, Space, Button } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ensureArray, safeSearch, generateSafeColumns, isValidTableData } from '../../utils/dataUtils';
 
 const { Search } = Input;
 
 const DataTable = ({ data, config = {} }) => {
   const [searchText, setSearchText] = useState('');
-  const [filteredData, setFilteredData] = useState(data || []);
+  const [filteredData, setFilteredData] = useState([]);
 
-  if (!data || !Array.isArray(data) || data.length === 0) {
+  // 使用資料安全工具確保資料是陣列格式
+  const safeData = ensureArray(data);
+
+  useEffect(() => {
+    setFilteredData(safeData);
+  }, [safeData]);
+
+  // 如果沒有有效資料，顯示空狀態
+  if (!isValidTableData(safeData)) {
     return (
       <Card style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Empty description="無數據" />
+        <Empty description="無數據或數據格式無效" />
       </Card>
     );
   }
 
-  // 自動生成列配置
-  const generateColumns = (data) => {
-    if (!data || data.length === 0) return [];
-    
-    const firstRow = data[0];
-    return Object.keys(firstRow).map(key => ({
-      title: key.charAt(0).toUpperCase() + key.slice(1),
-      dataIndex: key,
-      key: key,
-      sorter: (a, b) => {
-        const aVal = a[key];
-        const bVal = b[key];
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return aVal - bVal;
-        }
-        return String(aVal).localeCompare(String(bVal));
-      },
-      render: (text) => {
-        if (typeof text === 'boolean') {
-          return text ? '是' : '否';
-        }
-        if (typeof text === 'number') {
-          return text.toLocaleString();
-        }
-        return text;
-      }
-    }));
-  };
+  // 使用安全的列生成函數
+  const columns = generateSafeColumns(safeData);
 
-  const columns = generateColumns(data);
-
-  // 搜索功能
+  // 安全的搜索功能
   const handleSearch = (value) => {
     setSearchText(value);
     if (!value) {
-      setFilteredData(data);
+      setFilteredData(safeData);
       return;
     }
     
-    const filtered = data.filter(item =>
-      Object.values(item).some(val =>
-        String(val).toLowerCase().includes(value.toLowerCase())
-      )
-    );
+    const filtered = safeSearch(safeData, value);
     setFilteredData(filtered);
   };
 
   // 重置搜索
   const handleReset = () => {
     setSearchText('');
-    setFilteredData(data);
+    setFilteredData(safeData);
   };
+
+  // 確保過濾後的資料是陣列
+  const safeFilteredData = ensureArray(filteredData);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -95,18 +75,17 @@ const DataTable = ({ data, config = {} }) => {
       <div style={{ flex: 1, overflow: 'hidden' }}>
         <Table
           columns={columns}
-          dataSource={filteredData}
+          dataSource={safeFilteredData}
           pagination={{
             pageSize: config.pageSize || 10,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => 
-              `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
           }}
-          scroll={{ y: 'calc(100vh - 300px)' }}
+          scroll={{ x: 'max-content', y: 'max-content' }}
           size="small"
           bordered
-          rowKey={(record, index) => record.id || index}
+          rowKey={(record, index) => record.id || record.key || index}
         />
       </div>
     </div>

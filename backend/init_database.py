@@ -13,6 +13,9 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import logging
 
+# 導入新的資料庫設定
+from app.config.database_settings import get_database_configs, get_default_databases
+
 # 設定日誌
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -132,51 +135,31 @@ def init_database():
         )
         db.add(default_group)
         
-        # 創建預設資料庫連線
-        postgres_connection = DatabaseConnection(
-            name="PostgreSQL 主資料庫",
-            db_type="postgresql",
-            host="localhost",
-            port=5432,
-            database="iot_platform",
-            username="iot_user",
-            password="iot_password_2024",
-            connection_string="postgresql://iot_user:iot_password_2024@localhost:5432/iot_platform",
-            is_active=True,
-            is_default=True,
-            description="系統主資料庫連線"
-        )
-        db.add(postgres_connection)
+        # 從配置檔案創建預設資料庫連線
+        logger.info("🔗 創建預設資料庫連線...")
+        database_configs = get_database_configs()
         
-        mongo_connection = DatabaseConnection(
-            name="MongoDB 文檔資料庫",
-            db_type="mongodb",
-            host="localhost",
-            port=27017,
-            database="iot_platform",
-            username="iot_user",
-            password="iot_password_2024",
-            connection_string="mongodb://iot_user:iot_password_2024@localhost:27017/iot_platform",
-            is_active=True,
-            is_default=False,
-            description="文檔資料庫連線"
-        )
-        db.add(mongo_connection)
-        
-        influx_connection = DatabaseConnection(
-            name="InfluxDB 時序資料庫",
-            db_type="influxdb",
-            host="localhost",
-            port=8086,
-            database="iot_platform",
-            username="",
-            password="",
-            connection_string="http://localhost:8086",
-            is_active=True,
-            is_default=False,
-            description="時序資料庫連線"
-        )
-        db.add(influx_connection)
+        for db_type, config in database_configs.items():
+            if config.get("is_default", False):
+                # 生成連線字串
+                connection_string = generate_connection_string(db_type, config)
+                
+                # 創建資料庫連線記錄
+                db_connection = DatabaseConnection(
+                    name=f"{db_type.upper()} 資料庫",
+                    db_type=db_type,
+                    host=config.get("host", ""),
+                    port=config.get("port", ""),
+                    database=config.get("database", ""),
+                    username=config.get("username", ""),
+                    password=config.get("password", ""),
+                    connection_string=connection_string,
+                    is_active=True,
+                    is_default=config.get("is_default", False),
+                    description=f"從配置檔案自動創建的 {db_type} 資料庫連線"
+                )
+                db.add(db_connection)
+                logger.info(f"✅ 創建 {db_type} 資料庫連線: {config.get('host', '')}:{config.get('port', '')}/{config.get('database', '')}")
         
         db.commit()
         logger.info("✅ 初始數據創建完成")
@@ -190,6 +173,46 @@ def init_database():
     
     logger.info("🎉 資料庫初始化完成！")
     return True
+
+def generate_connection_string(db_type, config):
+    """生成資料庫連線字串"""
+    from urllib.parse import quote_plus
+    
+    host = config.get("host", "")
+    port = config.get("port", "")
+    database = config.get("database", "")
+    username = config.get("username", "")
+    password = config.get("password", "")
+    
+    if db_type == "postgresql":
+        if username and password:
+            encoded_username = quote_plus(username)
+            encoded_password = quote_plus(password)
+            return f"postgresql://{encoded_username}:{encoded_password}@{host}:{port}/{database}"
+        else:
+            return f"postgresql://{host}:{port}/{database}"
+    
+    elif db_type == "mongodb":
+        if username and password:
+            encoded_username = quote_plus(username)
+            encoded_password = quote_plus(password)
+            return f"mongodb://{encoded_username}:{encoded_password}@{host}:{port}/{database}"
+        else:
+            return f"mongodb://{host}:{port}/{database}"
+    
+    elif db_type == "influxdb":
+        return f"http://{host}:{port}"
+    
+    elif db_type == "mysql":
+        if username and password:
+            encoded_username = quote_plus(username)
+            encoded_password = quote_plus(password)
+            return f"mysql://{encoded_username}:{encoded_password}@{host}:{port}/{database}"
+        else:
+            return f"mysql://{host}:{port}/{database}"
+    
+    else:
+        return ""
 
 if __name__ == "__main__":
     if init_database():

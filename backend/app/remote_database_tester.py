@@ -218,7 +218,7 @@ class RemoteDatabaseTester:
             port = config.get("port", 8086)
             token = config.get("token", "")
             org = config.get("org", "IIPlatform")
-            bucket = config.get("bucket", "iot_platform")
+            bucket = config.get("bucket", "iiplatform")
             
             url = f"http://{host}:{port}"
             
@@ -404,9 +404,9 @@ async def main():
         "db_type": "postgresql",
         "host": "192.168.1.100",
         "port": 5432,
-        "database": "iot_platform",
-        "username": "iot_user",
-        "password": "iot_password_2024"
+        "database": "iiplatform",
+        "username": "postgres",
+        "password": "admin"
     }
     
     # MongoDB 測試配置
@@ -415,9 +415,9 @@ async def main():
         "db_type": "mongodb",
         "host": "192.168.1.101",
         "port": 27017,
-        "database": "iot_platform",
-        "username": "iot_user",
-        "password": "iot_password_2024",
+        "database": "iiplatform",
+        "username": "",
+        "password": "",
         "auth_source": "admin",
         "ssl_enabled": False
     }
@@ -430,7 +430,7 @@ async def main():
         "port": 8086,
         "token": "your-influxdb-token",
         "org": "IIPlatform",
-        "bucket": "iot_platform"
+        "bucket": "iiplatform"
     }
     
     # 測試連線

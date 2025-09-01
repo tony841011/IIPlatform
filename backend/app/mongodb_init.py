@@ -14,7 +14,7 @@ def init_mongodb_collections():
     # 連接到 MongoDB
     mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017/')
     client = MongoClient(mongo_url)
-    db = client.iot_platform
+    db = client.iiplatform
     
     print("🔧 開始初始化 MongoDB 集合...")
     

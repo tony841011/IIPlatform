@@ -19,20 +19,20 @@ try:
 except ImportError:
     print("⚠️  python-dotenv 未安裝，使用預設環境變數")
     # 設定預設環境變數
-    os.environ.setdefault('POSTGRES_USER', 'iot_user')
-    os.environ.setdefault('POSTGRES_PASSWORD', 'iot_password_2024')
+    os.environ.setdefault('POSTGRES_USER', 'postgres')
+    os.environ.setdefault('POSTGRES_PASSWORD', 'admin')
     os.environ.setdefault('POSTGRES_HOST', 'localhost')
     os.environ.setdefault('POSTGRES_PORT', '5432')
-    os.environ.setdefault('POSTGRES_DB', 'iot_platform')
+    os.environ.setdefault('POSTGRES_DB', 'iiplatform')
     os.environ.setdefault('MONGO_USER', '')
     os.environ.setdefault('MONGO_PASSWORD', '')
     os.environ.setdefault('MONGO_HOST', 'localhost')
     os.environ.setdefault('MONGO_PORT', '27017')
-    os.environ.setdefault('MONGO_DB', 'iot_platform')
+    os.environ.setdefault('MONGO_DB', 'iiplatform')
     os.environ.setdefault('INFLUXDB_URL', 'http://localhost:8086')
     os.environ.setdefault('INFLUXDB_TOKEN', '')
     os.environ.setdefault('INFLUXDB_ORG', 'IIPlatform')
-    os.environ.setdefault('INFLUXDB_BUCKET', 'iot_platform')
+    os.environ.setdefault('INFLUXDB_BUCKET', 'iiplatform')
 
 # 嘗試導入 MongoDB 和 InfluxDB 客戶端
 try:
@@ -52,11 +52,11 @@ except ImportError:
     print("⚠️  influxdb-client 未安裝，InfluxDB 功能將不可用")
 
 # PostgreSQL 連線設定
-POSTGRES_USER = os.getenv('POSTGRES_USER', 'iot_user')
-POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'iot_password_2024')
+POSTGRES_USER = os.getenv('POSTGRES_USER', 'postgres')
+POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'admin')
 POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
 POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
-POSTGRES_DB = os.getenv('POSTGRES_DB', 'iot_platform')
+POSTGRES_DB = os.getenv('POSTGRES_DB', 'iiplatform')
 
 # 嘗試建立 PostgreSQL 連線
 try:
@@ -83,7 +83,7 @@ class DatabaseManager:
             try:
                 mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017/')
                 self.mongo_client = MongoClient(mongo_url)
-                self.mongo_db = self.mongo_client.iot_platform
+                self.mongo_db = self.mongo_client.iiplatform
                 print("✅ MongoDB 連線建立成功")
             except Exception as e:
                 print(f"❌ MongoDB 連線失敗: {e}")
@@ -106,7 +106,7 @@ class DatabaseManager:
     def get_mongo_db(self):
         """取得 MongoDB 資料庫"""
         if self.mongo_client:
-            return self.mongo_client.iot_platform
+            return self.mongo_client.iiplatform
         return None
     
     def get_influx_client(self):
@@ -187,7 +187,7 @@ def create_device_data(device_id: str, data: dict):
             from influxdb_client import Point
             from influxdb_client.client.write_api import SYNCHRONOUS
             
-            bucket = os.getenv('INFLUXDB_BUCKET', 'iot_platform')
+            bucket = os.getenv('INFLUXDB_BUCKET', 'iiplatform')
             write_api = db_manager.influx_client.write_api(write_options=SYNCHRONOUS)
             
             point = Point("device_sensor_data")\
@@ -206,7 +206,7 @@ def get_device_history(device_id: str, hours: int = 24):
     if INFLUXDB_AVAILABLE and db_manager.influx_client:
         try:
             
-            bucket = os.getenv('INFLUXDB_BUCKET', 'iot_platform')
+            bucket = os.getenv('INFLUXDB_BUCKET', 'iiplatform')
             query_api = db_manager.influx_client.query_api()
             
             start_time = datetime.utcnow() - timedelta(hours=hours)

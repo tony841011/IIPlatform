@@ -10,20 +10,20 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 # 設定環境變數
-os.environ.setdefault('POSTGRES_USER', 'iot_user')
-os.environ.setdefault('POSTGRES_PASSWORD', 'iot_password_2024')
+os.environ.setdefault('POSTGRES_USER', 'postgres')
+os.environ.setdefault('POSTGRES_PASSWORD', 'admin')
 os.environ.setdefault('POSTGRES_HOST', 'localhost')
 os.environ.setdefault('POSTGRES_PORT', '5432')
-os.environ.setdefault('POSTGRES_DB', 'iot_platform')
+os.environ.setdefault('POSTGRES_DB', 'iiplatform')
 os.environ.setdefault('MONGO_USER', '')
 os.environ.setdefault('MONGO_PASSWORD', '')
 os.environ.setdefault('MONGO_HOST', 'localhost')
 os.environ.setdefault('MONGO_PORT', '27017')
-os.environ.setdefault('MONGO_DB', 'iot_platform')
+os.environ.setdefault('MONGO_DB', 'iiplatform')
 os.environ.setdefault('INFLUXDB_URL', 'http://localhost:8086')
 os.environ.setdefault('INFLUXDB_TOKEN', '')
 os.environ.setdefault('INFLUXDB_ORG', 'IIPlatform')
-os.environ.setdefault('INFLUXDB_BUCKET', 'iot_platform')
+os.environ.setdefault('INFLUXDB_BUCKET', 'iiplatform')
 
 def init_postgresql():
     """初始化 PostgreSQL"""
@@ -148,10 +148,10 @@ def init_postgresql():
                 db_type="postgresql",
                 host="localhost",
                 port=5432,
-                database="iot_platform",
-                username="iot_user",
-                password="iot_password_2024",
-                connection_string="postgresql://iot_user:iot_password_2024@localhost:5432/iot_platform",
+                database="iiplatform",
+                username="postgres",
+                password="admin",
+                connection_string="postgresql://postgres:admin@localhost:5432/iiplatform",
                 is_active=True,
                 is_default=True,
                 description="主要業務資料庫"
@@ -163,10 +163,10 @@ def init_postgresql():
                 db_type="mongodb",
                 host="localhost",
                 port=27017,
-                database="iot_platform",
+                database="iiplatform",
                 username="",
                 password="",
-                connection_string="mongodb://localhost:27017/iot_platform",
+                connection_string="mongodb://localhost:27017/iiplatform",
                 is_active=True,
                 is_default=False,
                 description="非結構化資料儲存"
@@ -178,7 +178,7 @@ def init_postgresql():
                 db_type="influxdb",
                 host="localhost",
                 port=8086,
-                database="iot_platform",
+                database="iiplatform",
                 username="",
                 password="",
                 connection_string="http://localhost:8086",

@@ -472,7 +472,7 @@ class DataProcessingService:
                     }
                     
                     write_api = influx_client.write_api()
-                    write_api.write(bucket="iot_platform", org="IIPlatform", record=point)
+                    write_api.write(bucket="iiplatform", org="IIPlatform", record=point)
                     logger.info("數據已保存到 InfluxDB")
                 else:
                     logger.warning("InfluxDB 客戶端不可用")

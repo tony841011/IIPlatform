@@ -12,7 +12,7 @@ class InfluxDBManager:
         self.url = os.getenv("INFLUX_URL", "http://localhost:8086")
         self.token = os.getenv("INFLUX_TOKEN", "iot_admin_token")
         self.org = os.getenv("INFLUX_ORG", "iot_org")
-        self.bucket = os.getenv("INFLUX_BUCKET", "iot_platform")
+        self.bucket = os.getenv("INFLUX_BUCKET", "iiplatform")
         
         try:
             self.client = InfluxDBClient(

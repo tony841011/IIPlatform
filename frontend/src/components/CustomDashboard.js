@@ -126,6 +126,7 @@ const CustomDashboard = () => {
           }]
         };
       case 'table':
+        // 確保返回陣列格式
         return [
           { id: 1, name: '設備A', status: '正常', value: 25.6 },
           { id: 2, name: '設備B', status: '警告', value: 45.2 },
@@ -144,7 +145,8 @@ const CustomDashboard = () => {
           suffix: config.suffix || ''
         };
       default:
-        return {};
+        // 預設返回空陣列而不是空物件
+        return [];
     }
   };
 
